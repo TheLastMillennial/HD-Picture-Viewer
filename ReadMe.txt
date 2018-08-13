@@ -1,6 +1,25 @@
-I'm learning how to use github so please pardon this horrible readme.
-Send all .8xp and .8xv file to your calculator.
-Compile the HDPic program using ICE.
-It will detect the app var you sent and show a thumbnail image of it.
+High Definition Picture View for the TI-84 Plus CE
+By: TheLastMillennial
 
-Better ReadMe and more code coming probably soon! (But who knows, maybe it'll be years before I look at this again)
+Send "HDPic.8xp" and any example image(s) you'd like to see to your calculator.
+Using ICE, compile the program and execute it. 
+
+The program currently only displays a thumbnail image, pauses, then quits.
+
+No custom images yet. My PC code is acting funny and I don't want to upload it quite yet.
+
+Programs:
+ICE- http://cemete.ch/DL1481
+
+Changelog:
+v3.40
+Initial GitHub upload.
+
+Credits:
+Thank you to everyone who has helped me with this project! 
+
+Peter "PT_" Tillema
+Matt "MateConLechuga" Waltz
+Beckadamtheinventor
+Iambian
+SahilS
