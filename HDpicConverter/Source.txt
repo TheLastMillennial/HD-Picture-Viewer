@@ -1,0 +1,344 @@
+using System;
+using System.IO;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Windows.Forms;
+using System.Drawing.Imaging;
+using System.Drawing.Drawing2D;
+
+namespace HD_Picture_Converter_CE
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private Image Img;
+        private Size OriginalImageSize;
+        private Size ModifiedImageSize;
+        private Settings SettingsForum;
+        
+        int cropWidth;
+        int cropHeight;
+        int highQualityCrop=1;
+        double AspectRatio;
+        
+        string AppDir;
+        string path;
+        string[] iniLines;
+        string Filename;
+        string FilenameEight;
+        public Pen cropPen;
+
+        public DashStyle cropDashStyle = DashStyle.DashDot;
+        public bool Makeselection = false;
+        public bool SettingsExpandCheck;
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            LogBox.Text = "Open an image to convert!";
+        }
+
+        private void OpenButton_Click(object sender, EventArgs e)
+        {
+
+            progressBar1.Value = 0;
+
+            OpenFileDialog Dlg = new OpenFileDialog();
+
+            Dlg.Filter = "";
+
+            Dlg.Title = "Select image";
+
+            if (Dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                Img = Image.FromFile(Dlg.FileName);
+                Filename=Dlg.FileName;
+                Filename = Path.GetFileName(Filename);
+                
+                LoadImage();
+            }
+            else
+            {
+                return;
+            }
+            LogBox.Text = "Resizing image...";
+            progressBar1.Increment(25);
+            ResizeImage();
+            LogBox.Text = "Cropping image...";
+            progressBar1.Increment(25);
+            highQualityCrop = 1;
+            Crop();
+            LogBox.Text = "Saving and running convPNG.exe";
+            progressBar1.Increment(25);
+            //saves images, creates new ini
+            SaveCreate();
+            progressBar1.Increment(25);
+            LogBox.Text = "Finished! The image has been saved into 2 app vars: "+Filename+"R.8xv and "+Filename+"L.8xv. \n Send both to your calculator and view them with the HDpic program! \n Open another image to convert!";
+            AdditionalLog.Text = "Image quality (1=HD,0=SD): " + highQualityCrop + ". Image width: " + ModifiedImageSize.Width + " Image height: " + ModifiedImageSize.Height;
+        }
+
+
+        private void LoadImage()
+        {
+            //we set the picturebox size according to image, we can get image width and height with the help of Image.Width and Image.height properties.
+            int imgWidth = Img.Width;
+            int imgHeight = Img.Height;
+            LeftPictureBox.Width = imgWidth;
+            LeftPictureBox.Height = imgHeight;
+            LeftPictureBox.Image = Img;
+            //PictureBoxLocation();
+            OriginalImageSize = new Size(imgWidth, imgHeight);
+
+            //SetResizeInfo();
+        }
+        private void btnOk_Click(object sender, EventArgs e)
+        {
+            Bitmap bm_source = new Bitmap(LeftPictureBox.Image);
+            // Make a bitmap for the result.
+            Bitmap bm_dest = new Bitmap(Convert.ToInt32(ModifiedImageSize.Width), Convert.ToInt32(ModifiedImageSize.Height));
+            // Make a Graphics object for the result Bitmap.
+            Graphics gr_dest = Graphics.FromImage(bm_dest);
+            // Copy the source image into the destination bitmap.
+            gr_dest.DrawImage(bm_source, 0, 0, bm_dest.Width + 1, bm_dest.Height + 1);
+            // Display the result.
+            LeftPictureBox.Image = bm_dest;
+            LeftPictureBox.Width = bm_dest.Width;
+            LeftPictureBox.Height = bm_dest.Height;
+            //PictureBoxLocation();
+
+        }
+
+        private void ResizeImage()
+        {
+            //try
+            {
+                AspectRatio = (double)OriginalImageSize.Width / (double)OriginalImageSize.Height;
+                Console.WriteLine("AR: " + AspectRatio);
+                if ((int)(320 * AspectRatio) <= OriginalImageSize.Width)
+                {
+                    ModifiedImageSize = new Size((int)((double)240 * AspectRatio),240 );
+                    if (ModifiedImageSize.Width>320)
+                        ModifiedImageSize = new Size(320, (int)((double)320 / AspectRatio));
+
+                }
+                else
+                {
+                    ModifiedImageSize = new Size(320, (int)((double)320 / AspectRatio));
+                    if(ModifiedImageSize.Height>240)
+                        ModifiedImageSize = new Size((int)((double)240 * AspectRatio), 240);
+                }
+                
+            Console.WriteLine("H: " + ModifiedImageSize.Height.ToString());
+            Console.WriteLine("W: " + ModifiedImageSize.Width.ToString());
+
+
+            //SetResizeInfo();
+        }
+            /*catch (Exception ex)
+            {
+                MessageBox.Show("Invalid Percentage");
+                return;
+            }*/
+            LeftPictureBox.Refresh();
+
+            Bitmap bm_source = new Bitmap(LeftPictureBox.Image);
+            // Make a bitmap for the result.
+            //Bitmap bm_dest = new Bitmap(Convert.ToInt32(ModifiedImageSize.Width), Convert.ToInt32(ModifiedImageSize.Height));
+            Bitmap bm_dest = new Bitmap(320, 240);
+            // Make a Graphics object for the result Bitmap.
+            Graphics gr_dest = Graphics.FromImage(bm_dest);
+            // Copy the source image into the destination bitmap.
+            gr_dest.DrawImage(bm_source, 0, 0, bm_dest.Width + 1, bm_dest.Height + 1);
+            // Display the result.
+            LeftPictureBox.Image = bm_dest;
+            LeftPictureBox.Width = bm_dest.Width;
+            LeftPictureBox.Height = bm_dest.Height;
+
+
+    }
+        private void Crop()
+        {
+            cropWidth = ModifiedImageSize.Width / 2;
+            cropHeight = ModifiedImageSize.Height;
+            Rectangle Lrect = new Rectangle(0, 0, cropWidth, ModifiedImageSize.Height);
+            Rectangle Rrect = new Rectangle(cropWidth, 0, cropWidth, ModifiedImageSize.Height);
+            Console.WriteLine("MFW: "+(ModifiedImageSize.Width / 2).ToString());
+
+            Bitmap OriginalImage = new Bitmap(LeftPictureBox.Image, LeftPictureBox.Width, LeftPictureBox.Height);
+            //Original image
+
+            Bitmap _Limg = new Bitmap(cropWidth, cropHeight);
+            Bitmap _Rimg = new Bitmap(cropWidth, cropHeight);
+            // for cropinf image
+            Graphics Lg = Graphics.FromImage(_Limg);
+            Graphics Rg = Graphics.FromImage(_Rimg);
+            // create graphics
+                Lg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                Lg.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                Lg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+            if (highQualityCrop == 0)
+            {
+                Lg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                Lg.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
+                Lg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
+            }
+                Lg.DrawImage(OriginalImage, 0, 0, Lrect, GraphicsUnit.Pixel);
+                   
+            LeftPictureBox.Image = _Limg;
+            LeftPictureBox.Width = _Limg.Width;
+            LeftPictureBox.Height = _Limg.Height;
+
+                Rg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                Rg.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                Rg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+            if (highQualityCrop == 0)
+            {
+                Rg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                Rg.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
+                Rg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
+            }
+
+            //Rg.DrawImage(OriginalImage, 160, 0, Rrect, GraphicsUnit.Pixel);
+            System.Drawing.Imaging.PixelFormat format = _Rimg.PixelFormat;
+            Bitmap _Rimg2 = OriginalImage.Clone(Rrect, format);
+
+            // Draw the cloned portion of the Bitmap object.
+            //Rg.DrawImage(_Rimg2, 0, 0);
+
+            RightPictureBox.Image = _Rimg2;
+            RightPictureBox.Width = _Rimg.Width;
+            RightPictureBox.Height = _Rimg.Height;
+
+            BoxLocations();
+            LeftPictureBox.Refresh();
+            RightPictureBox.Refresh();
+            
+        }
+
+        private void BoxLocations()
+        {
+            LeftPictureBox.Location=new Point(50,120);
+            RightPictureBox.Location = new Point(250, 120);
+        }
+
+        private void SaveCreate()
+        {
+            //gets directory of this program
+            AppDir = AppDomain.CurrentDomain.BaseDirectory;
+            //debugging, doesn't effect the program
+            Console.WriteLine("Dir: "+AppDir);
+            //saves the pictures as pngs
+            LeftPictureBox.Image.Save(AppDir + @"Left.png", ImageFormat.Png);
+            long length= new System.IO.FileInfo(AppDir + @"Left.png").Length;
+          
+
+            
+            RightPictureBox.Image.Save(AppDir + @"Right.png", ImageFormat.Png);
+            //makes sure file name is correct length 
+            FilenameEight = Filename;
+            //I have this as 7 for the app var name allowing a L or R to be placed at the end
+            if (Filename.Length > 7)
+                Filename = Filename.Substring(0, 7);
+            //I have this as 8 for the header
+            if (FilenameEight.Length > 8)
+            {
+                FilenameEight = FilenameEight.Substring(0, 8);
+            }
+            else
+            {
+                //This loops until the header is 8 chars long
+                while (Filename.Length < 8)
+                {
+                    Filename = Filename + "_";
+                }
+            }
+            //left picture ini file
+            string[] iniLines = { "/Leave this alone"
+                    , "#GroupICE          : all_gfx"
+                    , "/Leave this alone"
+                    ,"#Palette           : xlibc"
+                    ,"/image name"
+                    ,"#PNGImages         :"
+                    ,"Left"
+                    ,"/name of your output app var"
+                    ,"#AppvarICE         : "+Filename+"L"
+                    ,"#OutputHeader      : HDPICV2L"+FilenameEight
+                    ,"/same image name as above"
+                    ,"#PNGImages         :"
+                    ," Left"};
+            //saves the ini text and runs convpng
+            System.IO.File.WriteAllLines(AppDir+@"convpng.ini", iniLines);
+            Process.Start(AppDir + @"windows_convpng.exe");
+            if(!File.Exists(AppDir+Filename + "L.8xv"))
+            {
+                if (highQualityCrop == 1)
+                {
+                    highQualityCrop = 0;
+                    MessageBox.Show("Warning: Image too big, attempting to reduce quality.");
+                    //return;
+                }else
+                {
+                    MessageBox.Show("Error: Could not convert image! Try reducing image quality and try again.");
+                    return;
+                }
+                
+            }
+                
+
+            //right picture ini file
+            string[] iniLinesB = { "/Leave this alone"
+                    , "#GroupICE          : all_gfx"
+                    , "/Leave this alone"
+                    ,"#Palette           : xlibc"
+                    ,"/image name"
+                    ,"#PNGImages         :"
+                    ,"Right"
+                    ,"/name of your output app var"
+                    ,"#AppvarICE         : "+Filename+"R"
+                    ,"#OutputHeader      : HDPICV2R"+FilenameEight
+                    ,"/same image name as above"
+                    ,"#PNGImages         :"
+                    ," Right"};
+            //saves the ini text and runs convpng
+            System.IO.File.WriteAllLines(AppDir + @"convpng.ini", iniLinesB);
+            Process.Start(AppDir + @"windows_convpng.exe");
+            if (!File.Exists(AppDir + Filename + "R.8xv"))
+            {
+                if (highQualityCrop == 1)
+                {
+                    MessageBox.Show("Warning: Image too big, attempting to reduce quality.");
+                    highQualityCrop = 0;
+                    //return;
+                }else
+                {
+                    MessageBox.Show("Error: Could not convert image! Try reducing image quality and try again.");
+                    return;
+                }
+                
+            }
+            
+            
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Process.Start(AppDomain.CurrentDomain.BaseDirectory);
+        }
+
+        private void SettingsButton_Click(object sender, EventArgs e)
+        {
+            SettingsForum.Show();
+            return;
+        }
+    }
+    
+}

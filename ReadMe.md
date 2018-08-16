@@ -3,14 +3,22 @@ High Definition Picture View for the TI-84 Plus CE
 By: TheLastMillennial
 
 
-
+Use:
 Send "HDPic.8xp" and any example image(s) you'd like to see to your calculator.
 
 Using ICE, compile the program and execute it. 
 
 The program currently only displays a thumbnail image, pauses, then quits.
 
-No custom images yet. My PC code is acting funny and I don't want to upload it quite yet.
+Custom images:
+
+Open and compile "HD Picture Converter CE.sln". 
+
+Make sure that windows_convpng.exe is in the same directory
+
+Once the application window appears, click on 'open file' and select an image. The image may need to be reduced in quality. When finished converting, a preview image of the 2 halves will be shown. You can now click 'open folder' and copy the converted .8xv files to your calculator.
+
+
 
 Programs:
 
@@ -18,6 +26,13 @@ ICE- http://cemete.ch/DL1481
 
 
 Changelog:
+
+v3.46
+
+-Tried missing image detection, removed it
+
++Added C# code for the PC converter.
+
 
 v3.40
 

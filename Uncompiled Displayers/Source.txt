@@ -49,7 +49,7 @@ While Detect(^^oAPOS,"HDPICV2L"->LPIC
 
 	TOTALPICS/3->SIMPLETOTAL
    //thumbnail x
-	10+150*((remainder(SIMPLETOTAL,2)=0))->LPICX+(*{GetDataPtr(LPICSLOT)})/2->RPICX
+	10+150*((remainder(SIMPLETOTAL,4)=0))->LPICX+(*{GetDataPtr(LPICSLOT)})/2->RPICX
 	//thumbnail y
    10+70*((SIMPLETOTAL>4)+(SIMPLETOTAL>8))->LPICY->RPICY
    //WRONG: (SIMPLETOTAL/4)*remainder(SIMPLETOTAL,4)!=0
