@@ -28,7 +28,9 @@ namespace HD_Picture_Converter_CE
         
         int cropWidth;
         int cropHeight;
+        int errorCode = 0;
         int highQualityCrop=1;
+        int conversionFail = 0;
         double AspectRatio;
         
         string AppDir;
@@ -82,13 +84,23 @@ namespace HD_Picture_Converter_CE
             //saves images, creates new ini
             SaveCreate();
             progressBar1.Increment(25);
-            LogBox.Text = "Finished! The image has been saved into 2 app vars: "+Filename+"R.8xv and "+Filename+"L.8xv. \n Send both to your calculator and view them with the HDpic program! \n Open another image to convert!";
-            AdditionalLog.Text = "Image quality (1=HD,0=SD): " + highQualityCrop + ". Image width: " + ModifiedImageSize.Width + " Image height: " + ModifiedImageSize.Height;
+            if (conversionFail == 0)
+            {
+                LogBox.Text = "Finished! The image has been saved into 2 app vars: " + Filename + "R.8xv and " + Filename + "L.8xv. \n Send both to your calculator and view them with the HDpic program! \n Open another image to convert!";
+                AdditionalLog.Text = "Image quality (1=HD,0=SD): " + highQualityCrop + ". Image width: " + ModifiedImageSize.Width + " Image height: " + ModifiedImageSize.Height;
+
+            }
+            else
+            {
+                LogBox.Text = "Error, image could not be converted! \n If you believe this is an error, please contact TheLastMillennial on Cemetech \n Here: www.cemete.ch/t14498";
+                AdditionalLog.Text = "Error code: " + errorCode;
+            }
         }
 
 
         private void LoadImage()
         {
+            errorCode = 10;
             //we set the picturebox size according to image, we can get image width and height with the help of Image.Width and Image.height properties.
             int imgWidth = Img.Width;
             int imgHeight = Img.Height;
@@ -99,9 +111,11 @@ namespace HD_Picture_Converter_CE
             OriginalImageSize = new Size(imgWidth, imgHeight);
 
             //SetResizeInfo();
+            errorCode = 19;
         }
         private void btnOk_Click(object sender, EventArgs e)
         {
+            errorCode = 20;
             Bitmap bm_source = new Bitmap(LeftPictureBox.Image);
             // Make a bitmap for the result.
             Bitmap bm_dest = new Bitmap(Convert.ToInt32(ModifiedImageSize.Width), Convert.ToInt32(ModifiedImageSize.Height));
@@ -114,15 +128,17 @@ namespace HD_Picture_Converter_CE
             LeftPictureBox.Width = bm_dest.Width;
             LeftPictureBox.Height = bm_dest.Height;
             //PictureBoxLocation();
-
+            errorCode = 29;
         }
 
         private void ResizeImage()
         {
-            //try
+            errorCode = 30;
+            try
             {
                 AspectRatio = (double)OriginalImageSize.Width / (double)OriginalImageSize.Height;
                 Console.WriteLine("AR: " + AspectRatio);
+                errorCode = 32;
                 if ((int)(320 * AspectRatio) <= OriginalImageSize.Width)
                 {
                     ModifiedImageSize = new Size((int)((double)240 * AspectRatio),240 );
@@ -132,6 +148,7 @@ namespace HD_Picture_Converter_CE
                 }
                 else
                 {
+                    errorCode = 34;
                     ModifiedImageSize = new Size(320, (int)((double)320 / AspectRatio));
                     if(ModifiedImageSize.Height>240)
                         ModifiedImageSize = new Size((int)((double)240 * AspectRatio), 240);
@@ -139,17 +156,18 @@ namespace HD_Picture_Converter_CE
                 
             Console.WriteLine("H: " + ModifiedImageSize.Height.ToString());
             Console.WriteLine("W: " + ModifiedImageSize.Width.ToString());
-
+                errorCode = 36;
 
             //SetResizeInfo();
-        }
-            /*catch (Exception ex)
+            }
+            catch (Exception)
             {
-                MessageBox.Show("Invalid Percentage");
+                
+                MessageBox.Show("Error! Code: "+errorCode);
                 return;
-            }*/
+            }
             LeftPictureBox.Refresh();
-
+            errorCode = 38;
             Bitmap bm_source = new Bitmap(LeftPictureBox.Image);
             // Make a bitmap for the result.
             //Bitmap bm_dest = new Bitmap(Convert.ToInt32(ModifiedImageSize.Width), Convert.ToInt32(ModifiedImageSize.Height));
@@ -163,10 +181,11 @@ namespace HD_Picture_Converter_CE
             LeftPictureBox.Width = bm_dest.Width;
             LeftPictureBox.Height = bm_dest.Height;
 
-
+            errorCode = 39;
     }
         private void Crop()
         {
+            errorCode = 40;
             cropWidth = ModifiedImageSize.Width / 2;
             cropHeight = ModifiedImageSize.Height;
             Rectangle Lrect = new Rectangle(0, 0, cropWidth, ModifiedImageSize.Height);
@@ -181,13 +200,14 @@ namespace HD_Picture_Converter_CE
             // for cropinf image
             Graphics Lg = Graphics.FromImage(_Limg);
             Graphics Rg = Graphics.FromImage(_Rimg);
+            errorCode = 44;
             // create graphics
                 Lg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
                 Lg.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
                 Lg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
             if (highQualityCrop == 0)
             {
-                Lg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                Lg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
                 Lg.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
                 Lg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
             }
@@ -202,11 +222,11 @@ namespace HD_Picture_Converter_CE
                 Rg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
             if (highQualityCrop == 0)
             {
-                Rg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                Rg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
                 Rg.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
                 Rg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
             }
-
+            errorCode = 46;
             //Rg.DrawImage(OriginalImage, 160, 0, Rrect, GraphicsUnit.Pixel);
             System.Drawing.Imaging.PixelFormat format = _Rimg.PixelFormat;
             Bitmap _Rimg2 = OriginalImage.Clone(Rrect, format);
@@ -221,7 +241,7 @@ namespace HD_Picture_Converter_CE
             BoxLocations();
             LeftPictureBox.Refresh();
             RightPictureBox.Refresh();
-            
+            errorCode = 49;
         }
 
         private void BoxLocations()
@@ -232,10 +252,12 @@ namespace HD_Picture_Converter_CE
 
         private void SaveCreate()
         {
+            errorCode = 50;
             //gets directory of this program
             AppDir = AppDomain.CurrentDomain.BaseDirectory;
             //debugging, doesn't effect the program
             Console.WriteLine("Dir: "+AppDir);
+            errorCode = 52;
             //saves the pictures as pngs
             LeftPictureBox.Image.Save(AppDir + @"Left.png", ImageFormat.Png);
             long length= new System.IO.FileInfo(AppDir + @"Left.png").Length;
@@ -248,6 +270,7 @@ namespace HD_Picture_Converter_CE
             //I have this as 7 for the app var name allowing a L or R to be placed at the end
             if (Filename.Length > 7)
                 Filename = Filename.Substring(0, 7);
+            
             //I have this as 8 for the header
             if (FilenameEight.Length > 8)
             {
@@ -261,6 +284,22 @@ namespace HD_Picture_Converter_CE
                     Filename = Filename + "_";
                 }
             }
+            errorCode = 54;
+            //Detects if the images were previously created, if so, it deletes them to be overwritten.
+            if (File.Exists(AppDir + Filename + "L.8xv"))
+            {
+                Console.WriteLine("Deleting L!");
+                File.Delete(AppDir + Filename + "L.8xv");
+            }
+                
+            if (File.Exists(AppDir + Filename + "R.8xv"))
+            {
+                Console.WriteLine("Deleting R!");
+                File.Delete(AppDir + Filename + "R.8xv");
+            }
+                       
+
+            errorCode = 55;
             //left picture ini file
             string[] iniLines = { "/Leave this alone"
                     , "#GroupICE          : all_gfx"
@@ -283,17 +322,20 @@ namespace HD_Picture_Converter_CE
                 if (highQualityCrop == 1)
                 {
                     highQualityCrop = 0;
-                    MessageBox.Show("Warning: Image too big, attempting to reduce quality.");
+                    MessageBox.Show("Warning: Left Image too big, attempting to reduce quality.");
+                    SaveCreate();
                     //return;
                 }else
                 {
-                    MessageBox.Show("Error: Could not convert image! Try reducing image quality and try again.");
+                    conversionFail = 1;
+                    Console.WriteLine(errorCode);
+                    MessageBox.Show("Error: Could not convert left image! Try reducing image quality and try again.");
                     return;
                 }
                 
             }
-                
 
+            errorCode = 56;
             //right picture ini file
             string[] iniLinesB = { "/Leave this alone"
                     , "#GroupICE          : all_gfx"
@@ -315,18 +357,21 @@ namespace HD_Picture_Converter_CE
             {
                 if (highQualityCrop == 1)
                 {
-                    MessageBox.Show("Warning: Image too big, attempting to reduce quality.");
+                    MessageBox.Show("Warning: Right Image too big, attempting to reduce quality.");
                     highQualityCrop = 0;
+                    SaveCreate();
                     //return;
                 }else
                 {
-                    MessageBox.Show("Error: Could not convert image! Try reducing image quality and try again.");
+                    conversionFail = 1;
+                    Console.WriteLine(errorCode);
+                    MessageBox.Show("Error: Could not convert right image! Try reducing image quality and try again.");
                     return;
                 }
                 
             }
-            
-            
+
+            errorCode = 59;
         }
 
         private void button1_Click(object sender, EventArgs e)
