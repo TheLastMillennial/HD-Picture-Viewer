@@ -22,56 +22,94 @@ Lbl DETECTPICS
 While Detect(^^oAPOS,"HDPICV2L"->LPIC
 	CloseAll
 	Open(LPIC,"r->LPICSLOT
+	Disp "1",[i]
+	
+	
 	If LPICSLOT=0
+		Disp "2",[i]
+
 		Goto WRONGPIC
 	End
+
+	Disp "3",[i]
 	
-	
-	
+	Alloc(9)->LPICNAME
+	Seek(8,0,LPICSLOT
+	Read(LPICNAME,8,1,LPICSLOT)
+
 	0->BPOS
 	Lbl WRONGPIC
+	Disp "4",[i]
+	
 	While Detect(^^oBPOS,"HDPICV2R"->RPIC
-		Alloc(9)->LPICNAME
-		Seek(8,0,LPICSLOT
-		Read(LPICNAME,8,1,RPICSLOT)
+
+		Disp "5",[i]
+	
+		
 		
 		Open(RPIC,"r->RPICSLOT
 		If RPICSLOT=0
+			Disp "6",[i]
+	
 			Goto WRONGPIC
 		End
+		Disp "7",[i]
+	
 		Alloc(9)->RPICNAME
 		Seek(8,0,RPICSLOT
 		Read(RPICNAME,8,1,RPICSLOT)
+
+		Disp "8",[i]
+	
 		0->WRONGPIC
 		For(CHAR,0,7
 			If GetChar(LPICSLOT)!=GetChar(RPICSLOT
 				Close(RPICSLOT
+				Disp "9",[i]
+	Pause 
 				Goto WRONGPIC
 			End
 		End
+		Disp "10",[i]
+	
 		Goto CORRECTPIC
 	End
-	Goto STOP
+	Disp "11",[i]
 	
+	Return
+	//Goto STOP
+
+	//You can read from those structures by Output(0,0,LPICS+NUMBERYOUWANT*10)
 	Lbl CORRECTPIC
-	3+TOTALPICS->TOTALPICS
-	Disp LPIC,[i]
-	LPICNAME->{L1+TOTALPICS}
-	Disp RPIC,[i]
-	RPICNAME->{L2+TOTALPICS}
-	Pause 
+	Disp "12",[i]
+	
+	10+TOTALPICS->TOTALPICS
+	
+	Alloc(TOTALPICS)->LPICS->RPICS
+    Disp LPICNAME,[i]
+    Copy(LPICS+TOTALPICS,LPICNAME,length(LPICNAME)+1)
+    Disp RPICNAME,[i]
+    Copy(RPICS+TOTALPICS,LPICNAME,length(LPICNAME)+1)
+    Pause 
+
 	
 	
 End
+Disp "13",[i]
+	Pause 
 Return
 
 Lbl DISPTHUMB
+Disp TOTALPICS,[i]
+Pause 
+
 Begin
-TOTALPICS/3->SIMPLETOTAL
+TOTALPICS/10->SIMPLETOTAL
 1->I
-While 6>=I and (I*6)=<TOTALPICS
-	L1(I*3)->LPIC
-	L2(I*3)->RPIC
+While 10>=I and (I*10)=<TOTALPICS
+	LPICS+I*10->LPIC
+	RPICS+I*10->RPIC
+	Disp LPIC,[i],RPIC,[i]
 	10+150*((remainder(SIMPLETOTAL,4)=0))->LPICX-20+(LPIC)/2->RPICX
 	10+70*((SIMPLETOTAL>4)+(SIMPLETOTAL>8))->LPICY->RPICY
 	
