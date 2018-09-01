@@ -11,105 +11,96 @@
 10->RECTY
 
 While KEY!=15
+	Output(2,2,"Det")
+		Pause 
 	Call DETECTPICS
+	Output(2,2,"Disp")
+		Pause 
 	Call DISPTHUMB
+	Output(2,2,"Selc")
+		Pause 
 	Call SELECTOR
 End
 
 
 
 Lbl DETECTPICS
+0->TOTALPICS
+ 
+// Allocate memory for picture names
+Alloc(9)->LPICNAME
+Alloc(9)->RPICNAME
+ 
+// Detect left half of the images
+Output(2,2,"1")
+Pause 
+0->APOS
 While Detect(^^oAPOS,"HDPICV2L"->LPIC
-	CloseAll
-	Open(LPIC,"r->LPICSLOT
-	Disp "1",[i]
-	
-	
-	If LPICSLOT=0
-		Disp "2",[i]
+    // Open the variable - we are sure it exists because it's detected
+    Open(LPIC,"r"->LPICSLOT
+ 
+    // Write the name to the allocated memory
+    Seek(8,0,LPICSLOT
+    Read(LPICNAME,8,1,LPICSLOT
 
-		Goto WRONGPIC
-	End
-
-	Disp "3",[i]
-	
-	Alloc(9)->LPICNAME
-	Seek(8,0,LPICSLOT
-	Read(LPICNAME,8,1,LPICSLOT)
-
-	0->BPOS
-	Lbl WRONGPIC
-	Disp "4",[i]
-	
-	While Detect(^^oBPOS,"HDPICV2R"->RPIC
-
-		Disp "5",[i]
-	
-		
-		
-		Open(RPIC,"r->RPICSLOT
-		If RPICSLOT=0
-			Disp "6",[i]
-	
-			Goto WRONGPIC
-		End
-		Disp "7",[i]
-	
-		Alloc(9)->RPICNAME
-		Seek(8,0,RPICSLOT
-		Read(RPICNAME,8,1,RPICSLOT)
-
-		Disp "8",[i]
-	
-		0->WRONGPIC
-		For(CHAR,0,7
-			If GetChar(LPICSLOT)!=GetChar(RPICSLOT
-				Close(RPICSLOT
-				Disp "9",[i]
+	Output(2,2,"2")
 	Pause 
-				Goto WRONGPIC
-			End
-		End
-		Disp "10",[i]
-	
-		Goto CORRECTPIC
-	End
-	Disp "11",[i]
-	
-	Return
-	//Goto STOP
+	".
+    // Detect right half of the images
+    0->BPOS
+    While Detect(^^oBPOS,"HDPICV2R"->RPIC
+        // Open the variable - we are sure it exists because it's detected
+        Open(RPIC,"r"->RPICSLOT
+ 
+        // Write the name
+        Seek(8,0,RPICSLOT
+        Read(RPICNAME,8,1,LPICSLOT
 
-	//You can read from those structures by Output(0,0,LPICS+NUMBERYOUWANT*10)
-	Lbl CORRECTPIC
-	Disp "12",[i]
-	
-	10+TOTALPICS->TOTALPICS
-	
-	Alloc(TOTALPICS)->LPICS->RPICS
-    Disp LPICNAME,[i]
-    Copy(LPICS+TOTALPICS,LPICNAME,length(LPICNAME)+1)
-    Disp RPICNAME,[i]
-    Copy(RPICS+TOTALPICS,LPICNAME,length(LPICNAME)+1)
-    Pause 
-
-	
-	
+		Output(2,2,"3  ")
+		
+		".
+		Output(3,3,LPICNAME)
+		Output(4,4,RPICNAME)
+		Pause 
+		".
+        // Compare names compare returns 0 if true
+		If not([Med]LPICNAME,RPICNAME
+			Output(2,2,"3.1")
+			Pause 
+			".
+			// Yay, they matched! Now store the data pointer into L1
+			TOTALPICS+3->TOTALPICS
+            GetDataPtr(LPICSLOT)->L1(TOTALPICS
+            GetDataPtr(RPICSLOT)->L2(TOTALPICS
+            
+        End
+ 
+        // Close the right half of the image
+        Close(RPICSLOT
+    End
+	Output(2,2,"4")
+	Pause 
+	".
+    // Close the left half of the image
+    Close(LPICSLOT
 End
-Disp "13",[i]
-	Pause 
+Output(2,2,"5")
+Pause 
 Return
 
 Lbl DISPTHUMB
-Disp TOTALPICS,[i]
+Output(2,2,TOTALPICS)
 Pause 
 
 Begin
-TOTALPICS/10->SIMPLETOTAL
+TOTALPICS/3->SIMPLETOTAL
 1->I
-While 10>=I and (I*10)=<TOTALPICS
-	LPICS+I*10->LPIC
-	RPICS+I*10->RPIC
-	Disp LPIC,[i],RPIC,[i]
+While 6>=I and (I*6)=<TOTALPICS
+	L1(I*3)->LPIC
+	L2(I*3)->RPIC
+	Output(2,2,I)
+	Output(2,3,LPIC)
+	Output(2,4,RPIC)
 	10+150*((remainder(SIMPLETOTAL,4)=0))->LPICX-20+(LPIC)/2->RPICX
 	10+70*((SIMPLETOTAL>4)+(SIMPLETOTAL>8))->LPICY->RPICY
 	
@@ -137,7 +128,7 @@ While KEY!=15
 		SetColor(255
 		Rectangle_NoClip(RECTX,RECTY,130,60)
 		150*(((KEY=3) and (RECTX=10))-((KEY=2) and (RECTX=160)))+RECTX->RECTX
-		70*(((KEY=1) and (RECTY<=150))-((KEY=4) and (RECTY>=80)))+RECTY->RECTY
+		70*(((KEY=1) and (RECTY<150))-((KEY=4) and (RECTY>=80)))+RECTY->RECTY
 		
 		SetColor(18
 	End
@@ -152,5 +143,5 @@ Return
 Lbl STOP
 CloseAll
 det(1
-Disp "End!
+Output(2,2,"End!
 Pause 
