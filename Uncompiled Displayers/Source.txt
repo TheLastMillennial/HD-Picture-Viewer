@@ -1,8 +1,7 @@
 [i]HDPICV
-
-
-
+//WARNING: the following code is so horrible, it crashed the ICE debugger and froze CEmu! :P
 0->APOS
+0->KEY
 0->PAGE
 0->TOTALPICS
 10->THUMBNAILX
@@ -10,136 +9,154 @@
 10->RECTX
 10->RECTY
 
+//Main loop
 While KEY!=15
-	Output(2,2,"Det")
-		Pause 
+//detects images
 	Call DETECTPICS
-	Output(2,2,"Disp")
-		Pause 
+	//displays the thumbnails
 	Call DISPTHUMB
-	Output(2,2,"Selc")
-		Pause 
+	//loads the selection GUI
 	Call SELECTOR
 End
-
+Goto STOP
 
 
 Lbl DETECTPICS
 0->TOTALPICS
- 
+sum(0)
 // Allocate memory for picture names
 Alloc(9)->LPICNAME
 Alloc(9)->RPICNAME
  
 // Detect left half of the images
-Output(2,2,"1")
-Pause 
+
+
 0->APOS
 While Detect(^^oAPOS,"HDPICV2L"->LPIC
     // Open the variable - we are sure it exists because it's detected
-    Open(LPIC,"r"->LPICSLOT
+    Open(LPIC,"r")->LPICSLOT
  
     // Write the name to the allocated memory
     Seek(8,0,LPICSLOT
     Read(LPICNAME,8,1,LPICSLOT
-
-	Output(2,2,"2")
-	Pause 
-	".
+	//Copy(LPICNAME,LPICSLOT,8 this failed
+	
+	
+	
+	
     // Detect right half of the images
     0->BPOS
     While Detect(^^oBPOS,"HDPICV2R"->RPIC
         // Open the variable - we are sure it exists because it's detected
         Open(RPIC,"r"->RPICSLOT
  
-        // Write the name
-        Seek(8,0,RPICSLOT
-        Read(RPICNAME,8,1,LPICSLOT
-
-		Output(2,2,"3  ")
+		// Write the name
 		
-		".
+        Seek(8,0,RPICSLOT
+        Read(RPICNAME,8,1,RPICSLOT
+		//Copy(RPICNAME,RPICSLOT,8 this failed
+		
+		Output(2,2,"3  ")
 		Output(3,3,LPICNAME)
 		Output(4,4,RPICNAME)
-		Pause 
-		".
-        // Compare names compare returns 0 if true
+		
+		// Compare names compare returns 0 if true
 		If not([Med]LPICNAME,RPICNAME
-			Output(2,2,"3.1")
-			Pause 
-			".
 			// Yay, they matched! Now store the data pointer into L1
 			TOTALPICS+3->TOTALPICS
             GetDataPtr(LPICSLOT)->L1(TOTALPICS
             GetDataPtr(RPICSLOT)->L2(TOTALPICS
-            
         End
  
         // Close the right half of the image
-        Close(RPICSLOT
-    End
-	Output(2,2,"4")
-	Pause 
-	".
-    // Close the left half of the image
-    Close(LPICSLOT
-End
-Output(2,2,"5")
-Pause 
-Return
+		Close(RPICSLOT
+	End
+	
+	Close(LPICSLOT
+End//end of Detect( LPIC
 
+Return//go back to the main loop
+
+//displays thumbnails
 Lbl DISPTHUMB
-Output(2,2,TOTALPICS)
+Output(5,5,TOTALPICS)
 Pause 
 
 Begin
+//divides total pics by 3 to get the correct number of half-pictures detected
 TOTALPICS/3->SIMPLETOTAL
+//initializes the I for the loop
 1->I
+//Loops until the screen has been filled with a max of 6 pictures (6>=I) or if there are no more pictures to display ((I*6)=<TOTALPICS)
 While 6>=I and (I*6)=<TOTALPICS
+	//This stores the pic data for the halves into L and RPIC
 	L1(I*3)->LPIC
 	L2(I*3)->RPIC
+	//Debug stuff
 	Output(2,2,I)
 	Output(2,3,LPIC)
 	Output(2,4,RPIC)
+	//This is the math that determines where the image half will be placed
+	//10 so there's some buffer between the image and edge of screen
+	//150 because the images need to have space between them,
+	//(remainder(SIMPLETOTAL,4)=0)->LPICX This checks if the image should be placed on the left part of the screen or the right part (so they don't overlap) it stores the result into LPICX
+	//LPICX-20+(LPIC)/2->RPICX This takes which part of the screen it should be on, and adds on some x space so the 2 halves are directly next to eachother.
 	10+150*((remainder(SIMPLETOTAL,4)=0))->LPICX-20+(LPIC)/2->RPICX
+	//70*((SIMPLETOTAL>4)+(SIMPLETOTAL>8)) This adds on 70 to the Y placement if the image is the third, through sixth image. This makes sure the images don't overlap. It stores the result in LPICY and RPICY since the Y values aren't different
 	10+70*((SIMPLETOTAL>4)+(SIMPLETOTAL>8))->LPICY->RPICY
-	
+
+	//this code resized the full image to thumbnail-size 
 	DefineSprite(40,60->THUMBNAIL
 	40->*{THUMBNAIL}
 	60->*{THUMBNAIL+1}
+
+	//scales left half
 	ScaleSprite(LPIC,THUMBNAIL)
+	//displays left half
 	Sprite_NoClip(THUMBNAIL,LPICX,LPICY)
+	//scales right half
 	ScaleSprite(RPIC,THUMBNAIL)
+	//displays right half
 	Sprite_NoClip(THUMBNAIL,RPICX,RPICY)
+	//increments I so the code doesn't keep displaying the same image
 	I+1->I
-End
+End// end of While loop
 
-Return
+Return//goes back to the main loop
 
-
+//selection GUI
 Lbl SELECTOR
+//sets color to black
 SetColor(0
+//makes a black bar at the bottom of the screen, options will be shown there
 FillRectangle_NoClip(0,230,320,10
 
+//sets color to a blue 
 SetColor(18
+//This code moves around the selection box
 While KEY!=15
 	getKey->KEY
+	//only exectued when a key is pressed
 	If KEY!=0
+		//sets color to white
 		SetColor(255
+		//clears the rectangular selector
 		Rectangle_NoClip(RECTX,RECTY,130,60)
+		//detects if the left or right arrow keys are pressed and updates the rectangle coordinates
 		150*(((KEY=3) and (RECTX=10))-((KEY=2) and (RECTX=160)))+RECTX->RECTX
+		//detecs if the up or down arrow keys are pressed and updates the rectangle coordinates 
 		70*(((KEY=1) and (RECTY<150))-((KEY=4) and (RECTY>=80)))+RECTY->RECTY
-		
+		//sets color back to blue
 		SetColor(18
 	End
-	
+	//displays the rectangle selector
 	Rectangle_NoClip(RECTX,RECTY,130,60)
 	
-End
+End//end of while loop
 
-Return
+Return//go back to main loop
 
-
+//ends the program
 Lbl STOP
 CloseAll
 det(1
