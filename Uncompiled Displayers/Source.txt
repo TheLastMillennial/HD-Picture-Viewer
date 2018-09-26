@@ -1,4 +1,5 @@
 [i]HDPICV
+dbd(0
 //WARNING: the following code is so horrible, it crashed the ICE debugger and froze CEmu! :P
 0->APOS
 0->KEY
@@ -39,9 +40,6 @@ While Detect(^^oAPOS,"HDPICV2L"->LPIC
     // Write the name to the allocated memory
     Seek(8,0,LPICSLOT
     Read(LPICNAME,8,1,LPICSLOT
-	//Copy(LPICNAME,LPICSLOT,8 this failed
-	
-	
 	
 	
     // Detect right half of the images
@@ -51,14 +49,8 @@ While Detect(^^oAPOS,"HDPICV2L"->LPIC
         Open(RPIC,"r"->RPICSLOT
  
 		// Write the name
-		
-        Seek(8,0,RPICSLOT
+		Seek(8,0,RPICSLOT
         Read(RPICNAME,8,1,RPICSLOT
-		//Copy(RPICNAME,RPICSLOT,8 this failed
-		
-		Output(2,2,"3  ")
-		Output(3,3,LPICNAME)
-		Output(4,4,RPICNAME)
 		
 		// Compare names compare returns 0 if true
 		If not([Med]LPICNAME,RPICNAME
@@ -73,13 +65,14 @@ While Detect(^^oAPOS,"HDPICV2L"->LPIC
 	End
 	
 	Close(LPICSLOT
-End//end of Detect( LPIC
+End
+//end of Detect( LPIC
 
-Return//go back to the main loop
+Return
+//go back to the main loop
 
 //displays thumbnails
 Lbl DISPTHUMB
-Output(5,5,TOTALPICS)
 Pause 
 
 Begin
@@ -87,29 +80,24 @@ Begin
 TOTALPICS/3->SIMPLETOTAL
 //initializes the I for the loop
 1->I
-//Loops until the screen has been filled with a max of 6 pictures (6>=I) or if there are no more pictures to display ((I*6)=<TOTALPICS)
-While 6>=I and (I*6)=<TOTALPICS
+//Loops until the screen has been filled with a max of 6 pictures (6>=I) or if there are no more pictures to display ((I*3)=<TOTALPICS)
+While 6>=I and (I*3)<=TOTALPICS
 	//This stores the pic data for the halves into L and RPIC
 	L1(I*3)->LPIC
 	L2(I*3)->RPIC
-	//Debug stuff
-	Output(2,2,I)
-	Output(2,3,LPIC)
-	Output(2,4,RPIC)
+
 	//This is the math that determines where the image half will be placed
 	//10 so there's some buffer between the image and edge of screen
 	//150 because the images need to have space between them,
-	//(remainder(SIMPLETOTAL,4)=0)->LPICX This checks if the image should be placed on the left part of the screen or the right part (so they don't overlap) it stores the result into LPICX
-	//LPICX-20+(LPIC)/2->RPICX This takes which part of the screen it should be on, and adds on some x space so the 2 halves are directly next to eachother.
-	10+150*((remainder(SIMPLETOTAL,4)=0))->LPICX-20+(LPIC)/2->RPICX
-	//70*((SIMPLETOTAL>4)+(SIMPLETOTAL>8)) This adds on 70 to the Y placement if the image is the third, through sixth image. This makes sure the images don't overlap. It stores the result in LPICY and RPICY since the Y values aren't different
-	10+70*((SIMPLETOTAL>4)+(SIMPLETOTAL>8))->LPICY->RPICY
+	//(remainder(I,2)=0)->LPICX This checks if the image should be placed on the left part of the screen or the right part (so they don't overlap) it stores the result into LPICX
+	//LPICX-20+*{LPIC}/2->RPICX This takes which part of the screen it should be on, and adds on some x space so the 2 halves are directly next to eachother.
+	10+150*not(remainder(I,2))->LPICX-20+*{LPIC}/2->RPICX
+	//70*((I-1)/2) This adds on 70 to the Y placement if the image is the third, through sixth image. This makes sure the images don't overlap. It stores the result in LPICY and RPICY since the Y values aren't different
+	10+70*((I-1)/2)->LPICY->RPICY
 
 	//this code resized the full image to thumbnail-size 
 	DefineSprite(40,60->THUMBNAIL
-	40->*{THUMBNAIL}
-	60->*{THUMBNAIL+1}
-
+	
 	//scales left half
 	ScaleSprite(LPIC,THUMBNAIL)
 	//displays left half
@@ -120,9 +108,11 @@ While 6>=I and (I*6)=<TOTALPICS
 	Sprite_NoClip(THUMBNAIL,RPICX,RPICY)
 	//increments I so the code doesn't keep displaying the same image
 	I+1->I
-End// end of While loop
+End
+// end of While loop
 
-Return//goes back to the main loop
+Return
+//goes back to the main loop
 
 //selection GUI
 Lbl SELECTOR
@@ -152,9 +142,11 @@ While KEY!=15
 	//displays the rectangle selector
 	Rectangle_NoClip(RECTX,RECTY,130,60)
 	
-End//end of while loop
+End
+//end of while loop
 
-Return//go back to main loop
+Return
+//go back to main loop
 
 //ends the program
 Lbl STOP
