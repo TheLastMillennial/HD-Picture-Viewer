@@ -1,5 +1,5 @@
 [i]HDPICV
-dbd(0
+//dbd(0
 //WARNING: the following code is so horrible, it crashed the ICE debugger and froze CEmu! :P
 0->APOS
 0->KEY
@@ -9,6 +9,7 @@ dbd(0
 20->THUMBNAILY
 10->RECTX
 10->RECTY
+1->SELECTEDPIC
 
 //Main loop
 While KEY!=15
@@ -30,8 +31,6 @@ Alloc(9)->LPICNAME
 Alloc(9)->RPICNAME
  
 // Detect left half of the images
-
-
 0->APOS
 While Detect(^^oAPOS,"HDPICV2L"->LPIC
     // Open the variable - we are sure it exists because it's detected
@@ -40,8 +39,7 @@ While Detect(^^oAPOS,"HDPICV2L"->LPIC
     // Write the name to the allocated memory
     Seek(8,0,LPICSLOT
     Read(LPICNAME,8,1,LPICSLOT
-	
-	
+		
     // Detect right half of the images
     0->BPOS
     While Detect(^^oBPOS,"HDPICV2R"->RPIC
@@ -63,7 +61,7 @@ While Detect(^^oAPOS,"HDPICV2L"->LPIC
         // Close the right half of the image
 		Close(RPICSLOT
 	End
-	
+	// Close the left half of the image
 	Close(LPICSLOT
 End
 //end of Detect( LPIC
@@ -71,13 +69,13 @@ End
 Return
 //go back to the main loop
 
+
 //displays thumbnails
 Lbl DISPTHUMB
-Pause 
 
 Begin
 //divides total pics by 3 to get the correct number of half-pictures detected
-TOTALPICS/3->SIMPLETOTAL
+//TOTALPICS/3->SIMPLETOTAL
 //initializes the I for the loop
 1->I
 //Loops until the screen has been filled with a max of 6 pictures (6>=I) or if there are no more pictures to display ((I*3)=<TOTALPICS)
@@ -91,7 +89,7 @@ While 6>=I and (I*3)<=TOTALPICS
 	//150 because the images need to have space between them,
 	//(remainder(I,2)=0)->LPICX This checks if the image should be placed on the left part of the screen or the right part (so they don't overlap) it stores the result into LPICX
 	//LPICX-20+*{LPIC}/2->RPICX This takes which part of the screen it should be on, and adds on some x space so the 2 halves are directly next to eachother.
-	10+150*not(remainder(I,2))->LPICX-20+*{LPIC}/2->RPICX
+	10+150*not(remainder(I,2))->LPICX+40->RPICX
 	//70*((I-1)/2) This adds on 70 to the Y placement if the image is the third, through sixth image. This makes sure the images don't overlap. It stores the result in LPICY and RPICY since the Y values aren't different
 	10+70*((I-1)/2)->LPICY->RPICY
 
@@ -107,6 +105,7 @@ While 6>=I and (I*3)<=TOTALPICS
 	//displays right half
 	Sprite_NoClip(THUMBNAIL,RPICX,RPICY)
 	//increments I so the code doesn't keep displaying the same image
+	//dbd(0
 	I+1->I
 End
 // end of While loop
@@ -133,11 +132,37 @@ While KEY!=15
 		//clears the rectangular selector
 		Rectangle_NoClip(RECTX,RECTY,130,60)
 		//detects if the left or right arrow keys are pressed and updates the rectangle coordinates
-		150*(((KEY=3) and (RECTX=10))-((KEY=2) and (RECTX=160)))+RECTX->RECTX
+		(((KEY=3) and (RECTX=10))-((KEY=2) and (RECTX=160)))->XPOS
+		150*XPOS+RECTX->RECTX
+		XPOS+SELECTEDPIC->SELECTEDPIC
+		
 		//detecs if the up or down arrow keys are pressed and updates the rectangle coordinates 
-		70*(((KEY=1) and (RECTY<150))-((KEY=4) and (RECTY>=80)))+RECTY->RECTY
+		(((KEY=1) and (RECTY<150))-((KEY=4) and (RECTY>=80)))->YPOS
+		70*YPOS+RECTY->RECTY
+		YPOS*2+SELECTEDPIC->SELECTEDPIC
 		//sets color back to blue
 		SetColor(18
+
+		If KEY=9
+			1->XC
+			1->YC
+			If RECTX<150
+				0->XC
+			End
+			If RECTY<70
+				0->YC
+			End
+			
+			//((RECTX-10)/((150*XC)+(1*not(YC)))+((RECTY-10)/((70*YC)+(1*not(YC))-1)->SELECTEDPIC
+			L1(SELECTEDPIC*3)->LPIC
+			L2(SELECTEDPIC*3)->RPIC
+			Sprite_NoClip(LPIC,0,0)
+			Sprite_NoClip(RPIC,*{LPIC},0)
+			dbd(0
+			Pause 
+			Call DISPTHUMB
+		End
+		
 	End
 	//displays the rectangle selector
 	Rectangle_NoClip(RECTX,RECTY,130,60)
