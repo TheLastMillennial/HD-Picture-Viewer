@@ -10,6 +10,8 @@
 10->RECTX
 10->RECTY
 1->SELECTEDPIC
+//this code resized the full image to thumbnail-size 
+DefineSprite(40,60->THUMBNAIL
 
 //Main loop
 While KEY!=15
@@ -72,17 +74,19 @@ Return
 
 //displays thumbnails
 Lbl DISPTHUMB
+det(0
 
-Begin
 //divides total pics by 3 to get the correct number of half-pictures detected
 //TOTALPICS/3->SIMPLETOTAL
 //initializes the I for the loop
 1->I
 //Loops until the screen has been filled with a max of 6 pictures (6>=I) or if there are no more pictures to display ((I*3)=<TOTALPICS)
+
 While 6>=I and (I*3)<=TOTALPICS
+	dbd(0
 	//This stores the pic data for the halves into L and RPIC
-	L1(I*3)->LPIC
-	L2(I*3)->RPIC
+	L1(I*3+18*PAGE)->LPIC
+	L2(I*3+18*PAGE)->RPIC
 
 	//This is the math that determines where the image half will be placed
 	//10 so there's some buffer between the image and edge of screen
@@ -93,8 +97,7 @@ While 6>=I and (I*3)<=TOTALPICS
 	//70*((I-1)/2) This adds on 70 to the Y placement if the image is the third, through sixth image. This makes sure the images don't overlap. It stores the result in LPICY and RPICY since the Y values aren't different
 	10+70*((I-1)/2)->LPICY->RPICY
 
-	//this code resized the full image to thumbnail-size 
-	DefineSprite(40,60->THUMBNAIL
+	
 	
 	//scales left half
 	ScaleSprite(LPIC,THUMBNAIL)
@@ -109,9 +112,7 @@ While 6>=I and (I*3)<=TOTALPICS
 	I+1->I
 End
 // end of While loop
-
 Return
-//goes back to the main loop
 
 //selection GUI
 Lbl SELECTOR
@@ -134,34 +135,63 @@ While KEY!=15
 		//detects if the left or right arrow keys are pressed and updates the rectangle coordinates
 		(((KEY=3) and (RECTX=10))-((KEY=2) and (RECTX=160)))->XPOS
 		150*XPOS+RECTX->RECTX
-		XPOS+SELECTEDPIC->SELECTEDPIC
+		XPOS+SELECTEDPIC+6*PAGE->SELECTEDPIC
 		
 		//detecs if the up or down arrow keys are pressed and updates the rectangle coordinates 
 		(((KEY=1) and (RECTY<150))-((KEY=4) and (RECTY>=80)))->YPOS
 		70*YPOS+RECTY->RECTY
-		YPOS*2+SELECTEDPIC->SELECTEDPIC
+		YPOS*2+SELECTEDPIC+6*PAGE->SELECTEDPIC
 		//sets color back to blue
 		SetColor(18
-
-		If KEY=9
-			1->XC
-			1->YC
-			If RECTX<150
-				0->XC
-			End
-			If RECTY<70
-				0->YC
-			End
-			
-			//((RECTX-10)/((150*XC)+(1*not(YC)))+((RECTY-10)/((70*YC)+(1*not(YC))-1)->SELECTEDPIC
-			L1(SELECTEDPIC*3)->LPIC
-			L2(SELECTEDPIC*3)->RPIC
-			Sprite_NoClip(LPIC,0,0)
-			Sprite_NoClip(RPIC,*{LPIC},0)
-			dbd(0
-			Pause 
+		
+		//detects if y= or graph keys are pressed and changes PAGE accordingly
+		If KEY=53 or KEY=49
+			(KEY=53 and PAGE>0)-(KEY=49 and PAGE<(TOTALPICS/18))+PAGE->PAGE
 			Call DISPTHUMB
 		End
+		
+		//if enter was pressed
+		If KEY=9
+			//stores the selection into a restorer variable
+			SELECTEDPIC->ORIGSELECTED
+			//stores the picture selected
+			L1(SELECTEDPIC*3)->LPIC
+			L2(SELECTEDPIC*3)->RPIC
+			det(5,0
+			Sprite_NoClip(LPIC,0,0)
+			Sprite_NoClip(RPIC,*{LPIC},0)
+			
+			While KEY!=15
+			//Gets the correct picture that was selected into L and RPIC
+				getKey->KEY
+				
+				If KEY=53 or KEY=2
+					SELECTEDPIC-1->SELECTEDPIC
+				End
+
+				If KEY=49 or KEY=3
+					SELECTEDPIC+1->SELECTEDPIC
+				End
+
+				//displays the picture
+				If KEY
+					L1(SELECTEDPIC*3)->LPIC
+					L2(SELECTEDPIC*3)->RPIC
+					det(5,0
+					Sprite_NoClip(LPIC,0,0)
+					Sprite_NoClip(RPIC,*{LPIC},0)
+				End
+				
+			End
+			//restores selected pic so the selector will open the correct pic
+			ORIGSELECTED->SELECTEDPIC
+			Call DISPTHUMB
+			//makes sure the program wont quit
+			0->KEY
+		End
+		
+		
+		
 		
 	End
 	//displays the rectangle selector
