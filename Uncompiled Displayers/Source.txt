@@ -31,20 +31,34 @@ sum(0)
 // Allocate memory for picture names
 Alloc(9)->LPICNAME
 Alloc(9)->RPICNAME
+//palettes
+//Alloc(9)->LPICPAL
+//Alloc(9)->RPICPAL
  
 // Detect left half of the images
-0->APOS
-While Detect(^^oAPOS,"HDPICV2L"->LPIC
+0->LPOS
+While Detect(^^oLPOS,"HDPICV2L"->LPIC
     // Open the variable - we are sure it exists because it's detected
     Open(LPIC,"r")->LPICSLOT
  
-    // Write the name to the allocated memory
+	//get palette to name
+	//Seek(7,0,LPICSLOT
+	//Read(LPICPAL,7,1,LPICSLOT
+	//search for it
+	//0->LPALPOS
+	//While Detect(^^oLPALPOS,"Z"+LPICPAL->LPAL
+	//	Open(LPAL,"r")->LPALSLOT
+	//	Read(LPALNAME,256,1,LPALSLOT
+
+	//End
+		
+	// Write the name to the allocated memory
     Seek(8,0,LPICSLOT
     Read(LPICNAME,8,1,LPICSLOT
 		
     // Detect right half of the images
-    0->BPOS
-    While Detect(^^oBPOS,"HDPICV2R"->RPIC
+    0->RPOS
+    While Detect(^^oRPOS,"HDPICV2R"->RPIC
         // Open the variable - we are sure it exists because it's detected
         Open(RPIC,"r"->RPICSLOT
  
@@ -54,7 +68,21 @@ While Detect(^^oAPOS,"HDPICV2L"->LPIC
 		
 		// Compare names compare returns 0 if true
 		If not([Med]LPICNAME,RPICNAME
-			// Yay, they matched! Now store the data pointer into L1
+			// Yay, they matched! 
+			
+			//store right palette to mem
+			//get palette name
+			//Seek(7,0,RPICSLOT
+			//Read(RPICPAL,7,1,RPICSLOT
+			//search for it
+			//0->RPALPOS
+			//While Detect(^^oRPALPOS,"Z"+RPICPAL->RPAL
+			//	Open(RPAL,"r")->RPALSLOT
+			//	Read(RPALNAME,256,1,RPALSLOT
+
+			//End
+			
+			//Now store the data pointer into L1
 			TOTALPICS+3->TOTALPICS
             GetDataPtr(LPICSLOT)->L1(TOTALPICS
             GetDataPtr(RPICSLOT)->L2(TOTALPICS
@@ -85,15 +113,15 @@ det(0
 While 6>=I and (I*3)<=TOTALPICS
 	dbd(0
 	//This stores the pic data for the halves into L and RPIC
-	L1(I*3+18*PAGE)->LPIC
-	L2(I*3+18*PAGE)->RPIC
+	L1(I*3+6*PAGE)->LPIC
+	L2(I*3+6*PAGE)->RPIC
 
 	//This is the math that determines where the image half will be placed
 	//10 so there's some buffer between the image and edge of screen
 	//150 because the images need to have space between them,
 	//(remainder(I,2)=0)->LPICX This checks if the image should be placed on the left part of the screen or the right part (so they don't overlap) it stores the result into LPICX
 	//LPICX-20+*{LPIC}/2->RPICX This takes which part of the screen it should be on, and adds on some x space so the 2 halves are directly next to eachother.
-	10+150*not(remainder(I,2))->LPICX+40->RPICX
+	10+160*not(remainder(I,2))->LPICX+40->RPICX
 	//70*((I-1)/2) This adds on 70 to the Y placement if the image is the third, through sixth image. This makes sure the images don't overlap. It stores the result in LPICY and RPICY since the Y values aren't different
 	10+70*((I-1)/2)->LPICY->RPICY
 
@@ -131,10 +159,10 @@ While KEY!=15
 		//sets color to white
 		SetColor(255
 		//clears the rectangular selector
-		Rectangle_NoClip(RECTX,RECTY,130,60)
+		Rectangle_NoClip(RECTX,RECTY,140,60)
 		//detects if the left or right arrow keys are pressed and updates the rectangle coordinates
-		(((KEY=3) and (RECTX=10))-((KEY=2) and (RECTX=160)))->XPOS
-		150*XPOS+RECTX->RECTX
+		(((KEY=3) and (RECTX=10))-((KEY=2) and (RECTX=170)))->XPOS
+		160*XPOS+RECTX->RECTX
 		XPOS+SELECTEDPIC+6*PAGE->SELECTEDPIC
 		
 		//detecs if the up or down arrow keys are pressed and updates the rectangle coordinates 
@@ -146,7 +174,7 @@ While KEY!=15
 		
 		//detects if y= or graph keys are pressed and changes PAGE accordingly
 		If KEY=53 or KEY=49
-			(KEY=53 and PAGE>0)-(KEY=49 and PAGE<(TOTALPICS/18))+PAGE->PAGE
+			(KEY=49 and PAGE<(TOTALPICS/18))-(KEY=53 and PAGE>0)+PAGE->PAGE
 			Call DISPTHUMB
 		End
 		
@@ -195,7 +223,7 @@ While KEY!=15
 		
 	End
 	//displays the rectangle selector
-	Rectangle_NoClip(RECTX,RECTY,130,60)
+	Rectangle_NoClip(RECTX,RECTY,140,60)
 	
 End
 //end of while loop
