@@ -110,11 +110,11 @@ det(0
 1->I
 //Loops until the screen has been filled with a max of 6 pictures (6>=I) or if there are no more pictures to display ((I*3)=<TOTALPICS)
 
-While 6>=I and (I*3)<=TOTALPICS
+While 6>=I and (I*3+18*PAGE)<=TOTALPICS
 	dbd(0
 	//This stores the pic data for the halves into L and RPIC
-	L1(I*3+6*PAGE)->LPIC
-	L2(I*3+6*PAGE)->RPIC
+	L1(I*3+18*PAGE)->LPIC
+	L2(I*3+18*PAGE)->RPIC
 
 	//This is the math that determines where the image half will be placed
 	//10 so there's some buffer between the image and edge of screen
@@ -163,12 +163,12 @@ While KEY!=15
 		//detects if the left or right arrow keys are pressed and updates the rectangle coordinates
 		(((KEY=3) and (RECTX=10))-((KEY=2) and (RECTX=170)))->XPOS
 		160*XPOS+RECTX->RECTX
-		XPOS+SELECTEDPIC+6*PAGE->SELECTEDPIC
+		XPOS+SELECTEDPIC->SELECTEDPIC
 		
 		//detecs if the up or down arrow keys are pressed and updates the rectangle coordinates 
 		(((KEY=1) and (RECTY<150))-((KEY=4) and (RECTY>=80)))->YPOS
 		70*YPOS+RECTY->RECTY
-		YPOS*2+SELECTEDPIC+6*PAGE->SELECTEDPIC
+		YPOS*2+SELECTEDPIC->SELECTEDPIC
 		//sets color back to blue
 		SetColor(18
 		
@@ -179,12 +179,12 @@ While KEY!=15
 		End
 		
 		//if enter was pressed
-		If KEY=9
+		If KEY=9 and SELECTEDPIC*3+18*PAGE<=TOTALPICS
 			//stores the selection into a restorer variable
 			SELECTEDPIC->ORIGSELECTED
-			//stores the picture selected
-			L1(SELECTEDPIC*3)->LPIC
-			L2(SELECTEDPIC*3)->RPIC
+			//stores the picture selected the +6*PAGE accounts for multiple pages
+			L1(SELECTEDPIC*3+18*PAGE)->LPIC
+			L2(SELECTEDPIC*3+18*PAGE)->RPIC
 			det(5,0
 			Sprite_NoClip(LPIC,0,0)
 			Sprite_NoClip(RPIC,*{LPIC},0)
@@ -192,19 +192,19 @@ While KEY!=15
 			While KEY!=15
 			//Gets the correct picture that was selected into L and RPIC
 				getKey->KEY
-				
-				If KEY=53 or KEY=2
+				//Broken
+				If (KEY=53 or KEY=2) and SELECTEDPIC+18*PAGE>1
 					SELECTEDPIC-1->SELECTEDPIC
 				End
 
-				If KEY=49 or KEY=3
+				If (KEY=49 or KEY=3) and SELECTEDPIC*3+18*PAGE<TOTALPICS
 					SELECTEDPIC+1->SELECTEDPIC
 				End
 
 				//displays the picture
 				If KEY
-					L1(SELECTEDPIC*3)->LPIC
-					L2(SELECTEDPIC*3)->RPIC
+					L1(SELECTEDPIC*3+18*PAGE)->LPIC
+					L2(SELECTEDPIC*3+18*PAGE)->RPIC
 					det(5,0
 					Sprite_NoClip(LPIC,0,0)
 					Sprite_NoClip(RPIC,*{LPIC},0)
@@ -235,5 +235,3 @@ Return
 Lbl STOP
 CloseAll
 det(1
-Output(2,2,"End!
-Pause 
