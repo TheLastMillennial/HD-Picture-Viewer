@@ -142,15 +142,31 @@ End
 // end of While loop
 Return
 
-//selection GUI
-Lbl SELECTOR
+Lbl DIRECTIONS
 //sets color to black
 SetColor(0
 //makes a black bar at the bottom of the screen, options will be shown there
-FillRectangle_NoClip(0,230,320,10
+FillRectangle_NoClip(0,225,320,15
 
-//sets color to a blue 
-SetColor(18
+//doubles text size
+SetTextScale(2,2
+//background black
+SetTextBGColor(0
+//text white
+SetTextFGColor(214
+PrintStringXY("<-",0,225
+PrintStringXY("-\>",294,225
+Return
+
+//selection GUI
+Lbl SELECTOR
+
+//arrows GUI
+Call DIRECTIONS
+
+
+
+//SetColor(18
 //This code moves around the selection box
 While KEY!=15
 	getKey->KEY
@@ -179,7 +195,7 @@ While KEY!=15
 		End
 		
 		//if enter was pressed
-		If KEY=9 and SELECTEDPIC*3+18*PAGE<=TOTALPICS
+		If (KEY=9 or KEY=54) and SELECTEDPIC*3+18*PAGE<=TOTALPICS
 			//stores the selection into a restorer variable
 			SELECTEDPIC->ORIGSELECTED
 			//stores the picture selected the +6*PAGE accounts for multiple pages
@@ -188,17 +204,27 @@ While KEY!=15
 			det(5,0
 			Sprite_NoClip(LPIC,0,0)
 			Sprite_NoClip(RPIC,*{LPIC},0)
-			
+
 			While KEY!=15
 			//Gets the correct picture that was selected into L and RPIC
 				getKey->KEY
-				//Broken
+				//Broke
 				If (KEY=53 or KEY=2) and SELECTEDPIC+18*PAGE>1
 					SELECTEDPIC-1->SELECTEDPIC
+					If remainder(SELECTEPIC,6)=0 and PAGE>0
+						PAGE-1->PAGE
+						SELECTEDPIC+6->SELECTEDPIC
+					End
+					
 				End
 
 				If (KEY=49 or KEY=3) and SELECTEDPIC*3+18*PAGE<TOTALPICS
 					SELECTEDPIC+1->SELECTEDPIC
+					dbd(0)
+					If remainder(SELECTEPIC,6)=0 and (PAGE<(TOTALPICS/3)/6)
+						PAGE+1->PAGE
+						SELECTEDPIC-6->SELECTEDPIC
+					End
 				End
 
 				//displays the picture
@@ -217,10 +243,9 @@ While KEY!=15
 			//makes sure the program wont quit
 			0->KEY
 		End
-		
-		
-		
-		
+
+		//outputs arrows GUI
+		Call DIRECTIONS
 	End
 	//displays the rectangle selector
 	Rectangle_NoClip(RECTX,RECTY,140,60)
