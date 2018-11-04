@@ -1,25 +1,18 @@
 [i]HDPICV
-//dbd(0
-//WARNING: the following code is so horrible, it crashed the ICE debugger and froze CEmu! :P
 0->APOS
 0->KEY
 0->PAGE
 0->TOTALPICS
 10->THUMBNAILX
 20->THUMBNAILY
-10->RECTX
+0->RECTX
 10->RECTY
 1->SELECTEDPIC
-//this code resized the full image to thumbnail-size 
 DefineSprite(40,60->THUMBNAIL
 
-//Main loop
 While KEY!=15
-//detects images
 	Call DETECTPICS
-	//displays the thumbnails
 	Call DISPTHUMB
-	//loads the selection GUI
 	Call SELECTOR
 End
 Goto STOP
@@ -27,188 +20,105 @@ Goto STOP
 
 Lbl DETECTPICS
 0->TOTALPICS
-sum(0)
-// Allocate memory for picture names
+CloseAll)
 Alloc(9)->LPICNAME
 Alloc(9)->RPICNAME
-//palettes
-//Alloc(9)->LPICPAL
-//Alloc(9)->RPICPAL
- 
-// Detect left half of the images
+
 0->LPOS
 While Detect(^^oLPOS,"HDPICV2L"->LPIC
-    // Open the variable - we are sure it exists because it's detected
-    Open(LPIC,"r")->LPICSLOT
- 
-	//get palette to name
-	//Seek(7,0,LPICSLOT
-	//Read(LPICPAL,7,1,LPICSLOT
-	//search for it
-	//0->LPALPOS
-	//While Detect(^^oLPALPOS,"Z"+LPICPAL->LPAL
-	//	Open(LPAL,"r")->LPALSLOT
-	//	Read(LPALNAME,256,1,LPALSLOT
-
-	//End
-		
-	// Write the name to the allocated memory
-    Seek(8,0,LPICSLOT
-    Read(LPICNAME,8,1,LPICSLOT
-		
-    // Detect right half of the images
-    0->RPOS
-    While Detect(^^oRPOS,"HDPICV2R"->RPIC
-        // Open the variable - we are sure it exists because it's detected
-        Open(RPIC,"r"->RPICSLOT
- 
-		// Write the name
+	Open(LPIC,"r")->LPICSLOT
+	Seek(8,0,LPICSLOT
+	Alloc(9)->LPICNAME
+	Read(LPICNAME,8,1,LPICSLOT
+	0->RPOS
+	While Detect(^^oRPOS,"HDPICV2R"->RPIC
+		Open(RPIC,"r"->RPICSLOT
 		Seek(8,0,RPICSLOT
-        Read(RPICNAME,8,1,RPICSLOT
-		
-		// Compare names compare returns 0 if true
+		Read(RPICNAME,8,1,RPICSLOT
 		If not([Med]LPICNAME,RPICNAME
-			// Yay, they matched! 
-			
-			//store right palette to mem
-			//get palette name
-			//Seek(7,0,RPICSLOT
-			//Read(RPICPAL,7,1,RPICSLOT
-			//search for it
-			//0->RPALPOS
-			//While Detect(^^oRPALPOS,"Z"+RPICPAL->RPAL
-			//	Open(RPAL,"r")->RPALSLOT
-			//	Read(RPALNAME,256,1,RPALSLOT
-
-			//End
-			
-			//Now store the data pointer into L1
 			TOTALPICS+3->TOTALPICS
-            GetDataPtr(LPICSLOT)->L1(TOTALPICS
-            GetDataPtr(RPICSLOT)->L2(TOTALPICS
-        End
- 
-        // Close the right half of the image
+			GetDataPtr(LPICSLOT)->L1(TOTALPICS
+			GetDataPtr(RPICSLOT)->L2(TOTALPICS
+			LPICNAME->L3(TOTALPICS
+			
+		End
 		Close(RPICSLOT
 	End
-	// Close the left half of the image
 	Close(LPICSLOT
 End
-//end of Detect( LPIC
-
 Return
-//go back to the main loop
-
-
-//displays thumbnails
 Lbl DISPTHUMB
-det(0
+Begin
 
-//divides total pics by 3 to get the correct number of half-pictures detected
-//TOTALPICS/3->SIMPLETOTAL
-//initializes the I for the loop
+SetTextScale(1,1
+SetTextBGColor(255
+SetTextFGColor(0
+
 1->I
-//Loops until the screen has been filled with a max of 6 pictures (6>=I) or if there are no more pictures to display ((I*3)=<TOTALPICS)
-
 While 6>=I and (I*3+18*PAGE)<=TOTALPICS
 	dbd(0
-	//This stores the pic data for the halves into L and RPIC
 	L1(I*3+18*PAGE)->LPIC
 	L2(I*3+18*PAGE)->RPIC
-
-	//This is the math that determines where the image half will be placed
-	//10 so there's some buffer between the image and edge of screen
-	//150 because the images need to have space between them,
-	//(remainder(I,2)=0)->LPICX This checks if the image should be placed on the left part of the screen or the right part (so they don't overlap) it stores the result into LPICX
-	//LPICX-20+*{LPIC}/2->RPICX This takes which part of the screen it should be on, and adds on some x space so the 2 halves are directly next to eachother.
-	10+160*not(remainder(I,2))->LPICX+40->RPICX
-	//70*((I-1)/2) This adds on 70 to the Y placement if the image is the third, through sixth image. This makes sure the images don't overlap. It stores the result in LPICY and RPICY since the Y values aren't different
+	L3(I*3+18*PAGE)->HEADERTEXT
+	75+90*not(remainder(I,2))->LPICX+40->RPICX
 	10+70*((I-1)/2)->LPICY->RPICY
-
 	
 	
-	//scales left half
+	5+245*not(remainder(I,2))->TEXTX
+	12+70*((I-1)/2)->TEXTY
+	
+	PrintStringXY(HEADERTEXT,TEXTX,TEXTY
 	ScaleSprite(LPIC,THUMBNAIL)
-	//displays left half
 	Sprite_NoClip(THUMBNAIL,LPICX,LPICY)
-	//scales right half
 	ScaleSprite(RPIC,THUMBNAIL)
-	//displays right half
 	Sprite_NoClip(THUMBNAIL,RPICX,RPICY)
-	//increments I so the code doesn't keep displaying the same image
-	//dbd(0
 	I+1->I
 End
-// end of While loop
 Return
 
 Lbl DIRECTIONS
-//sets color to black
 SetColor(0
-//makes a black bar at the bottom of the screen, options will be shown there
 FillRectangle_NoClip(0,225,320,15
 
-//doubles text size
 SetTextScale(2,2
-//background black
 SetTextBGColor(0
-//text white
 SetTextFGColor(214
 PrintStringXY("<-",0,225
-PrintStringXY("-\>",294,225
+PrintStringXY("->",294,225
 Return
 
-//selection GUI
 Lbl SELECTOR
 
-//arrows GUI
 Call DIRECTIONS
 
 
 
-//SetColor(18
-//This code moves around the selection box
 While KEY!=15
 	getKey->KEY
-	//only exectued when a key is pressed
 	If KEY!=0
-		//sets color to white
 		SetColor(255
-		//clears the rectangular selector
-		Rectangle_NoClip(RECTX,RECTY,140,60)
-		//detects if the left or right arrow keys are pressed and updates the rectangle coordinates
-		(((KEY=3) and (RECTX=10))-((KEY=2) and (RECTX=170)))->XPOS
-		160*XPOS+RECTX->RECTX
+		Rectangle_NoClip(RECTX,RECTY,155,60)
+		(((KEY=3) and (RECTX=0))-((KEY=2) and (RECTX=165)))->XPOS
+		165*XPOS+RECTX->RECTX
 		XPOS+SELECTEDPIC->SELECTEDPIC
-		
-		//detecs if the up or down arrow keys are pressed and updates the rectangle coordinates 
 		(((KEY=1) and (RECTY<150))-((KEY=4) and (RECTY>=80)))->YPOS
 		70*YPOS+RECTY->RECTY
 		YPOS*2+SELECTEDPIC->SELECTEDPIC
-		//sets color back to blue
 		SetColor(18
-		
-		//detects if y= or graph keys are pressed and changes PAGE accordingly
 		If KEY=53 or KEY=49
 			(KEY=49 and PAGE<(TOTALPICS/18))-(KEY=53 and PAGE>0)+PAGE->PAGE
 			Call DISPTHUMB
 		End
-		
-		//if enter was pressed
 		If (KEY=9 or KEY=54) and SELECTEDPIC*3+18*PAGE<=TOTALPICS
-			//stores the selection into a restorer variable
 			SELECTEDPIC->ORIGSELECTED
-			//stores the picture selected the +6*PAGE accounts for multiple pages
 			L1(SELECTEDPIC*3+18*PAGE)->LPIC
 			L2(SELECTEDPIC*3+18*PAGE)->RPIC
-			det(5,0
+			FillScreen(0
 			Sprite_NoClip(LPIC,0,0)
 			Sprite_NoClip(RPIC,*{LPIC},0)
-
+			
 			While KEY!=15
-			//Gets the correct picture that was selected into L and RPIC
 				getKey->KEY
-				//Broke
 				If (KEY=53 or KEY=2) and SELECTEDPIC+18*PAGE>1
 					SELECTEDPIC-1->SELECTEDPIC
 					If remainder(SELECTEPIC,6)=0 and PAGE>0
@@ -217,7 +127,7 @@ While KEY!=15
 					End
 					
 				End
-
+				
 				If (KEY=49 or KEY=3) and SELECTEDPIC*3+18*PAGE<TOTALPICS
 					SELECTEDPIC+1->SELECTEDPIC
 					dbd(0)
@@ -226,37 +136,25 @@ While KEY!=15
 						SELECTEDPIC-6->SELECTEDPIC
 					End
 				End
-
-				//displays the picture
 				If KEY
 					L1(SELECTEDPIC*3+18*PAGE)->LPIC
 					L2(SELECTEDPIC*3+18*PAGE)->RPIC
-					det(5,0
+					FillScreen(0
 					Sprite_NoClip(LPIC,0,0)
 					Sprite_NoClip(RPIC,*{LPIC},0)
 				End
 				
 			End
-			//restores selected pic so the selector will open the correct pic
 			ORIGSELECTED->SELECTEDPIC
 			Call DISPTHUMB
-			//makes sure the program wont quit
 			0->KEY
 		End
-
-		//outputs arrows GUI
 		Call DIRECTIONS
 	End
-	//displays the rectangle selector
-	Rectangle_NoClip(RECTX,RECTY,140,60)
+	Rectangle_NoClip(RECTX,RECTY,155,60)
 	
 End
-//end of while loop
-
 Return
-//go back to main loop
-
-//ends the program
 Lbl STOP
 CloseAll
 det(1
