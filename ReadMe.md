@@ -1,28 +1,41 @@
 # High-Definition Picture Viewer
-*For the TI-84 Plus CE*
+*For the TI-84 Plus CE, TI-84 Plus CE -t, and TI-83 Premium CE*
 
 By TheLastMillennial
 
 
 ## To Use
-- Send "HDPic.8xp" and any example image(s) you'd like to see to your calculator.
-- Using ICE, compile the program and execute it. 
-- The program currently only displays a thumbnail image, pauses, then quits.
+- Open the Compiled Displayers folder.
+- Send "HDPic.8xp" and any converted image(s) to your calculator.
+- Run the program on your calculator. 
+- Refer to this troubleshooting video if you encounter any issues: https://www.youtube.com/watch?v=-TweNnHuFCQ
+- Use the arrow keys to select an image.
+- Use [y=] and [graph] to scroll through pages of images
+- Use [enter] to open an image
+- Use [clear] to exit an image and to quit the program
 
 ### Custom images
-- Open and compile "HD Picture Converter CE.sln". 
-- Make sure that windows_convpng.exe is in the same directory
-- Once the application window appears, click on 'open file' and select an image. The image may need to be reduced in quality. When finished converting, a preview image of the 2 halves will be shown. You can now click 'open folder' and copy the converted .8xv files to your calculator.
+- Choose the image you want to convert
+- Make the image at most 320 pixels wide and 240 pixels tall
+- Turn the image into a .png
+- Take that image and split into two halfs; a left half and a right half. (each half should be at most 160 pixels wide and 240 pixels tall.)
+- Open the HDpicConverter folder
+- Open the file "convpng.ini" with a text editor of your choice
+- Change the .ini file so it will convert your left image
+- Run convPNG.exe
+- Change the .ini file so it will convert your right image
+- Run convPNG.exe
+- Send the converted .8xv files to your calculator
 
-## Programs
+
+## Programs (only needed if you are compiling the source code)
 
 [ICE Compiler](http://cemete.ch/DL1481)
 
 ## Changelog
 
-### v3.46
-- Tried missing image detection, removed it
-- Added C# code for the PC converter.
+### v4.0.100
+- First Beta release.
 
 ### v3.40
 - Initial GitHub upload.
@@ -33,5 +46,7 @@ Thank you to everyone who has helped me with this project!
 - Peter "PT_" Tillema
 - Matt "MateoConLechuga" Waltz
 - Beckadamtheinventor
+- _iPhoenix_
 - Iambian
 - SahilS
+
