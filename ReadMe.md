@@ -6,7 +6,7 @@ By TheLastMillennial
 
 ## To Use
 - Open the Compiled Displayers folder.
-- Send "HDPic.8xp" and any converted image(s) to your calculator.
+- Send "HDPICV.8xp" and any converted image(s) to your calculator.
 - Run the program on your calculator. 
 - Refer to this troubleshooting video if you encounter any issues: https://www.youtube.com/watch?v=-TweNnHuFCQ
 - Use the arrow keys to select an image.
@@ -18,8 +18,9 @@ By TheLastMillennial
 - Choose the image you want to convert
 - Make the image at most 320 pixels wide and 240 pixels tall
 - Turn the image into a .png
-- Take that image and split into two halfs; a left half and a right half. (each half should be at most 160 pixels wide and 240 pixels tall.)
+- Take that image and split into two halfs; a left half and a right half. (Each half should be at most 160 pixels wide and 240 pixels tall.)
 - Open the HDpicConverter folder
+- Copy or save the two halves you just made to this folder.
 - Open the file "convpng.ini" with a text editor of your choice
 - Change the .ini file so it will convert your left image
 - Run convPNG.exe
@@ -33,6 +34,12 @@ By TheLastMillennial
 [ICE Compiler](http://cemete.ch/DL1481)
 
 ## Changelog
+
+###v4.0.101
+- Added icon.
+- Added description.
+- Updated ReadMe.
+- Updated example images.
 
 ### v4.0.100
 - First Beta release.
