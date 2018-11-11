@@ -35,7 +35,7 @@ By TheLastMillennial
 
 ## Changelog
 
-###v4.0.101
+### v4.0.101
 - Added icon.
 - Added description.
 - Updated ReadMe.
