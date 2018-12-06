@@ -32,11 +32,15 @@ namespace HD_Picture_Converter_CE
         int highQualityCrop=1;
         int conversionFail = 0;
         double AspectRatio;
+
+        //double ratioX;
+        //double ratioY;
         
         string AppDir;
         string path;
         string[] iniLines;
         string Filename;
+        string FilenameFive;
         string FilenameEight;
         public Pen cropPen;
 
@@ -74,7 +78,17 @@ namespace HD_Picture_Converter_CE
             }
             LogBox.Text = "Resizing image...";
             progressBar1.Increment(25);
-            ResizeImage();
+            if (OriginalImageSize.Width > 320 || OriginalImageSize.Height > 240)
+            {
+                MessageBox.Show("Error: Image too big!");
+                LogBox.Text = "Your image is either too tall or too wide. \nMake sure your image is at most 320 pixels wide and 240 pixels tall.\n Try resizing the image using a software such as Paint. \nAuto-resizing may come in a future update!";
+                return;
+            }else
+            {
+                ResizeImage();
+                
+            }
+            
             LogBox.Text = "Cropping image...";
             progressBar1.Increment(25);
             highQualityCrop = 1;
@@ -86,14 +100,15 @@ namespace HD_Picture_Converter_CE
             progressBar1.Increment(25);
             if (conversionFail == 0)
             {
-                LogBox.Text = "Finished! The image has been saved into 2 app vars: " + Filename + "R.8xv and " + Filename + "L.8xv. \n Send both to your calculator and view them with the HDpic program! \n Open another image to convert!";
-                AdditionalLog.Text = "Image quality (1=HD,0=SD): " + highQualityCrop + ". Image width: " + ModifiedImageSize.Width + " Image height: " + ModifiedImageSize.Height;
+                LogBox.Text = "Finished! The image has been saved into 3 app vars: " + Filename + "R.8xv, " + Filename + "L.8xv, and "+Filename+"P.8xv. \nSend all 3 to your calculator and view the image with the HDpic program! \nYou can now open another image to convert!";
+                AdditionalLog.Text = "Image width: " + ModifiedImageSize.Width + " Image height: " + ModifiedImageSize.Height;
 
             }
             else
             {
-                LogBox.Text = "Error, image could not be converted! \n If you believe this is an error, please contact TheLastMillennial on Cemetech \n Here: www.cemete.ch/t14498";
+                LogBox.Text = "Error, image could not be converted! \nIf you can't fix it yourself, please contact TheLastMillennial on Cemetech \nHere: www.ceme.tech/t14498";
                 AdditionalLog.Text = "Error code: " + errorCode;
+                conversionFail = 0;
             }
         }
 
@@ -107,6 +122,11 @@ namespace HD_Picture_Converter_CE
             LeftPictureBox.Width = imgWidth;
             LeftPictureBox.Height = imgHeight;
             LeftPictureBox.Image = Img;
+
+            /*RightPictureBox.Image = Img;
+            RightPictureBox.Width = imgWidth;
+            RightPictureBox.Height = imgHeight;*/
+
             //PictureBoxLocation();
             OriginalImageSize = new Size(imgWidth, imgHeight);
 
@@ -127,38 +147,53 @@ namespace HD_Picture_Converter_CE
             LeftPictureBox.Image = bm_dest;
             LeftPictureBox.Width = bm_dest.Width;
             LeftPictureBox.Height = bm_dest.Height;
+
+            
+
             //PictureBoxLocation();
             errorCode = 29;
         }
 
         private void ResizeImage()
         {
-            errorCode = 30;
+
             try
             {
-                AspectRatio = (double)OriginalImageSize.Width / (double)OriginalImageSize.Height;
-                Console.WriteLine("AR: " + AspectRatio);
-                errorCode = 32;
-                if ((int)(320 * AspectRatio) <= OriginalImageSize.Width)
-                {
-                    ModifiedImageSize = new Size((int)((double)240 * AspectRatio),240 );
-                    if (ModifiedImageSize.Width>320)
-                        ModifiedImageSize = new Size(320, (int)((double)320 / AspectRatio));
-
-                }
-                else
-                {
-                    errorCode = 34;
-                    ModifiedImageSize = new Size(320, (int)((double)320 / AspectRatio));
-                    if(ModifiedImageSize.Height>240)
-                        ModifiedImageSize = new Size((int)((double)240 * AspectRatio), 240);
-                }
                 
-            Console.WriteLine("H: " + ModifiedImageSize.Height.ToString());
+
+
+                ModifiedImageSize.Width = OriginalImageSize.Width;
+                ModifiedImageSize.Height = OriginalImageSize.Height;
+
+                /*
+                //AspectRatio = (double)OriginalImageSize.Width / (double)OriginalImageSize.Height;
+                //Console.WriteLine("AR: " + AspectRatio);
+                Bitmap OriginalImage = new Bitmap(LeftPictureBox.Image, LeftPictureBox.Width, LeftPictureBox.Height);
+                double ratioX = (double)320 / OriginalImageSize.Width;
+                double ratioY = (double)240 / OriginalImageSize.Height;
+                double ratio = Math.Min(ratioX, ratioY);
+                Console.WriteLine("Ratio: "+ratio);
+                ModifiedImageSize.Width = (int)(Img.Width * ratio);
+                ModifiedImageSize.Height = (int)(Img.Height * ratio);
+
+                Bitmap resizedImg = new Bitmap(ModifiedImageSize.Width, ModifiedImageSize.Height);
+
+                //using (var graphics = Graphics.FromImage(resizedImg))
+                    //graphics.DrawImage(OriginalImage, 0, 0, ModifiedImageSize.Width, ModifiedImageSize.Height);
+
+                
+                LeftPictureBox.Width = ModifiedImageSize.Width;
+                LeftPictureBox.Height = ModifiedImageSize.Height;
+                LeftPictureBox.Image = resizedImg;
+                
+                LeftPictureBox.Refresh();
+                MessageBox.Show("1");
+                
+                Console.WriteLine("H: " + ModifiedImageSize.Height.ToString());
             Console.WriteLine("W: " + ModifiedImageSize.Width.ToString());
                 errorCode = 36;
+                */
 
-            //SetResizeInfo();
             }
             catch (Exception)
             {
@@ -166,22 +201,7 @@ namespace HD_Picture_Converter_CE
                 MessageBox.Show("Error! Code: "+errorCode);
                 return;
             }
-            LeftPictureBox.Refresh();
-            errorCode = 38;
-            Bitmap bm_source = new Bitmap(LeftPictureBox.Image);
-            // Make a bitmap for the result.
-            //Bitmap bm_dest = new Bitmap(Convert.ToInt32(ModifiedImageSize.Width), Convert.ToInt32(ModifiedImageSize.Height));
-            Bitmap bm_dest = new Bitmap(320, 240);
-            // Make a Graphics object for the result Bitmap.
-            Graphics gr_dest = Graphics.FromImage(bm_dest);
-            // Copy the source image into the destination bitmap.
-            gr_dest.DrawImage(bm_source, 0, 0, bm_dest.Width + 1, bm_dest.Height + 1);
-            // Display the result.
-            LeftPictureBox.Image = bm_dest;
-            LeftPictureBox.Width = bm_dest.Width;
-            LeftPictureBox.Height = bm_dest.Height;
-
-            errorCode = 39;
+           
     }
         private void Crop()
         {
@@ -197,47 +217,39 @@ namespace HD_Picture_Converter_CE
 
             Bitmap _Limg = new Bitmap(cropWidth, cropHeight);
             Bitmap _Rimg = new Bitmap(cropWidth, cropHeight);
-            // for cropinf image
-            Graphics Lg = Graphics.FromImage(_Limg);
-            Graphics Rg = Graphics.FromImage(_Rimg);
-            errorCode = 44;
-            // create graphics
-                Lg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                Lg.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                Lg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-            if (highQualityCrop == 0)
+
+            //crops?
+            //_Limg = new Bitmap(Lrect.Width, Lrect.Height);
+            //_Rimg = new Bitmap(Rrect.Width, Rrect.Height);
+
+            using (Graphics g = Graphics.FromImage(_Limg))
             {
-                Lg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
-                Lg.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
-                Lg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
+                g.DrawImage(OriginalImage, new Rectangle(0, 0, _Limg.Width, _Limg.Height),Lrect,GraphicsUnit.Pixel);
             }
-                Lg.DrawImage(OriginalImage, 0, 0, Lrect, GraphicsUnit.Pixel);
-                   
+
+            using (Graphics g = Graphics.FromImage(_Rimg))
+            {
+                g.DrawImage(OriginalImage, new Rectangle(0, 0, _Rimg.Width, _Rimg.Height), Rrect, GraphicsUnit.Pixel);
+            }
             LeftPictureBox.Image = _Limg;
+            RightPictureBox.Image = _Rimg;
+
+
+            //I dunno what this did anymore
+            /*LeftPictureBox.Image = _Limg;
             LeftPictureBox.Width = _Limg.Width;
             LeftPictureBox.Height = _Limg.Height;
 
-                Rg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                Rg.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                Rg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
-            if (highQualityCrop == 0)
-            {
-                Rg.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.Low;
-                Rg.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighSpeed;
-                Rg.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighSpeed;
-            }
-            errorCode = 46;
-            //Rg.DrawImage(OriginalImage, 160, 0, Rrect, GraphicsUnit.Pixel);
-            System.Drawing.Imaging.PixelFormat format = _Rimg.PixelFormat;
+                System.Drawing.Imaging.PixelFormat format = _Rimg.PixelFormat;
             Bitmap _Rimg2 = OriginalImage.Clone(Rrect, format);
-
+            
             // Draw the cloned portion of the Bitmap object.
             //Rg.DrawImage(_Rimg2, 0, 0);
 
             RightPictureBox.Image = _Rimg2;
             RightPictureBox.Width = _Rimg.Width;
             RightPictureBox.Height = _Rimg.Height;
-
+            */
             BoxLocations();
             LeftPictureBox.Refresh();
             RightPictureBox.Refresh();
@@ -261,12 +273,11 @@ namespace HD_Picture_Converter_CE
             //saves the pictures as pngs
             LeftPictureBox.Image.Save(AppDir + @"Left.png", ImageFormat.Png);
             long length= new System.IO.FileInfo(AppDir + @"Left.png").Length;
-          
 
-            
             RightPictureBox.Image.Save(AppDir + @"Right.png", ImageFormat.Png);
             //makes sure file name is correct length 
             FilenameEight = Filename;
+            FilenameFive = Filename;
             //I have this as 7 for the app var name allowing a L or R to be placed at the end
             if (Filename.Length > 7)
                 Filename = Filename.Substring(0, 7);
@@ -281,7 +292,7 @@ namespace HD_Picture_Converter_CE
                 //This loops until the header is 8 chars long
                 while (Filename.Length < 8)
                 {
-                    Filename = Filename + "_";
+                    Filename = Filename + " ";
                 }
             }
             errorCode = 54;
@@ -297,27 +308,72 @@ namespace HD_Picture_Converter_CE
                 Console.WriteLine("Deleting R!");
                 File.Delete(AppDir + Filename + "R.8xv");
             }
-                       
 
             errorCode = 55;
-            //left picture ini file
-            string[] iniLines = { "/Leave this alone"
-                    , "#GroupICE          : all_gfx"
-                    , "/Leave this alone"
-                    ,"#Palette           : xlibc"
-                    ,"/image name"
-                    ,"#PNGImages         :"
-                    ,"Left"
-                    ,"/name of your output app var"
-                    ,"#AppvarICE         : "+Filename+"L"
-                    ,"#OutputHeader      : HDPICV2L"+FilenameEight
-                    ,"/same image name as above"
-                    ,"#PNGImages         :"
-                    ," Left"};
+           
+            //both picture's ini file
+            string[] iniLines = {"/Leave this alone",
+"#GroupPalette      : image_palette.png",
+"/put your image names here",
+"#PNGImages         :",
+ "Left",
+ "Right",
+
+"/Leave this alone",
+"#GroupICE          : gfx",
+"#Palette           : image_palette.png",
+"/Put your image names here (same as above)",
+"#PNGImages         :",
+ "Left",
+ "Right",
+
+"/name of your output app var (maximum of 8 characters)",
+"#AppvarICE         :" +Filename+"L",
+"/This will be at the very beginning of the app var (add underscores to the end to make the whole header 16 chars long)",
+"/Never change the FIRST 8 characters. The LAST 8 characters will be used as the image name in the program.",
+"#OutputHeader      : HDPICV2L"+FilenameEight,
+"#OutputPalettes    : gfx",
+"/Image name of LEFT image",
+"#PNGImages         :",
+ "Left",
+
+"/name of your output app var (maximum of 8 characters) (does not need to be the same as above)",
+"#AppvarICE         : "+Filename+"R",
+"/This will be at the very beginning of the app var (add underscores to the end to make the whole header 16 chars long)",
+"/Never change the FIRST 8 characters. The LAST 8 characters will be used as the image name in the program. (make sure it's the same as above)",
+"#OutputHeader      : HDPICV2R"+FilenameEight,
+"#OutputPalettes    : gfx",
+"/image name of RIGHT image",
+"#PNGImages         :",
+ "Right",
+
+"#AppvarICE         : "+Filename+"P",
+"#OutputHeader      : HDPALV1B"+FilenameEight,
+"#OutputPalettes    : gfx",
+"#PNGImages         :",
+"  image_palette.png"};
+
+
+
+
+            
             //saves the ini text and runs convpng
-            System.IO.File.WriteAllLines(AppDir+@"convpng.ini", iniLines);
-            Process.Start(AppDir + @"windows_convpng.exe");
-            if(!File.Exists(AppDir+Filename + "L.8xv"))
+            try
+            {
+                errorCode = 56;
+                System.IO.File.WriteAllLines(AppDir + @"convpng.ini", iniLines);
+                errorCode = 57;
+                Process.Start(AppDir + @"windows_convpng.exe");
+            }
+            catch (Exception e)
+            {
+                conversionFail = 1;
+                MessageBox.Show("Error! code: "+errorCode+ "\nMake sure you have windows_convpng.exe at the following directory: \n" + AppDir);
+
+                return;
+            }
+            
+            /*if(!File.Exists(AppDir+Filename + "L.8xv"))
             {
                 if (highQualityCrop == 1)
                 {
@@ -333,45 +389,9 @@ namespace HD_Picture_Converter_CE
                     return;
                 }
                 
-            }
+            }*/
 
-            errorCode = 56;
-            //right picture ini file
-            string[] iniLinesB = { "/Leave this alone"
-                    , "#GroupICE          : all_gfx"
-                    , "/Leave this alone"
-                    ,"#Palette           : xlibc"
-                    ,"/image name"
-                    ,"#PNGImages         :"
-                    ,"Right"
-                    ,"/name of your output app var"
-                    ,"#AppvarICE         : "+Filename+"R"
-                    ,"#OutputHeader      : HDPICV2R"+FilenameEight
-                    ,"/same image name as above"
-                    ,"#PNGImages         :"
-                    ," Right"};
-            //saves the ini text and runs convpng
-            System.IO.File.WriteAllLines(AppDir + @"convpng.ini", iniLinesB);
-            Process.Start(AppDir + @"windows_convpng.exe");
-            if (!File.Exists(AppDir + Filename + "R.8xv"))
-            {
-                if (highQualityCrop == 1)
-                {
-                    MessageBox.Show("Warning: Right Image too big, attempting to reduce quality.");
-                    highQualityCrop = 0;
-                    SaveCreate();
-                    //return;
-                }else
-                {
-                    conversionFail = 1;
-                    Console.WriteLine(errorCode);
-                    MessageBox.Show("Error: Could not convert right image! Try reducing image quality and try again.");
-                    return;
-                }
-                
-            }
-
-            errorCode = 59;
+            
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -381,7 +401,7 @@ namespace HD_Picture_Converter_CE
 
         private void SettingsButton_Click(object sender, EventArgs e)
         {
-            SettingsForum.Show();
+            //SettingsForum.Show();
             return;
         }
     }

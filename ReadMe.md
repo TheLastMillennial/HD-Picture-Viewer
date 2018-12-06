@@ -22,9 +22,7 @@ By TheLastMillennial
 - Open the HDpicConverter folder
 - Copy or save the two halves you just made to this folder.
 - Open the file "convpng.ini" with a text editor of your choice
-- Change the .ini file so it will convert your left image
-- Run convPNG.exe
-- Change the .ini file so it will convert your right image
+- Change the .ini file so it will convert your images
 - Run convPNG.exe
 - Send the converted .8xv files to your calculator
 
