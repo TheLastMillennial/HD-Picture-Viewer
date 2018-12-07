@@ -14,6 +14,7 @@
 1->SELECTEDPIC
 //this code resized the full image to thumbnail-size 
 DefineSprite(40,60->THUMBNAIL
+DefineSprite(160,320
 
 //Main loop
 While KEY!=15
@@ -34,8 +35,9 @@ sum(0)
 Alloc(9)->LPICNAME
 Alloc(9)->RPICNAME
 //palettes
-//Alloc(9)->LPICPAL
-//Alloc(9)->RPICPAL
+Alloc(9)->LPICPAL
+Alloc(9)->RPICPAL
+Alloc(256)->RPALNAME
  
 // Detect left half of the images
 0->LPOS
@@ -75,27 +77,30 @@ While Detect(^^oLPOS,"HDPICV2L"->LPIC
 			
 			//store right palette to mem
 			//get palette name
-			//Seek(7,0,RPICSLOT
+			//Seek(8,0,RPICSLOT
 			//Read(RPICPAL,7,1,RPICSLOT
 			//search for it
 			//0->RPALPOS
-			//While Detect(^^oRPALPOS,"Z"+RPICPAL->RPAL
-			//	Open(RPAL,"r")->RPALSLOT
-			//	Read(RPALNAME,256,1,RPALSLOT
-			//End
-			
-			//Now store the data pointer into L1
-			TOTALPICS+3->TOTALPICS
-            GetDataPtr(LPICSLOT)->L1(TOTALPICS
-			GetDataPtr(RPICSLOT)->L2(TOTALPICS
-			//gets name of the pictures
-			LPICNAME->L3(TOTALPICS
-			//gets size of the pictures
-			//GetSize(LPICSLOT)+GetSize(RPICSLOT)->L4(TOTALPICS
-			//dbd(0
-        End
- 
-        // Close the right half of the image
+			While Detect(^^oRPALPOS,"HDPALV1B"->RPAL
+				Open(RPAL,"r")->RPALSLOT
+				Seek(8,0,RPALSLOT
+				Read(RPALNAME,8,1,RPALSLOT
+				If not([Med]LPICNAME,RPALNAME
+					//Now store the data pointer into L1
+					TOTALPICS+3->TOTALPICS
+					
+            		GetDataPtr(LPICSLOT)->L1(TOTALPICS
+					GetDataPtr(RPICSLOT)->L2(TOTALPICS
+					GetDataPtr(RPALSLOT)->L3(TOTALPICS
+					//gets name of the pictures
+					LPICNAME->L4(TOTALPICS
+					//gets size of the pictures
+					//GetSize(LPICSLOT)+GetSize(RPICSLOT)->L5(TOTALPICS
+					//dbd(0
+				End				
+			End
+		End
+		// Close the right half of the image
 		Close(RPICSLOT
 	End
 	// Close the left half of the image
@@ -111,14 +116,21 @@ Return
 Lbl DISPTHUMB
 det(0
 
+
 //set up for text
 //normal text size
-	SetTextScale(1,1
-	//background text white
-	SetTextBGColor(255
-	//text black
-	SetTextFGColor(0
+SetTextScale(1,1
+//background text white
+SetTextBGColor(255
+//text black
+SetTextFGColor(0
 
+//if no pictures are detected
+If TOTALPICS=0
+	det(18," Warning: No Pictures Detected!",50,1
+End
+
+	
 //divides total pics by 3 to get the correct number of half-pictures detected
 //TOTALPICS/3->SIMPLETOTAL
 //initializes the I for the loop
@@ -131,7 +143,7 @@ While 6>=I and (I*3+18*PAGE)<=TOTALPICS
 	L1(I*3+18*PAGE)->LPIC
 	L2(I*3+18*PAGE)->RPIC
 	//image name
-	L3(I*3+18*PAGE)->HEADERTEXT
+	L4(I*3+18*PAGE)->HEADERTEXT
 	//image size
 	//L4(I*3+18*PAGE)->IMAGESIZE
 	//This is the math that determines where the image half will be placed
@@ -150,6 +162,11 @@ While 6>=I and (I*3+18*PAGE)<=TOTALPICS
 	//prints out the image name
 	PrintStringXY(HEADERTEXT,TEXTX,TEXTY
 	//PrintStringXY(IMAGESIZE,TEXTX,(TEXTY+10))
+
+	//[P_T] Otherwise you won't have enough memory allocated for the biggest zoom sprite
+//5:12:54 PM [#] [P_T] Set width and height of image using W->*{DATA} \ H->*{DATA+1} and use ScaleSprite(
+	//5:12:23 PM [#] [P_T] Then, loop like 20 times to scale and do this:
+
 	
 	//scales left half
 	ScaleSprite(LPIC,THUMBNAIL)
@@ -159,6 +176,8 @@ While 6>=I and (I*3+18*PAGE)<=TOTALPICS
 	ScaleSprite(RPIC,THUMBNAIL)
 	//displays right half
 	Sprite_NoClip(THUMBNAIL,RPICX,RPICY)
+	
+	
 	//increments I so the code doesn't keep displaying the same image
 	//dbd(0
 	I+1->I
@@ -225,7 +244,9 @@ While KEY!=15
 			//stores the picture selected the +6*PAGE accounts for multiple pages
 			L1(SELECTEDPIC*3+18*PAGE)->LPIC
 			L2(SELECTEDPIC*3+18*PAGE)->RPIC
+			L3(SELECTEDPIC*3+18*PAGE)->RPAL
 			det(5,0
+			det(4,RPAL,512,0
 			Sprite_NoClip(LPIC,0,0)
 			Sprite_NoClip(RPIC,*{LPIC},0)
 
@@ -255,7 +276,8 @@ While KEY!=15
 				If KEY
 					L1(SELECTEDPIC*3+18*PAGE)->LPIC
 					L2(SELECTEDPIC*3+18*PAGE)->RPIC
-					det(5,0
+						det(5,0
+						det(4,RPAL,512,0
 					Sprite_NoClip(LPIC,0,0)
 					Sprite_NoClip(RPIC,*{LPIC},0)
 				End
