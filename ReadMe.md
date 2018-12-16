@@ -1,7 +1,7 @@
 # High-Definition Picture Viewer
 *For the TI-84 Plus CE, TI-84 Plus CE -t, and TI-83 Premium CE*
 
-By TheLastMillennial
+By TheLastMillennial and the gracious help of Peter "PT_" Tillema
 
 
 ## To Use
@@ -54,4 +54,5 @@ Thank you to everyone who has helped me with this project!
 - _iPhoenix_
 - Iambian
 - SahilS
+- SM84CE
 

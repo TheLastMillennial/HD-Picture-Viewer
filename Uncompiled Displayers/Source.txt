@@ -27,7 +27,6 @@ While KEY!=15
 End
 Goto STOP
 
-
 Lbl DETECTPICS
 0->TOTALPICS
 sum(0)
@@ -37,14 +36,15 @@ Alloc(9)->RPICNAME
 //palettes
 Alloc(9)->LPICPAL
 Alloc(9)->RPICPAL
-Alloc(256)->RPALNAME
- 
-// Detect left half of the images
+
+Alloc(256)->PALNAME
+
 0->LPOS
-While Detect(^^oLPOS,"HDPICV2L"->LPIC
-    // Open the variable - we are sure it exists because it's detected
+
+While Detect(^^oLPOS,"HDPICV3L"->LPIC
+	// Open the variable - we are sure it exists because it's detected
     Open(LPIC,"r")->LPICSLOT
- 
+
 	//get palette to name
 	//Seek(7,0,LPICSLOT
 	//Read(LPICPAL,7,1,LPICSLOT
@@ -52,52 +52,53 @@ While Detect(^^oLPOS,"HDPICV2L"->LPIC
 	//0->LPALPOS
 	//While Detect(^^oLPALPOS,"Z"+LPICPAL->LPAL
 	//	Open(LPAL,"r")->LPALSLOT
+	
 	//	Read(LPALNAME,256,1,LPALSLOT
-
 	//End
+	
 		
 	// Write the name to the allocated memory
 	Seek(8,0,LPICSLOT
 	Alloc(9)->LPICNAME
-    Read(LPICNAME,8,1,LPICSLOT
+	Read(LPICNAME,8,1,LPICSLOT
 		
-    // Detect right half of the images
-    0->RPOS
-    While Detect(^^oRPOS,"HDPICV2R"->RPIC
+	// Detect right half of the images
+	0->RPOS
+	While Detect(^^oRPOS,"HDPICV3R"->RPIC
         // Open the variable - we are sure it exists because it's detected
-        Open(RPIC,"r"->RPICSLOT
- 
+		Open(RPIC,"r"->RPICSLOT
+
 		// Write the name
 		Seek(8,0,RPICSLOT
-        Read(RPICNAME,8,1,RPICSLOT
-		
+		Read(RPICNAME,8,1,RPICSLOT
+
 		// Compare names compare returns 0 if true
 		If not([Med]LPICNAME,RPICNAME
-			// Yay, they matched! 
-			
+			// Yay, they matched!			
 			//store right palette to mem
 			//get palette name
 			//Seek(8,0,RPICSLOT
 			//Read(RPICPAL,7,1,RPICSLOT
 			//search for it
-			//0->RPALPOS
-			While Detect(^^oRPALPOS,"HDPALV1B"->RPAL
-				Open(RPAL,"r")->RPALSLOT
-				Seek(8,0,RPALSLOT
-				Read(RPALNAME,8,1,RPALSLOT
-				If not([Med]LPICNAME,RPALNAME
+			0->PALPOS
+			While Detect(^^oPALPOS,"HDPALV1B"->PAL
+				Open(PAL,"r")->PALSLOT
+				Seek(8,0,PALSLOT
+				Read(PALNAME,8,1,PALSLOT
+				If not([Med]LPICNAME,PALNAME
 					//Now store the data pointer into L1
 					TOTALPICS+3->TOTALPICS
 					
             		GetDataPtr(LPICSLOT)->L1(TOTALPICS
 					GetDataPtr(RPICSLOT)->L2(TOTALPICS
-					GetDataPtr(RPALSLOT)->L3(TOTALPICS
+					GetDataPtr(PALSLOT)->L3(TOTALPICS
 					//gets name of the pictures
 					LPICNAME->L4(TOTALPICS
 					//gets size of the pictures
-					//GetSize(LPICSLOT)+GetSize(RPICSLOT)->L5(TOTALPICS
+					//GetSize(LPICSLOT)+GetSize(RPICSLOT)->L5(TOTALPICS		
 					//dbd(0
-				End				
+										
+				End
 			End
 		End
 		// Close the right half of the image
@@ -111,6 +112,29 @@ End
 Return
 //go back to the main loop
 
+
+//NOTES FOR NEW THUMBNAIL ROUTINE
+//[MateoC] Each pixel is given 3 color components, known as red (R), green (G), and blue (B)
+//[MateoC] On the CE, these are derived from a palette. An image has a palette, and the screen has a different palette.
+//[MateoC] What we want to do is make the colors in the image palette match as close as possible to the screen palette
+//[MateoC] This is so the colors look good when different images are using different palettes
+//[MateoC] In your case, the xlib palette is the screen palette 
+//[MateoC] Now, for every pixel in the image, we grab the palette entry associated with it
+//[MateoC] Images are stored in bytes, so if a byte is 2, it means it is using entry 2 of the palette (starting from 0)
+//[MateoC] Palette entries are 16 bits, formatted as 1555
+//[MateoC] This means that 1 bit green, 5 bits red, 5 bits green, 5 bits blue
+//[Runer112] (that's not what it's supposed to mean, but that's what it does mean for the CE)
+//[MateoC] The 1 bit green actually is a part of the 5 bits green, resulting in a 565 r,g,b color 
+//[MateoC] So what we do is we get each component of red, blue, and green into variables. We'll call them R1, G1, B1
+//[MateoC] Now, we have to search the screen (xlib) palette for a color that matches best these R1, G1, B1 values
+//[MateoC] Starting at the first entry in the palette, we get the color components for the xlib color. We'll call this R2, G2, B2
+//[MateoC] Now, we use a fancy thing called the Euclidean distance between these two colors. It's a straightforward formula that looks like this:
+//sqrt((R1 -R2)^2 + (G1 - G2)^2 + (B1 - B2)^2)
+//[MateoC] Then we loop through the screen palette for every R2, G2, and B2 color, and whichever one results in the smallest Euclidean distance is the palette entry we use, and draw to the screen
+//[MateoC] So if the original image's pixel is 2, we rewrite it to the screen as a different value which matches the palette entry
+//[MateoC] Okay I'm done
+
+//[TLM] So you're taking the custom palette and trying to substitute it for a standard palette.
 
 //displays thumbnails
 Lbl DISPTHUMB
@@ -130,7 +154,6 @@ If TOTALPICS=0
 	det(18," Warning: No Pictures Detected!",50,1
 End
 
-	
 //divides total pics by 3 to get the correct number of half-pictures detected
 //TOTALPICS/3->SIMPLETOTAL
 //initializes the I for the loop
@@ -142,8 +165,11 @@ While 6>=I and (I*3+18*PAGE)<=TOTALPICS
 	//This stores the pic data for the halves into L and RPIC
 	L1(I*3+18*PAGE)->LPIC
 	L2(I*3+18*PAGE)->RPIC
+	L3(SELECTEDPIC*3+18*PAGE)->PAL
 	//image name
 	L4(I*3+18*PAGE)->HEADERTEXT
+	//sets the palette for the thumbnail
+	det(4,PAL,512,0
 	//image size
 	//L4(I*3+18*PAGE)->IMAGESIZE
 	//This is the math that determines where the image half will be placed
@@ -163,6 +189,7 @@ While 6>=I and (I*3+18*PAGE)<=TOTALPICS
 	PrintStringXY(HEADERTEXT,TEXTX,TEXTY
 	//PrintStringXY(IMAGESIZE,TEXTX,(TEXTY+10))
 
+	//This is notes for a future palette
 	//[P_T] Otherwise you won't have enough memory allocated for the biggest zoom sprite
 //5:12:54 PM [#] [P_T] Set width and height of image using W->*{DATA} \ H->*{DATA+1} and use ScaleSprite(
 	//5:12:23 PM [#] [P_T] Then, loop like 20 times to scale and do this:
@@ -179,9 +206,11 @@ While 6>=I and (I*3+18*PAGE)<=TOTALPICS
 	
 	
 	//increments I so the code doesn't keep displaying the same image
-	//dbd(0
 	I+1->I
 End
+//makes sure the rest of the graphics aren't effected by the custom palettes
+det(3)
+
 // end of While loop
 Return
 
@@ -235,6 +264,7 @@ While KEY!=15
 		If KEY=53 or KEY=49
 			(KEY=49 and PAGE<(TOTALPICS/18))-(KEY=53 and PAGE>0)+PAGE->PAGE
 			Call DISPTHUMB
+			det(3
 		End
 		
 		//if enter was pressed
@@ -244,9 +274,9 @@ While KEY!=15
 			//stores the picture selected the +6*PAGE accounts for multiple pages
 			L1(SELECTEDPIC*3+18*PAGE)->LPIC
 			L2(SELECTEDPIC*3+18*PAGE)->RPIC
-			L3(SELECTEDPIC*3+18*PAGE)->RPAL
+			L3(SELECTEDPIC*3+18*PAGE)->PAL
 			det(5,0
-			det(4,RPAL,512,0
+			det(4,PAL,512,0
 			Sprite_NoClip(LPIC,0,0)
 			Sprite_NoClip(RPIC,*{LPIC},0)
 
@@ -276,8 +306,9 @@ While KEY!=15
 				If KEY
 					L1(SELECTEDPIC*3+18*PAGE)->LPIC
 					L2(SELECTEDPIC*3+18*PAGE)->RPIC
+					L3(SELECTEDPIC*3+18*PAGE)->PAL
 						det(5,0
-						det(4,RPAL,512,0
+						det(4,PAL,512,0
 					Sprite_NoClip(LPIC,0,0)
 					Sprite_NoClip(RPIC,*{LPIC},0)
 				End
@@ -286,6 +317,7 @@ While KEY!=15
 			//restores selected pic so the selector will open the correct pic
 			ORIGSELECTED->SELECTEDPIC
 			Call DISPTHUMB
+			det(3
 			//makes sure the program wont quit
 			0->KEY
 		End
