@@ -15,6 +15,20 @@ By TheLastMillennial and the gracious help of Peter "PT_" Tillema
 - Use [clear] to exit an image and to quit the program
 
 ### Custom images
+#### Using the Converter:
+- Choose the image you want to convert
+- Make the image at most 320 pixels wide and 240 pixels tall
+- Turn the image into a .png
+- Open the HDpicConverter folder
+- Run HD Picture Converter CE.exe (Make sure you have Wine if you are NOT on Windows)
+- Click 'Open File'
+- Navigate to, and select the image you want to convert
+- Click 'Open'
+- If an error occures, read the output and report it to TheLastMillennial on Cemetech.net Then try Manual Conversion
+- If no errors occur, click on 'Open Folder'
+- Send the converted .8xv files to your calculator
+
+#### Manual Conversion:
 - Choose the image you want to convert
 - Make the image at most 320 pixels wide and 240 pixels tall
 - Turn the image into a .png
@@ -27,9 +41,9 @@ By TheLastMillennial and the gracious help of Peter "PT_" Tillema
 - Send the converted .8xv files to your calculator
 
 
-## Programs (only needed if you are compiling the source code)
-
-[ICE Compiler](http://cemete.ch/DL1481)
+## Programs 
+[ICE Compiler](http://cemete.ch/DL1481) (only needed if you are compiling the source code)
+[Wine](https://www.winehq.org/) (Only needed if you are on Mac or Linux)
 
 ## Changelog
 
