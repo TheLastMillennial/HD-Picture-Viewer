@@ -24,7 +24,8 @@ By TheLastMillennial and the gracious help of Peter "PT_" Tillema
 - Click 'Open File'
 - Navigate to, and select the image you want to convert
 - Click 'Open'
-- If an error occures, read the output and report it to TheLastMillennial on Cemetech.net Then try Manual Conversion
+- If an error occurs, read and report the output to TheLastMillennial on Cemetech.net
+- If an error occurs, attempt Manual Conversion as shown below
 - If no errors occur, click on 'Open Folder'
 - Send the converted .8xv files to your calculator
 
@@ -34,7 +35,7 @@ By TheLastMillennial and the gracious help of Peter "PT_" Tillema
 - Turn the image into a .png
 - Take that image and split into two halfs; a left half and a right half. (Each half should be at most 160 pixels wide and 240 pixels tall.)
 - Open the HDpicConverter folder
-- Copy or save the two halves you just made to this folder.
+- Copy or save the two halves you just made to this folder
 - Open the file "convpng.ini" with a text editor of your choice
 - Change the .ini file so it will convert your images
 - Run convPNG.exe
@@ -42,8 +43,8 @@ By TheLastMillennial and the gracious help of Peter "PT_" Tillema
 
 
 ## Programs 
-[ICE Compiler](http://cemete.ch/DL1481) (only needed if you are compiling the source code)
-[Wine](https://www.winehq.org/) (Only needed if you are on Mac or Linux)
+- [ICE Compiler](http://cemete.ch/DL1481) (only needed if you are compiling the source code)
+- [Wine](https://www.winehq.org/) (Only needed if you are on Mac or Linux)
 
 ## Changelog
 
