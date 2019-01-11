@@ -43,20 +43,7 @@ Alloc(256)->PALNAME
 
 While Detect(^^oLPOS,"HDPICV3L"->LPIC
 	// Open the variable - we are sure it exists because it's detected
-    Open(LPIC,"r")->LPICSLOT
-
-	//get palette to name
-	//Seek(7,0,LPICSLOT
-	//Read(LPICPAL,7,1,LPICSLOT
-	//search for it
-	//0->LPALPOS
-	//While Detect(^^oLPALPOS,"Z"+LPICPAL->LPAL
-	//	Open(LPAL,"r")->LPALSLOT
-	
-	//	Read(LPALNAME,256,1,LPALSLOT
-	//End
-	
-		
+    Open(LPIC,"r")->LPICSLOT	
 	// Write the name to the allocated memory
 	Seek(8,0,LPICSLOT
 	Alloc(9)->LPICNAME
@@ -74,7 +61,7 @@ While Detect(^^oLPOS,"HDPICV3L"->LPIC
 
 		// Compare names compare returns 0 if true
 		If not([Med]LPICNAME,RPICNAME
-			// Yay, they matched!			
+			// Yay, they matched!
 			//store right palette to mem
 			//get palette name
 			//Seek(8,0,RPICSLOT
@@ -99,6 +86,7 @@ While Detect(^^oLPOS,"HDPICV3L"->LPIC
 					//dbd(0
 										
 				End
+				Close(PALSLOT
 			End
 		End
 		// Close the right half of the image
@@ -114,17 +102,6 @@ Return
 
 
 //NOTES FOR NEW THUMBNAIL ROUTINE
-//[MateoC] Each pixel is given 3 color components, known as red (R), green (G), and blue (B)
-//[MateoC] On the CE, these are derived from a palette. An image has a palette, and the screen has a different palette.
-//[MateoC] What we want to do is make the colors in the image palette match as close as possible to the screen palette
-//[MateoC] This is so the colors look good when different images are using different palettes
-//[MateoC] In your case, the xlib palette is the screen palette 
-//[MateoC] Now, for every pixel in the image, we grab the palette entry associated with it
-//[MateoC] Images are stored in bytes, so if a byte is 2, it means it is using entry 2 of the palette (starting from 0)
-//[MateoC] Palette entries are 16 bits, formatted as 1555
-//[MateoC] This means that 1 bit green, 5 bits red, 5 bits green, 5 bits blue
-//[Runer112] (that's not what it's supposed to mean, but that's what it does mean for the CE)
-//[MateoC] The 1 bit green actually is a part of the 5 bits green, resulting in a 565 r,g,b color 
 //[MateoC] So what we do is we get each component of red, blue, and green into variables. We'll call them R1, G1, B1
 //[MateoC] Now, we have to search the screen (xlib) palette for a color that matches best these R1, G1, B1 values
 //[MateoC] Starting at the first entry in the palette, we get the color components for the xlib color. We'll call this R2, G2, B2
