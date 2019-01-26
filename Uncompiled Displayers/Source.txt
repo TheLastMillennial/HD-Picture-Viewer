@@ -1,6 +1,9 @@
 [i]HDPICV
 [i]"99999999999999999BBBBBBBBBBBBBB99B999999999999B99B99999999BBB9B99B99999999BBB9B99B99999999BBB9B99B999999999999B99B999B99999999B99B99BBB9999999B99B9BBBBB999B99B99B9BBBBBB9BBB9B99B9BBBBBBBBBB9B99B999999999999B99BBBBBBBBBBBBBB99BBBBBBBBBBBBBB99999999999999999"
 [i]High Definition Picture Viewer                    By TLM
+//VERSION NUMBER
+"4.0.129"->VERSION
+
 //dbd(0
 //WARNING: the following code is so horrible, it crashed the ICE debugger and froze CEmu! :P
 0->APOS
@@ -12,14 +15,82 @@
 0->RECTX
 10->RECTY
 1->SELECTEDPIC
+
+" "->Str4
+"HDPICV3L"->Str1
+"HDPICV3R"->Str2
+"HDPALV1B"->Str3
+
 //this code resized the full image to thumbnail-size 
 DefineSprite(40,60->THUMBNAIL
-DefineSprite(160,320
+
+//Detects if a program is using this as a subprogram
+sum(0
+OpenVar(Data(1,|E72,0,0),"r",4)->ANSSLOT
+//Output(2,1,ANSSLOT
+//Pause 
+//detects if Ans succeeded to open
+If ANSSLOT!=0
+	//reads Ans to Str0	
+	Read(Str0,1,GetSize(ANSSLOT),ANSSLOT)
+	//closes Str0 off with a zero or something like that
+	0->*{Str0+GetSize(ANSSLOT
+	
+	//Output(1,1,Str0
+	//Pause 
+If not([Med]"HDPICV3",sub(Str0,0,7))
+	
+	sub(Str0,7,length(Str0)->Str4
+	//If length(Str0)<15
+		//makes sure name is correct length
+		
+		//For(I,length(Str0),15)
+		//	Str4+" "->Str4
+		//End
+	//End
+	//gets correct name to search for
+	"HDPICV3L"+Str4->Str1
+	"HDPICV3R"+Str4->Str2
+	"HDPALV1B"+Str4->Str3
+
+	//searches for that image
+	Call DETECTSOMEPICS
+
+	//if no pics detected, return 1 for error. If a pic detected, return 0 for sucess
+	dbd(0
+		det(0
+		L1(3)->LPIC
+		L2(3)->RPIC
+		L3(3)->PAL
+		det(5,0
+		det(4,PAL,512,0
+		Sprite_NoClip(LPIC,0,0)
+		Sprite_NoClip(RPIC,*{LPIC},0)
+		Pause 
+	If TOTALPICS=0
+		"2"->Str0
+	Else
+		
+		"0"->Str0
+	End
+	//returns to subprogram
+	Return
+			
+	End
+	//if it did fail to open
+Else
+	"1"->Str0
+
+End
+
+
+
+
 
 //Main loop
 While KEY!=15
 //detects images
-	Call DETECTPICS
+	Call DETECTALLPICS
 	//displays the thumbnails
 	Call DISPTHUMB
 	//loads the selection GUI
@@ -27,7 +98,16 @@ While KEY!=15
 End
 Goto STOP
 
-Lbl DETECTPICS
+Lbl DETECTALLPICS
+det(0
+det(18," Loading data...",60,1
+det(18,VERSION,230,1
+"HDPICV3L"->Str1
+"HDPICV3R"->Str2
+"HDPALV1B"->Str3
+
+Lbl DETECTSOMEPICS
+
 0->TOTALPICS
 sum(0)
 // Allocate memory for picture names
@@ -41,17 +121,18 @@ Alloc(256)->PALNAME
 
 0->LPOS
 
-While Detect(^^oLPOS,"HDPICV3L"->LPIC
+While Detect(^^oLPOS,Str1->LPIC
 	// Open the variable - we are sure it exists because it's detected
     Open(LPIC,"r")->LPICSLOT	
 	// Write the name to the allocated memory
 	Seek(8,0,LPICSLOT
 	Alloc(9)->LPICNAME
+	//FUTURE NOTE: you can read directly to a list (ex Read(L1,8,1,LPICSLOT) )
 	Read(LPICNAME,8,1,LPICSLOT
 		
 	// Detect right half of the images
 	0->RPOS
-	While Detect(^^oRPOS,"HDPICV3R"->RPIC
+	While Detect(^^oRPOS,Str2->RPIC
         // Open the variable - we are sure it exists because it's detected
 		Open(RPIC,"r"->RPICSLOT
 
@@ -68,7 +149,7 @@ While Detect(^^oLPOS,"HDPICV3L"->LPIC
 			//Read(RPICPAL,7,1,RPICSLOT
 			//search for it
 			0->PALPOS
-			While Detect(^^oPALPOS,"HDPALV1B"->PAL
+			While Detect(^^oPALPOS,Str3->PAL
 				Open(PAL,"r")->PALSLOT
 				Seek(8,0,PALSLOT
 				Read(PALNAME,8,1,PALSLOT
@@ -83,9 +164,8 @@ While Detect(^^oLPOS,"HDPICV3L"->LPIC
 					LPICNAME->L4(TOTALPICS
 					//gets size of the pictures
 					//GetSize(LPICSLOT)+GetSize(RPICSLOT)->L5(TOTALPICS		
-					//dbd(0
-										
 				End
+				//Closes the palette
 				Close(PALSLOT
 			End
 		End
