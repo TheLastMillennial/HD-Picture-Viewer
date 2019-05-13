@@ -14,9 +14,9 @@ using System.Drawing.Drawing2D;
 
 namespace HD_Picture_Converter_CE
 {
-    public partial class Form1 : Form
+    public partial class ConvertBox : Form
     {
-        public Form1()
+        public ConvertBox()
         {
             InitializeComponent();
         }
@@ -25,13 +25,16 @@ namespace HD_Picture_Converter_CE
         private Size OriginalImageSize;
         private Size ModifiedImageSize;
         private Settings SettingsForum;
-        
+
+        int imagesToConvert=0;
+        int imagesConverted=0;
         int cropWidth;
         int cropHeight;
         int errorCode = 0;
         int highQualityCrop=1;
         int conversionFail = 0;
         double AspectRatio;
+        
 
         //double ratioX;
         //double ratioY;
@@ -50,33 +53,60 @@ namespace HD_Picture_Converter_CE
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            //InitializeOpenFileDialog();
             LogBox.Text = "Open an image to convert!";
+        }
+
+        private void InitializeOpenFileDialog()
+        {
+            progressBar1.Value = 0;
+            //filters out all images but png
+            this.openFileDialog1.Filter = "Images (*.PNG)|*.PNG|" +
+                                            "All files (*.*)|*.*";
+            this.openFileDialog1.Title = "Select image";
+
+            //  Allow the user to select multiple images.
+            this.openFileDialog1.Multiselect = true;
+            //                   ^  ^  ^  ^  ^  ^  ^
+            
         }
 
         private void OpenButton_Click(object sender, EventArgs e)
         {
+            InitializeOpenFileDialog();
+            DialogResult Dlg = this.openFileDialog1.ShowDialog();
 
-            progressBar1.Value = 0;
-
-            OpenFileDialog Dlg = new OpenFileDialog();
-
-            Dlg.Filter = "";
-
-            Dlg.Title = "Select image";
-
-            if (Dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            //OpenFileDialog Dlg = new InitializeOpenFileDialog();
+            if (Dlg == System.Windows.Forms.DialogResult.OK)
             {
-                Img = Image.FromFile(Dlg.FileName);
-                Filename=Dlg.FileName;
-                Filename = Path.GetFileName(Filename);
+                foreach(String File in openFileDialog1.FileNames)
+                {
+                    imagesToConvert++;
+                    Img = Image.FromFile(File);
+                    Filename = Path.GetFileName(File);
+                    //loads the current image to be converted
+                    LoadImage();
+                    //detects if the image is the correct size
+                    ResizeImage();
+                    //does *something* important
+                    Crop();
+                    //saves the image as an appvar.
+                    SaveCreate();
+
+                    imagesConverted++;
+                }
                 
-                LoadImage();
             }
-            else
+            else if (Dlg != System.Windows.Forms.DialogResult.Cancel)
             {
+                MessageBox.Show("Error: Problem opening image!");
+                LogBox.Text = "Something is wrong with your image. Perhaps it is not a valid PNG or may be corrupted.";
+
                 return;
             }
-            LogBox.Text = "Resizing image...";
+            
+
+            /*LogBox.Text = "Resizing image...";
             progressBar1.Increment(25);
             if (OriginalImageSize.Width > 320 || OriginalImageSize.Height > 240)
             {
@@ -96,16 +126,19 @@ namespace HD_Picture_Converter_CE
             LogBox.Text = "Saving and running convPNG.exe";
             progressBar1.Increment(25);
             //saves images, creates new ini
-            SaveCreate();
-            progressBar1.Increment(25);
+            SaveCreate();*/
+           
+
             if (conversionFail == 0)
             {
-                LogBox.Text = "Finished! The image has been saved into 3 app vars: " + Filename + "R.8xv, " + Filename + "L.8xv, and "+Filename+"P.8xv. \nSend all 3 to your calculator and view the image with the HDpic program! \nYou can now open another image to convert!";
-                AdditionalLog.Text = "Image width: " + ModifiedImageSize.Width + " Image height: " + ModifiedImageSize.Height;
+                progressBar1.Value = 100;
+                LogBox.Text = "Finished! Sucessfuly converted "+imagesConverted+ " out of "+imagesToConvert+" selected images!\n Each converted image has been saved into 3 app vars. \nSend all " + 3*imagesConverted+" .8xv files to your TI-84 Plus CE and view the image with the HDpic program! \nYou can now open another image to convert!";
+                AdditionalLog.Text = "Image width: " + ModifiedImageSize.Width + " Image height: " + ModifiedImageSize.Height + " \nConverted "+imagesConverted+" images";
 
             }
             else
             {
+                
                 LogBox.Text = "Error, image could not be converted! \nIf you can't fix it yourself, please contact TheLastMillennial on Cemetech \nHere: www.ceme.tech/t14498";
                 AdditionalLog.Text = "Error code: " + errorCode;
                 conversionFail = 0;
@@ -133,6 +166,7 @@ namespace HD_Picture_Converter_CE
             //SetResizeInfo();
             errorCode = 19;
         }
+
         private void btnOk_Click(object sender, EventArgs e)
         {
             errorCode = 20;
@@ -159,40 +193,8 @@ namespace HD_Picture_Converter_CE
 
             try
             {
-                
-
-
                 ModifiedImageSize.Width = OriginalImageSize.Width;
                 ModifiedImageSize.Height = OriginalImageSize.Height;
-
-                /*
-                //AspectRatio = (double)OriginalImageSize.Width / (double)OriginalImageSize.Height;
-                //Console.WriteLine("AR: " + AspectRatio);
-                Bitmap OriginalImage = new Bitmap(LeftPictureBox.Image, LeftPictureBox.Width, LeftPictureBox.Height);
-                double ratioX = (double)320 / OriginalImageSize.Width;
-                double ratioY = (double)240 / OriginalImageSize.Height;
-                double ratio = Math.Min(ratioX, ratioY);
-                Console.WriteLine("Ratio: "+ratio);
-                ModifiedImageSize.Width = (int)(Img.Width * ratio);
-                ModifiedImageSize.Height = (int)(Img.Height * ratio);
-
-                Bitmap resizedImg = new Bitmap(ModifiedImageSize.Width, ModifiedImageSize.Height);
-
-                //using (var graphics = Graphics.FromImage(resizedImg))
-                    //graphics.DrawImage(OriginalImage, 0, 0, ModifiedImageSize.Width, ModifiedImageSize.Height);
-
-                
-                LeftPictureBox.Width = ModifiedImageSize.Width;
-                LeftPictureBox.Height = ModifiedImageSize.Height;
-                LeftPictureBox.Image = resizedImg;
-                
-                LeftPictureBox.Refresh();
-                MessageBox.Show("1");
-                
-                Console.WriteLine("H: " + ModifiedImageSize.Height.ToString());
-            Console.WriteLine("W: " + ModifiedImageSize.Width.ToString());
-                errorCode = 36;
-                */
 
             }
             catch (Exception)
@@ -205,6 +207,7 @@ namespace HD_Picture_Converter_CE
     }
         private void Crop()
         {
+            //this makes the image the correct dimensions by chopping off part of it? I didn't comment this very good. :(
             errorCode = 40;
             cropWidth = ModifiedImageSize.Width / 2;
             cropHeight = ModifiedImageSize.Height;
@@ -218,9 +221,6 @@ namespace HD_Picture_Converter_CE
             Bitmap _Limg = new Bitmap(cropWidth, cropHeight);
             Bitmap _Rimg = new Bitmap(cropWidth, cropHeight);
 
-            //crops?
-            //_Limg = new Bitmap(Lrect.Width, Lrect.Height);
-            //_Rimg = new Bitmap(Rrect.Width, Rrect.Height);
 
             using (Graphics g = Graphics.FromImage(_Limg))
             {
@@ -234,22 +234,6 @@ namespace HD_Picture_Converter_CE
             LeftPictureBox.Image = _Limg;
             RightPictureBox.Image = _Rimg;
 
-
-            //I dunno what this did anymore
-            /*LeftPictureBox.Image = _Limg;
-            LeftPictureBox.Width = _Limg.Width;
-            LeftPictureBox.Height = _Limg.Height;
-
-                System.Drawing.Imaging.PixelFormat format = _Rimg.PixelFormat;
-            Bitmap _Rimg2 = OriginalImage.Clone(Rrect, format);
-            
-            // Draw the cloned portion of the Bitmap object.
-            //Rg.DrawImage(_Rimg2, 0, 0);
-
-            RightPictureBox.Image = _Rimg2;
-            RightPictureBox.Width = _Rimg.Width;
-            RightPictureBox.Height = _Rimg.Height;
-            */
             BoxLocations();
             LeftPictureBox.Refresh();
             RightPictureBox.Refresh();
@@ -363,13 +347,15 @@ namespace HD_Picture_Converter_CE
                 errorCode = 56;
                 System.IO.File.WriteAllLines(AppDir + @"convpng.ini", iniLines);
                 errorCode = 57;
-                Process.Start(AppDir + @"windows_convpng.exe");
+                //starts the converter application and allows it 30 seconds to convert before erroring out
+                var convPNGrunning=Process.Start(AppDir + @"windows_convpng.exe");
+                convPNGrunning.WaitForExit(30000);
             }
             catch (Exception e)
             {
                 conversionFail = 1;
                 MessageBox.Show("Error! code: "+errorCode+ "\nMake sure you have windows_convpng.exe at the following directory: \n" + AppDir);
-
+                imagesConverted--;
                 return;
             }
             
@@ -394,6 +380,7 @@ namespace HD_Picture_Converter_CE
             
         }
 
+
         private void button1_Click(object sender, EventArgs e)
         {
             Process.Start(AppDomain.CurrentDomain.BaseDirectory);
@@ -403,6 +390,11 @@ namespace HD_Picture_Converter_CE
         {
             //SettingsForum.Show();
             return;
+        }
+
+        private void ContactLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://www.cemetech.net/forum/viewtopic.php?t=14498");
         }
     }
     
