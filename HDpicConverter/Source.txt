@@ -79,7 +79,12 @@ namespace HD_Picture_Converter_CE
             //OpenFileDialog Dlg = new InitializeOpenFileDialog();
             if (Dlg == System.Windows.Forms.DialogResult.OK)
             {
-                foreach(String File in openFileDialog1.FileNames)
+                //resets images to convert statistics 
+                imagesToConvert = 0;
+                imagesConverted = 0;
+
+                //loops through each image that was selected
+                foreach (String File in openFileDialog1.FileNames)
                 {
                     imagesToConvert++;
                     Img = Image.FromFile(File);
@@ -93,6 +98,7 @@ namespace HD_Picture_Converter_CE
                     //saves the image as an appvar.
                     SaveCreate();
 
+                    //increments sucessful images converted 
                     imagesConverted++;
                 }
                 
@@ -133,7 +139,7 @@ namespace HD_Picture_Converter_CE
             {
                 progressBar1.Value = 100;
                 LogBox.Text = "Finished! Sucessfuly converted "+imagesConverted+ " out of "+imagesToConvert+" selected images!\n Each converted image has been saved into 3 app vars. \nSend all " + 3*imagesConverted+" .8xv files to your TI-84 Plus CE and view the image with the HDpic program! \nYou can now open another image to convert!";
-                AdditionalLog.Text = "Image width: " + ModifiedImageSize.Width + " Image height: " + ModifiedImageSize.Height + " \nConverted "+imagesConverted+" images";
+                AdditionalLog.Text = "Image width: " + ModifiedImageSize.Width + " Image height: " + ModifiedImageSize.Height + " \nConverted "+imagesConverted+" image"+(imagesConverted==1 ? ".":"s.");
 
             }
             else
@@ -298,14 +304,18 @@ namespace HD_Picture_Converter_CE
             //both picture's ini file
             string[] iniLines = {"/Leave this alone",
 "#GroupPalette      : image_palette.png",
+"#FixedIndexColor   : 0,0,0,0",
+"#FixedIndexColor   : 1,255,255,255",
 "/put your image names here",
 "#PNGImages         :",
  "Left",
  "Right",
 
-"/Leave this alone",
+"/Leave the next 4 lines alone",
 "#GroupICE          : gfx",
 "#Palette           : image_palette.png",
+"#FixedIndexColor   : 0,0,0,0",
+"#FixedIndexColor   : 1,255,255,255",
 "/Put your image names here (same as above)",
 "#PNGImages         :",
  "Left",

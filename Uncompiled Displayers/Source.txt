@@ -1,19 +1,18 @@
 [i]HDPICV
 [i]"99999999999999999BBBBBBBBBBBBBB99B999999999999B99B99999999BBB9B99B99999999BBB9B99B99999999BBB9B99B999999999999B99B999B99999999B99B99BBB9999999B99B9BBBBB999B99B99B9BBBBBB9BBB9B99B9BBBBBBBBBB9B99B999999999999B99BBBBBBBBBBBBBB99BBBBBBBBBBBBBB99999999999999999"
 [i]High Definition Picture Viewer                    By TLM
-//VERSION NUMBER
-"4.0.129"->VERSION
 
 //dbd(0
 //WARNING: the following code is so horrible, it crashed the ICE debugger and froze CEmu! :P
 0->APOS
+1->I
 0->KEY
 0->PAGE
 0->TOTALPICS
 10->THUMBNAILX
 20->THUMBNAILY
-0->RECTX
-10->RECTY
+18->RECTX
+18->RECTY
 1->SELECTEDPIC
 
 " "->Str4
@@ -22,69 +21,7 @@
 "HDPALV1B"->Str3
 
 //this code resized the full image to thumbnail-size 
-DefineSprite(40,60->THUMBNAIL
-
-//Detects if a program is using this as a subprogram
-sum(0
-OpenVar(Data(1,|E72,0,0),"r",4)->ANSSLOT
-//Output(2,1,ANSSLOT
-//Pause 
-//detects if Ans succeeded to open
-If ANSSLOT!=0
-	//reads Ans to Str0	
-	Read(Str0,1,GetSize(ANSSLOT),ANSSLOT)
-	//closes Str0 off with a zero or something like that
-	0->*{Str0+GetSize(ANSSLOT
-	
-	//Output(1,1,Str0
-	//Pause 
-If not([Med]"HDPICV3",sub(Str0,0,7))
-	
-	sub(Str0,7,length(Str0)->Str4
-	//If length(Str0)<15
-		//makes sure name is correct length
-		
-		//For(I,length(Str0),15)
-		//	Str4+" "->Str4
-		//End
-	//End
-	//gets correct name to search for
-	"HDPICV3L"+Str4->Str1
-	"HDPICV3R"+Str4->Str2
-	"HDPALV1B"+Str4->Str3
-
-	//searches for that image
-	Call DETECTSOMEPICS
-
-	//if no pics detected, return 1 for error. If a pic detected, return 0 for sucess
-	dbd(0
-		det(0
-		L1(3)->LPIC
-		L2(3)->RPIC
-		L3(3)->PAL
-		det(5,0
-		det(4,PAL,512,0
-		Sprite_NoClip(LPIC,0,0)
-		Sprite_NoClip(RPIC,*{LPIC},0)
-		Pause 
-	If TOTALPICS=0
-		"2"->Str0
-	Else
-		
-		"0"->Str0
-	End
-	//returns to subprogram
-	Return
-			
-	End
-	//if it did fail to open
-Else
-	"1"->Str0
-
-End
-
-
-
+DefineSprite(100,150->THUMBNAIL
 
 
 //Main loop
@@ -101,7 +38,7 @@ Goto STOP
 Lbl DETECTALLPICS
 det(0
 det(18," Loading data...",60,1
-det(18,VERSION,230,1
+det(18,"4.0.1xx DEV",230,1
 "HDPICV3L"->Str1
 "HDPICV3R"->Str2
 "HDPALV1B"->Str3
@@ -141,7 +78,7 @@ While Detect(^^oLPOS,Str1->LPIC
 		Read(RPICNAME,8,1,RPICSLOT
 
 		// Compare names compare returns 0 if true
-		If not([Med]LPICNAME,RPICNAME
+		If not(Compare(LPICNAME,RPICNAME
 			// Yay, they matched!
 			//store right palette to mem
 			//get palette name
@@ -153,13 +90,25 @@ While Detect(^^oLPOS,Str1->LPIC
 				Open(PAL,"r")->PALSLOT
 				Seek(8,0,PALSLOT
 				Read(PALNAME,8,1,PALSLOT
-				If not([Med]LPICNAME,PALNAME
+				If not(Compare(LPICNAME,PALNAME
 					//Now store the data pointer into L1
 					TOTALPICS+3->TOTALPICS
 					
             		GetDataPtr(LPICSLOT)->L1(TOTALPICS
 					GetDataPtr(RPICSLOT)->L2(TOTALPICS
 					GetDataPtr(PALSLOT)->L3(TOTALPICS
+
+					det(0
+					L1(I*3)->LPIC
+					L2(I*3)->RPIC
+					L3(3)->PAL
+					det(5,0
+					det(4,PAL,512,0
+					Sprite_NoClip(LPIC,0,0)
+					Sprite_NoClip(RPIC,*{LPIC},0)
+					//Pause 
+					//"Test
+				
 					//gets name of the pictures
 					LPICNAME->L4(TOTALPICS
 					//gets size of the pictures
@@ -181,30 +130,16 @@ Return
 //go back to the main loop
 
 
-//NOTES FOR NEW THUMBNAIL ROUTINE
-//[MateoC] So what we do is we get each component of red, blue, and green into variables. We'll call them R1, G1, B1
-//[MateoC] Now, we have to search the screen (xlib) palette for a color that matches best these R1, G1, B1 values
-//[MateoC] Starting at the first entry in the palette, we get the color components for the xlib color. We'll call this R2, G2, B2
-//[MateoC] Now, we use a fancy thing called the Euclidean distance between these two colors. It's a straightforward formula that looks like this:
-//sqrt((R1 -R2)^2 + (G1 - G2)^2 + (B1 - B2)^2)
-//[MateoC] Then we loop through the screen palette for every R2, G2, and B2 color, and whichever one results in the smallest Euclidean distance is the palette entry we use, and draw to the screen
-//[MateoC] So if the original image's pixel is 2, we rewrite it to the screen as a different value which matches the palette entry
-//[MateoC] Okay I'm done
-
-//[TLM] So you're taking the custom palette and trying to substitute it for a standard palette.
-
 //displays thumbnails
 Lbl DISPTHUMB
 det(0
-
-
 //set up for text
 //normal text size
 SetTextScale(1,1
-//background text white
-SetTextBGColor(255
-//text black
-SetTextFGColor(0
+//background text black
+SetTextBGColor(0
+//text white
+SetTextFGColor(1
 
 //if no pictures are detected
 If TOTALPICS=0
@@ -217,121 +152,72 @@ End
 1->I
 //Loops until the screen has been filled with a max of 6 pictures (6>=I) or if there are no more pictures to display ((I*3)=<TOTALPICS)
 
-While 6>=I and (I*3+18*PAGE)<=TOTALPICS
-	//dbd(0
-	//This stores the pic data for the halves into L and RPIC
-	L1(I*3+18*PAGE)->LPIC
-	L2(I*3+18*PAGE)->RPIC
-	L3(SELECTEDPIC*3+18*PAGE)->PAL
-	//image name
-	L4(I*3+18*PAGE)->HEADERTEXT
-	//sets the palette for the thumbnail
-	det(4,PAL,512,0
-	//image size
-	//L4(I*3+18*PAGE)->IMAGESIZE
-	//This is the math that determines where the image half will be placed
-	//10 so there's some buffer between the image and edge of screen
-	//150 because the images need to have space between them,
-	//(remainder(I,2)=0)->LPICX This checks if the image should be placed on the left part of the screen or the right part (so they don't overlap) it stores the result into LPICX
-	//LPICX-20+*{LPIC}/2->RPICX This takes which part of the screen it should be on, and adds on some x space so the 2 halves are directly next to eachother.
-	75+90*not(remainder(I,2))->LPICX+40->RPICX
-	//70*((I-1)/2) This adds on 70 to the Y placement if the image is the third, through sixth image. This makes sure the images don't overlap. It stores the result in LPICY and RPICY since the Y values aren't different
-	10+70*((I-1)/2)->LPICY->RPICY
+//6>=I and (I*3+18*PAGE)<=TOTALPICS
 
-	
-	5+245*not(remainder(I,2))->TEXTX
-	12+70*((I-1)/2)->TEXTY
-
-	//prints out the image name
-	PrintStringXY(HEADERTEXT,TEXTX,TEXTY
-	//PrintStringXY(IMAGESIZE,TEXTX,(TEXTY+10))
-
-	//This is notes for a future palette
-	//[P_T] Otherwise you won't have enough memory allocated for the biggest zoom sprite
-//5:12:54 PM [#] [P_T] Set width and height of image using W->*{DATA} \ H->*{DATA+1} and use ScaleSprite(
-	//5:12:23 PM [#] [P_T] Then, loop like 20 times to scale and do this:
-
-	
-	//scales left half
-	ScaleSprite(LPIC,THUMBNAIL)
-	//displays left half
-	Sprite_NoClip(THUMBNAIL,LPICX,LPICY)
-	//scales right half
-	ScaleSprite(RPIC,THUMBNAIL)
-	//displays right half
-	Sprite_NoClip(THUMBNAIL,RPICX,RPICY)
-	
-	
-	//increments I so the code doesn't keep displaying the same image
-	I+1->I
-End
-//makes sure the rest of the graphics aren't effected by the custom palettes
-det(3)
-
-// end of While loop
-Return
-
-Lbl DIRECTIONS
 //sets color to black
 SetColor(0
-//makes a black bar at the bottom of the screen, options will be shown there
-FillRectangle_NoClip(0,225,320,15
+//makes a grey bar at the left of the screen, options will be shown there
+FillRectangle_NoClip(0,0,120,240
 
-//doubles text size
-SetTextScale(2,2
-//background black
-SetTextBGColor(0
-//text white
-SetTextFGColor(214
-PrintStringXY("<-",0,225
-PrintStringXY("-\>",294,225
+//displays the images text name (the var 'I' was initialized above)
+While 16>I and I*3<=TOTALPICS
+	{L4+I*3}->HEADERTEXT
+	//gets proper text position
+	20->TEXTX
+	5+15*I->TEXTY
+	
+	//prints out the image name
+	PrintStringXY(HEADERTEXT,TEXTX,TEXTY
+	I+1->I
+End
+// end of While loop
 Return
 
 //selection GUI
 Lbl SELECTOR
 
-//arrows GUI
-Call DIRECTIONS
+dbd(0
+//presets palette to 
+L3(SELECTEDPIC*3)->PAL
+det(4,PAL,512,0
 
-
-
-//SetColor(18
-//This code moves around the selection box
 While KEY!=15
 	getKey->KEY
-	//only exectued when a key is pressed
 	If KEY!=0
-		//sets color to white
-		SetColor(255
+		
+		//sets color to black
+		SetColor(0
 		//clears the rectangular selector
-		Rectangle_NoClip(RECTX,RECTY,155,60)
-		//detects if the left or right arrow keys are pressed and updates the rectangle coordinates
-		(((KEY=3) and (RECTX=0))-((KEY=2) and (RECTX=165)))->XPOS
-		165*XPOS+RECTX->RECTX
-		XPOS+SELECTEDPIC->SELECTEDPIC
-		
-		//detecs if the up or down arrow keys are pressed and updates the rectangle coordinates 
-		(((KEY=1) and (RECTY<150))-((KEY=4) and (RECTY>=80)))->YPOS
-		70*YPOS+RECTY->RECTY
-		YPOS*2+SELECTEDPIC->SELECTEDPIC
-		//sets color back to blue
-		SetColor(18
-		
-		//detects if y= or graph keys are pressed and changes PAGE accordingly
-		If KEY=53 or KEY=49
-			(KEY=49 and PAGE<(TOTALPICS/18))-(KEY=53 and PAGE>0)+PAGE->PAGE
-			Call DISPTHUMB
-			det(3
+		Rectangle_NoClip(RECTX,RECTY,70,12)
+		//detecs if the up or down arrow keys are pressed and updates the y postition of cursor accordingly
+		If (SELECTEDPIC*3)<(TOTALPICS+3) and (SELECTEDPIC>0)
+			(((KEY=1) and (RECTY<227))-((KEY=4) and (RECTY>18)))->YPOS
+			//updates the rectangle coordinates 
+			YPOS*15+RECTY->RECTY
+			//updates the picture selected
+			YPOS+SELECTEDPIC->SELECTEDPIC
+			//loads the thumbnail
+			L1(SELECTEDPIC*3)->LPIC
+			L2(SELECTEDPIC*3)->RPIC
+			L3(SELECTEDPIC*3)->PAL
+			det(4,PAL,512,0
+			ScaleSprite(LPIC,THUMBNAIL
+			Sprite_NoClip(THUMBNAIL,120,30)
+			ScaleSprite(RPIC,THUMBNAIL
+			Sprite_NoClip(THUMBNAIL,120+*{THUMBNAIL},30)
+			
 		End
 		
-		//if enter was pressed
-		If (KEY=9 or KEY=54) and SELECTEDPIC*3+18*PAGE<=TOTALPICS
+		//sets color back to white
+		SetColor(1
+		//-------
+		If (KEY=9 or KEY=54) and SELECTEDPIC*3<=TOTALPICS
 			//stores the selection into a restorer variable
 			SELECTEDPIC->ORIGSELECTED
 			//stores the picture selected the +6*PAGE accounts for multiple pages
-			L1(SELECTEDPIC*3+18*PAGE)->LPIC
-			L2(SELECTEDPIC*3+18*PAGE)->RPIC
-			L3(SELECTEDPIC*3+18*PAGE)->PAL
+			L1(SELECTEDPIC*3)->LPIC
+			L2(SELECTEDPIC*3)->RPIC
+			L3(SELECTEDPIC*3)->PAL
 			det(5,0
 			det(4,PAL,512,0
 			Sprite_NoClip(LPIC,0,0)
@@ -341,7 +227,7 @@ While KEY!=15
 			//Gets the correct picture that was selected into L and RPIC
 				getKey->KEY
 				//Broke
-				If (KEY=53 or KEY=2) and SELECTEDPIC+18*PAGE>1
+				If (KEY=53 or KEY=2 or KEY=4) and SELECTEDPIC>1
 					SELECTEDPIC-1->SELECTEDPIC
 					If remainder(SELECTEPIC,6)=0 and PAGE>0
 						PAGE-1->PAGE
@@ -349,8 +235,7 @@ While KEY!=15
 					End
 					
 				End
-
-				If (KEY=49 or KEY=3) and SELECTEDPIC*3+18*PAGE<TOTALPICS
+				If (KEY=49 or KEY=3 or KEY=1) and SELECTEDPIC*3<TOTALPICS
 					SELECTEDPIC+1->SELECTEDPIC
 					//dbd(0)
 					If remainder(SELECTEPIC,6)=0 and (PAGE<(TOTALPICS/3)/6)
@@ -358,35 +243,35 @@ While KEY!=15
 						SELECTEDPIC-6->SELECTEDPIC
 					End
 				End
-
 				//displays the picture
 				If KEY
-					L1(SELECTEDPIC*3+18*PAGE)->LPIC
-					L2(SELECTEDPIC*3+18*PAGE)->RPIC
-					L3(SELECTEDPIC*3+18*PAGE)->PAL
-						det(5,0
-						det(4,PAL,512,0
+					L1(SELECTEDPIC*3)->LPIC
+					L2(SELECTEDPIC*3)->RPIC
+					L3(SELECTEDPIC*3)->PAL
+					det(5,0
+					det(4,PAL,512,0
 					Sprite_NoClip(LPIC,0,0)
 					Sprite_NoClip(RPIC,*{LPIC},0)
 				End
-				
 			End
 			//restores selected pic so the selector will open the correct pic
 			ORIGSELECTED->SELECTEDPIC
 			Call DISPTHUMB
-			det(3
+			//det(3
 			//makes sure the program wont quit
 			0->KEY
 		End
-
-		//outputs arrows GUI
-		Call DIRECTIONS
+		//sets color to black
+		SetColor(0
+		//makes a grey bar at the left of the screen, options will be shown there
+		//FillRectangle(0,0,120,240
+		//------
 	End
+	//sets color to white
+	SetColor(1
 	//displays the rectangle selector
-	Rectangle_NoClip(RECTX,RECTY,155,60)
-	
+	Rectangle_NoClip(RECTX,RECTY,70,12)
 End
-//end of while loop
 
 Return
 //go back to main loop
