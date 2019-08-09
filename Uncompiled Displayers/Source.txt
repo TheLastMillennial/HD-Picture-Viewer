@@ -12,7 +12,7 @@
 10->THUMBNAILX
 20->THUMBNAILY
 18->RECTX
-18->RECTY
+2->RECTY
 1->SELECTEDPIC
 
 " "->Str4
@@ -29,16 +29,16 @@ While KEY!=15
 //detects images
 	Call DETECTALLPICS
 	//displays the thumbnails
-	Call DISPTHUMB
+	Call LOADTHUMB
 	//loads the selection GUI
 	Call SELECTOR
 End
 Goto STOP
 
 Lbl DETECTALLPICS
-det(0
-det(18," Loading data...",60,1
-det(18,"4.0.1xx DEV",230,1
+//det(0
+//det(18," Loading data...",60,1
+//det(18,"4.0.2xx DEV",230,1
 "HDPICV3L"->Str1
 "HDPICV3R"->Str2
 "HDPALV1B"->Str3
@@ -57,6 +57,16 @@ Alloc(9)->RPICPAL
 Alloc(256)->PALNAME
 
 0->LPOS
+
+det(0
+SetColor(255
+SetTextFGColor(0
+SetTextBGColor(255
+PrintStringXY("Loading, Images Found:",10,10
+PrintStringXY("By: TheLastMillennial 2019      Version: 4.0.208",10,227
+
+
+					
 
 While Detect(^^oLPOS,Str1->LPIC
 	// Open the variable - we are sure it exists because it's detected
@@ -98,14 +108,9 @@ While Detect(^^oLPOS,Str1->LPIC
 					GetDataPtr(RPICSLOT)->L2(TOTALPICS
 					GetDataPtr(PALSLOT)->L3(TOTALPICS
 
-					det(0
-					L1(I*3)->LPIC
-					L2(I*3)->RPIC
-					L3(3)->PAL
-					det(5,0
-					det(4,PAL,512,0
-					Sprite_NoClip(LPIC,0,0)
-					Sprite_NoClip(RPIC,*{LPIC},0)
+					FillRectangle_NoClip(170,10,20,15
+					SetTextXY(170,10
+					PrintInt(TOTALPICS/3,2
 					//Pause 
 					//"Test
 				
@@ -131,7 +136,7 @@ Return
 
 
 //displays thumbnails
-Lbl DISPTHUMB
+Lbl LOADTHUMB
 det(0
 //set up for text
 //normal text size
@@ -148,7 +153,7 @@ End
 
 //divides total pics by 3 to get the correct number of half-pictures detected
 //TOTALPICS/3->SIMPLETOTAL
-//initializes the I for the loop
+//initializes the I for the loop, it's the starting point
 1->I
 //Loops until the screen has been filled with a max of 6 pictures (6>=I) or if there are no more pictures to display ((I*3)=<TOTALPICS)
 
@@ -159,18 +164,51 @@ SetColor(0
 //makes a grey bar at the left of the screen, options will be shown there
 FillRectangle_NoClip(0,0,120,240
 
-//displays the images text name (the var 'I' was initialized above)
-While 16>I and I*3<=TOTALPICS
+Call DISPNAMES
+
+Return
+
+Lbl DISPNAMES
+//clears current names
+SetColor(0
+FillRectangle_NoClip(0,0,120,240
+SetTextFGColor(1
+SetTextBGColor(0
+//displays the images text name (the var 'I' was initialized above) the Y is for text positioning
+0->Y
+If I<1
+	1->I
+End
+	
+While (15+I-Y)>=I and I*3<=TOTALPICS
 	{L4+I*3}->HEADERTEXT
 	//gets proper text position
 	20->TEXTX
-	5+15*I->TEXTY
-	
+	4+15*Y->TEXTY
 	//prints out the image name
 	PrintStringXY(HEADERTEXT,TEXTX,TEXTY
 	I+1->I
+	Y+1->Y
 End
-// end of While loop
+Return
+
+Lbl DISPTHUMB
+L1(SELECTEDPIC*3)->LPIC
+L2(SELECTEDPIC*3)->RPIC
+L3(SELECTEDPIC*3)->PAL
+SetColor(0
+Rectangle_NoClip(120,0,200,120
+det(4,PAL,512,0
+ScaleSprite(LPIC,THUMBNAIL
+Sprite_NoClip(THUMBNAIL,120,45)
+ScaleSprite(RPIC,THUMBNAIL
+Sprite_NoClip(THUMBNAIL,120+*{THUMBNAIL},45)
+Return
+
+//sets palette to current selected pic palette
+Lbl SETPALETTE
+L3(SELECTEDPIC*3)->PAL
+det(4,PAL,512,0
 Return
 
 //selection GUI
@@ -178,36 +216,46 @@ Lbl SELECTOR
 
 dbd(0
 //presets palette to 
-L3(SELECTEDPIC*3)->PAL
-det(4,PAL,512,0
 
+Call DISPTHUMB
 While KEY!=15
 	getKey->KEY
 	If KEY!=0
-		
+		//SetDraw(1
 		//sets color to black
 		SetColor(0
 		//clears the rectangular selector
 		Rectangle_NoClip(RECTX,RECTY,70,12)
 		//detecs if the up or down arrow keys are pressed and updates the y postition of cursor accordingly
-		If (SELECTEDPIC*3)<(TOTALPICS+3) and (SELECTEDPIC>0)
-			(((KEY=1) and (RECTY<227))-((KEY=4) and (RECTY>18)))->YPOS
-			//updates the rectangle coordinates 
-			YPOS*15+RECTY->RECTY
+		If ((SELECTEDPIC*3)<TOTALPICS or ((SELECTEDPIC*3)=TOTALPICS and KEY=4)) and ((SELECTEDPIC>1) or (SELECTEDPIC=1 and KEY=1))
+			dbd(0
+			(KEY=1)-(KEY=4)->YPOS
+			//(((KEY=1) and (RECTY<227))-((KEY=4) and (RECTY>18)))->YPOS
+
 			//updates the picture selected
 			YPOS+SELECTEDPIC->SELECTEDPIC
-			//loads the thumbnail
-			L1(SELECTEDPIC*3)->LPIC
-			L2(SELECTEDPIC*3)->RPIC
-			L3(SELECTEDPIC*3)->PAL
-			det(4,PAL,512,0
-			ScaleSprite(LPIC,THUMBNAIL
-			Sprite_NoClip(THUMBNAIL,120,30)
-			ScaleSprite(RPIC,THUMBNAIL
-			Sprite_NoClip(THUMBNAIL,120+*{THUMBNAIL},30)
-			
+			//updates the rectangle coordinates 
+			YPOS*15+RECTY->RECTY
+			If RECTY>=227
+				227->RECTY
+				SELECTEDPIC-15->I
+				Call DISPNAMES
+			End
+			//checks if the box is at the top of the screen or is trying to move above top
+			If RECTY<=2 or I>500
+				2->RECTY
+				SELECTEDPIC-1->I
+				If I>500
+					1->I
+				End
+				
+				Call DISPNAMES
+			End
+
+			//displays the thumbnail
+			Call DISPTHUMB
 		End
-		
+		//SwapDraw
 		//sets color back to white
 		SetColor(1
 		//-------
@@ -229,19 +277,12 @@ While KEY!=15
 				//Broke
 				If (KEY=53 or KEY=2 or KEY=4) and SELECTEDPIC>1
 					SELECTEDPIC-1->SELECTEDPIC
-					If remainder(SELECTEPIC,6)=0 and PAGE>0
-						PAGE-1->PAGE
-						SELECTEDPIC+6->SELECTEDPIC
-					End
+					
 					
 				End
 				If (KEY=49 or KEY=3 or KEY=1) and SELECTEDPIC*3<TOTALPICS
 					SELECTEDPIC+1->SELECTEDPIC
-					//dbd(0)
-					If remainder(SELECTEPIC,6)=0 and (PAGE<(TOTALPICS/3)/6)
-						PAGE+1->PAGE
-						SELECTEDPIC-6->SELECTEDPIC
-					End
+					
 				End
 				//displays the picture
 				If KEY
@@ -255,8 +296,10 @@ While KEY!=15
 				End
 			End
 			//restores selected pic so the selector will open the correct pic
-			ORIGSELECTED->SELECTEDPIC
+			//ORIGSELECTED->SELECTEDPIC
+			Call LOADTHUMB
 			Call DISPTHUMB
+			
 			//det(3
 			//makes sure the program wont quit
 			0->KEY
@@ -266,6 +309,7 @@ While KEY!=15
 		//makes a grey bar at the left of the screen, options will be shown there
 		//FillRectangle(0,0,120,240
 		//------
+		
 	End
 	//sets color to white
 	SetColor(1

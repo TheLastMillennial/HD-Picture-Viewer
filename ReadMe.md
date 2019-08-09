@@ -1,5 +1,5 @@
 # High-Definition Picture Viewer
-*For the TI-84 Plus CE, TI-84 Plus CE -t, and TI-83 Premium CE*
+*For the TI-84 Plus CE, TI-84 Plus CE -t, TI-83 Premium CE, and TI-83 Premium CE Edition Python*
 
 By TheLastMillennial and the help of Peter "PT_" Tillema
 
@@ -9,8 +9,7 @@ By TheLastMillennial and the help of Peter "PT_" Tillema
 - Send "HDPICV.8xp" and any converted image(s) to your calculator.
 - Run the program on your calculator. 
 - Refer to this troubleshooting video if you encounter any issues: https://www.youtube.com/watch?v=-TweNnHuFCQ
-- Use the arrow keys to select an image.
-- Use [y=] and [graph] to scroll through pages of images
+- Use the up and down arrow keys to select an image.
 - Use [enter] to open an image
 - Use [clear] to exit an image and to quit the program
 
@@ -21,12 +20,12 @@ By TheLastMillennial and the help of Peter "PT_" Tillema
 - Turn the image into a .png
 - Open the HDpicConverter folder
 - Run HD Picture Converter CE.exe (Make sure you have Wine if you are NOT on Windows)
-- Click 'Open File'
+- Click 'Open Images'
 - Navigate to, and select the image you want to convert
 - Click 'Open'
 - If an error occurs, read and report the output to TheLastMillennial on Cemetech.net
 - If an error occurs, attempt Manual Conversion as shown below
-- If no errors occur, click on 'Open Folder'
+- If no errors occur, click on 'Open Converted Images'
 - Send the converted .8xv files to your calculator
 
 #### Manual Conversion:
@@ -47,6 +46,13 @@ By TheLastMillennial and the help of Peter "PT_" Tillema
 - [Wine](https://www.winehq.org/) (Only needed if you are on Mac or Linux)
 
 ## Changelog
+
+### v4.0.208
+- Resdesigned GUI completely.
+- Improved image quality drastically.
+- Included image converter application.
+- Updated ReadMe.
+- Updated example images.
 
 ### v4.0.101
 - Added icon.
