@@ -3,8 +3,11 @@
 
 By TheLastMillennial and the help of Peter "PT_" Tillema
 
+## How To Use
+### Full Video Tutorial:
+- https://youtu.be/s1-g8oSueQg
 
-## To Use
+###: Text Tutorial:
 - Open the Compiled Displayers folder.
 - Send "HDPICV.8xp" and any converted image(s) to your calculator.
 - Run the program on your calculator. 
