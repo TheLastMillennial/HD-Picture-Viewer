@@ -79,6 +79,7 @@ namespace HD_Picture_Converter_CE
             //OpenFileDialog Dlg = new InitializeOpenFileDialog();
             if (Dlg == System.Windows.Forms.DialogResult.OK)
             {
+                progressBar1.Value = 25;
                 //resets images to convert statistics 
                 imagesToConvert = 0;
                 imagesConverted = 0;
@@ -86,28 +87,38 @@ namespace HD_Picture_Converter_CE
                 //loops through each image that was selected
                 foreach (String File in openFileDialog1.FileNames)
                 {
+                    
                     imagesToConvert++;
                     Img = Image.FromFile(File);
                     Filename = Path.GetFileName(File);
-                    //loads the current image to be converted
-                    LoadImage();
-                    //detects if the image is the correct size
-                    ResizeImage();
-                    //does *something* important
-                    Crop();
-                    //saves the image as an appvar.
-                    SaveCreate();
+                    //checks if the filename has a number as the first character
+                    if (char.IsDigit(Filename[0]))
+                    {
+                        LogBox.Text = "\""+Filename+ "\" Is not a valid name. Your image file name MUST start with a letter. Please rename the file and try again!";
+                        MessageBox.Show("Error: Invalid file name!");
+                    }
+                    else
+                    {
+                        //loads the current image to be converted
+                        LoadImage();
+                        //detects if the image is the correct size
+                        ResizeImage();
+                        //does *something* important
+                        Crop();
+                        //saves the image as an appvar.
+                        SaveCreate();
+                        //increments sucessful images converted 
+                        imagesConverted++;
+                    }
 
-                    //increments sucessful images converted 
-                    imagesConverted++;
+                    
                 }
                 
             }
             else if (Dlg != System.Windows.Forms.DialogResult.Cancel)
             {
-                MessageBox.Show("Error: Problem opening image!");
                 LogBox.Text = "Something is wrong with your image. Perhaps it is not a valid PNG or may be corrupted.";
-
+                MessageBox.Show("Error: Problem opening image!");
                 return;
             }
             
@@ -140,11 +151,9 @@ namespace HD_Picture_Converter_CE
                 progressBar1.Value = 100;
                 LogBox.Text = "Finished! Sucessfuly converted "+imagesConverted+ " out of "+imagesToConvert+" selected images!\n Each converted image has been saved into 3 app vars. \nSend all " + 3*imagesConverted+" .8xv files to your TI-84 Plus CE and view the image with the HDpic program! \nYou can now open another image to convert!";
                 AdditionalLog.Text = "Image width: " + ModifiedImageSize.Width + " Image height: " + ModifiedImageSize.Height + " \nConverted "+imagesConverted+" image"+(imagesConverted==1 ? ".":"s.");
-
             }
             else
             {
-                
                 LogBox.Text = "Error, image could not be converted! \nIf you can't fix it yourself, please contact TheLastMillennial on Cemetech \nHere: www.ceme.tech/t14498";
                 AdditionalLog.Text = "Error code: " + errorCode;
                 conversionFail = 0;
@@ -162,14 +171,7 @@ namespace HD_Picture_Converter_CE
             LeftPictureBox.Height = imgHeight;
             LeftPictureBox.Image = Img;
 
-            /*RightPictureBox.Image = Img;
-            RightPictureBox.Width = imgWidth;
-            RightPictureBox.Height = imgHeight;*/
-
-            //PictureBoxLocation();
             OriginalImageSize = new Size(imgWidth, imgHeight);
-
-            //SetResizeInfo();
             errorCode = 19;
         }
 
@@ -188,9 +190,6 @@ namespace HD_Picture_Converter_CE
             LeftPictureBox.Width = bm_dest.Width;
             LeftPictureBox.Height = bm_dest.Height;
 
-            
-
-            //PictureBoxLocation();
             errorCode = 29;
         }
 
@@ -349,7 +348,6 @@ namespace HD_Picture_Converter_CE
 
 
 
-
             
             //saves the ini text and runs convpng
             try
@@ -368,26 +366,7 @@ namespace HD_Picture_Converter_CE
                 imagesConverted--;
                 return;
             }
-            
-            /*if(!File.Exists(AppDir+Filename + "L.8xv"))
-            {
-                if (highQualityCrop == 1)
-                {
-                    highQualityCrop = 0;
-                    MessageBox.Show("Warning: Left Image too big, attempting to reduce quality.");
-                    SaveCreate();
-                    //return;
-                }else
-                {
-                    conversionFail = 1;
-                    Console.WriteLine(errorCode);
-                    MessageBox.Show("Error: Could not convert left image! Try reducing image quality and try again.");
-                    return;
-                }
-                
-            }*/
-
-            
+                       
         }
 
 
