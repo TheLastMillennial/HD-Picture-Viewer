@@ -28,17 +28,19 @@ DefineSprite(100,150->THUMBNAIL
 While KEY!=15
 //detects images
 	Call DETECTALLPICS
+	//draws to buffer
+	SetDraw(1
 	//displays the thumbnails
 	Call LOADTHUMB
+	If TOTALPICS=0
+		Goto STOP
+	End
 	//loads the selection GUI
 	Call SELECTOR
 End
 Goto STOP
 
 Lbl DETECTALLPICS
-//det(0
-//det(18," Loading data...",60,1
-//det(18,"4.0.2xx DEV",230,1
 "HDPICV3L"->Str1
 "HDPICV3R"->Str2
 "HDPALV1B"->Str3
@@ -63,10 +65,10 @@ SetColor(255
 SetTextFGColor(0
 SetTextBGColor(255
 PrintStringXY("Loading, Images Found:",10,10
-PrintStringXY("By: TheLastMillennial 2019      Version: 4.0.208",10,227
+PrintStringXY("By: TheLastMillennial 2019      Version: 4.0.2DEV",10,227
 
 
-					
+//bubble sort, heapsort, O(nlogn)				
 
 While Detect(^^oLPOS,Str1->LPIC
 	// Open the variable - we are sure it exists because it's detected
@@ -148,9 +150,22 @@ SetTextFGColor(1
 
 //if no pictures are detected
 If TOTALPICS=0
-	det(18," Warning: No Pictures Detected!",50,1
+	det(9,0
+	det(3
+	//background text black
+	SetTextBGColor(255
+	//text white
+	SetTextFGColor(192
+	det(18,"No Pictures Detected!",80,1
+	SetTextFGColor(0
+	det(18,"Convert some images and send them to your",5,11
+	det(18,"calculator using the HDp\ic converter!",5,21
+	det(18,"Tutorial:  https://youtu.be/s1-g8oSueQg",5,31
+	det(18,"Press any key to quit",80,41
+	While not(getKey
+	End
 End
-
+ReturnIf TOTALPICS=0
 //divides total pics by 3 to get the correct number of half-pictures detected
 //TOTALPICS/3->SIMPLETOTAL
 //initializes the I for the loop, it's the starting point
@@ -171,6 +186,9 @@ Return
 Lbl DISPNAMES
 //clears current names
 SetColor(0
+SetDraw(not(det(8
+FillRectangle_NoClip(0,0,120,240
+SetDraw(not(det(8
 FillRectangle_NoClip(0,0,120,240
 SetTextFGColor(1
 SetTextBGColor(0
@@ -185,8 +203,12 @@ While (15+I-Y)>=I and I*3<=TOTALPICS
 	//gets proper text position
 	20->TEXTX
 	4+15*Y->TEXTY
-	//prints out the image name
+	//prints out the image name, to make sure double buffering works, I have to display it on both buffers :(
+	SetDraw(not(det(8
 	PrintStringXY(HEADERTEXT,TEXTX,TEXTY
+	SetDraw(not(det(8
+	PrintStringXY(HEADERTEXT,TEXTX,TEXTY
+	
 	I+1->I
 	Y+1->Y
 End
@@ -196,6 +218,7 @@ Lbl DISPTHUMB
 L1(SELECTEDPIC*3)->LPIC
 L2(SELECTEDPIC*3)->RPIC
 L3(SELECTEDPIC*3)->PAL
+Call SETPALETTE
 SetColor(0
 Rectangle_NoClip(120,0,200,120
 det(4,PAL,512,0
@@ -216,24 +239,44 @@ Lbl SELECTOR
 
 dbd(0
 //presets palette to 
-
+//SetDraw(1
+//sets color to white
+SetColor(1
+//displays the rectangle selector
+Rectangle_NoClip(RECTX,RECTY,70,12)
 Call DISPTHUMB
+//----------NEW----------------
+SwapDraw
 While KEY!=15
 	getKey->KEY
 	If KEY!=0
-		//SetDraw(1
-		//sets color to black
-		SetColor(0
-		//clears the rectangular selector
-		Rectangle_NoClip(RECTX,RECTY,70,12)
+
 		//detecs if the up or down arrow keys are pressed and updates the y postition of cursor accordingly
 		If ((SELECTEDPIC*3)<TOTALPICS or ((SELECTEDPIC*3)=TOTALPICS and KEY=4)) and ((SELECTEDPIC>1) or (SELECTEDPIC=1 and KEY=1))
 			dbd(0
 			(KEY=1)-(KEY=4)->YPOS
-			//(((KEY=1) and (RECTY<227))-((KEY=4) and (RECTY>18)))->YPOS
 
 			//updates the picture selected
 			YPOS+SELECTEDPIC->SELECTEDPIC
+			
+			//sets color to black
+			SetColor(0
+			//clears the rectangular selector
+			SetDraw(0
+			Rectangle_NoClip(RECTX,RECTY,70,12)
+			SetDraw(1
+			If (SELECTEDPIC=2 or (SELECTEDPIC=(TOTALPICS/3)-1)
+					//sets color to black
+					SetColor(0
+					//clears the rectangular selector on top and bottom
+					Rectangle_NoClip(18,2,70,12)
+					Rectangle_NoClip(18,227,70,12)
+					SetDraw(not(det(8
+					Rectangle_NoClip(18,2,70,12)
+					Rectangle_NoClip(18,227,70,12)
+					SetDraw(not(det(8
+			End
+			
 			//updates the rectangle coordinates 
 			YPOS*15+RECTY->RECTY
 			If RECTY>=227
@@ -248,18 +291,18 @@ While KEY!=15
 				If I>500
 					1->I
 				End
-				
 				Call DISPNAMES
 			End
-
-			//displays the thumbnail
+			
 			Call DISPTHUMB
+			//sets color to white
+			SetColor(1
+			//displays rectangular selector
+			Rectangle_NoClip(RECTX,RECTY,70,12)
 		End
-		//SwapDraw
-		//sets color back to white
-		SetColor(1
-		//-------
-		If (KEY=9 or KEY=54) and SELECTEDPIC*3<=TOTALPICS
+		SwapDraw
+		//
+		If (KEY=9 or KEY=54)
 			//stores the selection into a restorer variable
 			SELECTEDPIC->ORIGSELECTED
 			//stores the picture selected the +6*PAGE accounts for multiple pages
@@ -270,19 +313,17 @@ While KEY!=15
 			det(4,PAL,512,0
 			Sprite_NoClip(LPIC,0,0)
 			Sprite_NoClip(RPIC,*{LPIC},0)
-
+			SwapDraw
+			
 			While KEY!=15
 			//Gets the correct picture that was selected into L and RPIC
 				getKey->KEY
-				//Broke
+					
 				If (KEY=53 or KEY=2 or KEY=4) and SELECTEDPIC>1
 					SELECTEDPIC-1->SELECTEDPIC
-					
-					
 				End
 				If (KEY=49 or KEY=3 or KEY=1) and SELECTEDPIC*3<TOTALPICS
 					SELECTEDPIC+1->SELECTEDPIC
-					
 				End
 				//displays the picture
 				If KEY
@@ -293,28 +334,22 @@ While KEY!=15
 					det(4,PAL,512,0
 					Sprite_NoClip(LPIC,0,0)
 					Sprite_NoClip(RPIC,*{LPIC},0)
+					SwapDraw
+					
 				End
 			End
 			//restores selected pic so the selector will open the correct pic
-			//ORIGSELECTED->SELECTEDPIC
+			ORIGSELECTED->SELECTEDPIC
 			Call LOADTHUMB
 			Call DISPTHUMB
 			
 			//det(3
 			//makes sure the program wont quit
 			0->KEY
+			
 		End
-		//sets color to black
-		SetColor(0
-		//makes a grey bar at the left of the screen, options will be shown there
-		//FillRectangle(0,0,120,240
-		//------
-		
+		Call DISPTHUMB
 	End
-	//sets color to white
-	SetColor(1
-	//displays the rectangle selector
-	Rectangle_NoClip(RECTX,RECTY,70,12)
 End
 
 Return

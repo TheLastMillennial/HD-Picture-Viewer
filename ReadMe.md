@@ -7,7 +7,7 @@ By TheLastMillennial and the help of Peter "PT_" Tillema
 ### Full Video Tutorial:
 - https://youtu.be/s1-g8oSueQg
 
-###: Text Tutorial:
+### Text Tutorial:
 - Open the Compiled Displayers folder.
 - Send "HDPICV.8xp" and any converted image(s) to your calculator.
 - Run the program on your calculator. 
@@ -76,6 +76,7 @@ Thank you to everyone who has helped me with this project!
 - Peter "PT_" Tillema
 - Beckadamtheinventor
 - _iPhoenix_
+- Hooloovoo
 - Runer112
 - Iambian
 - SahilS
