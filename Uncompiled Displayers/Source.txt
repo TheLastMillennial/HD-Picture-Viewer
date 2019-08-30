@@ -310,9 +310,9 @@ While KEY!=15
 			L2(SELECTEDPIC*3)->RPIC
 			L3(SELECTEDPIC*3)->PAL
 			det(5,0
-			det(4,PAL,512,0
 			Sprite_NoClip(LPIC,0,0)
 			Sprite_NoClip(RPIC,*{LPIC},0)
+			det(4,PAL,512,0
 			SwapDraw
 			
 			While KEY!=15
@@ -331,9 +331,10 @@ While KEY!=15
 					L2(SELECTEDPIC*3)->RPIC
 					L3(SELECTEDPIC*3)->PAL
 					det(5,0
-					det(4,PAL,512,0
+					
 					Sprite_NoClip(LPIC,0,0)
 					Sprite_NoClip(RPIC,*{LPIC},0)
+					det(4,PAL,512,0
 					SwapDraw
 					
 				End
