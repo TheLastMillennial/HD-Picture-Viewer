@@ -4,6 +4,9 @@
 
 //dbd(0
 //WARNING: the following code is so horrible, it crashed the ICE debugger and froze CEmu! :P
+//Sorts vat alphabetically
+Call SORTVAT
+
 0->APOS
 1->I
 0->KEY
@@ -14,6 +17,16 @@
 18->RECTX
 2->RECTY
 1->SELECTEDPIC
+//what element in L1 to search at
+3->ELEMENT
+//what char to search at, 0 is the beginning
+0->CHAR
+//current pic's ascii value
+0->CASCII
+//list string's ascii
+0->LASCII
+//this is used for pushing down the list
+TOTALPICS->NEXTPIC
 
 " "->Str4
 "HDPICV3L"->Str1
@@ -26,17 +39,17 @@ DefineSprite(100,150->THUMBNAIL
 
 //Main loop
 While KEY!=15
-//detects images
-	Call DETECTALLPICS
-	//draws to buffer
-	SetDraw(1
-	//displays the thumbnails
-	Call LOADTHUMB
-	If TOTALPICS=0
-		Goto STOP
-	End
-	//loads the selection GUI
-	Call SELECTOR
+  //detects images
+  Call DETECTALLPICS
+  //draws to buffer
+  SetDraw(1
+  //displays the thumbnails
+  Call LOADTHUMB
+  If TOTALPICS=0
+    Goto STOP
+  End
+  //loads the selection GUI
+  Call SELECTOR
 End
 Goto STOP
 
@@ -71,65 +84,65 @@ PrintStringXY("By: TheLastMillennial 2019      Version: 4.0.2DEV",10,227
 //bubble sort, heapsort, O(nlogn)				
 
 While Detect(^^oLPOS,Str1->LPIC
-	// Open the variable - we are sure it exists because it's detected
-    Open(LPIC,"r")->LPICSLOT	
-	// Write the name to the allocated memory
-	Seek(8,0,LPICSLOT
-	Alloc(9)->LPICNAME
-	//FUTURE NOTE: you can read directly to a list (ex Read(L1,8,1,LPICSLOT) )
-	Read(LPICNAME,8,1,LPICSLOT
-		
-	// Detect right half of the images
-	0->RPOS
-	While Detect(^^oRPOS,Str2->RPIC
-        // Open the variable - we are sure it exists because it's detected
-		Open(RPIC,"r"->RPICSLOT
-
-		// Write the name
-		Seek(8,0,RPICSLOT
-		Read(RPICNAME,8,1,RPICSLOT
-
-		// Compare names compare returns 0 if true
-		If not(Compare(LPICNAME,RPICNAME
-			// Yay, they matched!
-			//store right palette to mem
-			//get palette name
-			//Seek(8,0,RPICSLOT
-			//Read(RPICPAL,7,1,RPICSLOT
-			//search for it
-			0->PALPOS
-			While Detect(^^oPALPOS,Str3->PAL
-				Open(PAL,"r")->PALSLOT
-				Seek(8,0,PALSLOT
-				Read(PALNAME,8,1,PALSLOT
-				If not(Compare(LPICNAME,PALNAME
-					//Now store the data pointer into L1
-					TOTALPICS+3->TOTALPICS
-					
-            		GetDataPtr(LPICSLOT)->L1(TOTALPICS
-					GetDataPtr(RPICSLOT)->L2(TOTALPICS
-					GetDataPtr(PALSLOT)->L3(TOTALPICS
-
-					FillRectangle_NoClip(170,10,20,15
-					SetTextXY(170,10
-					PrintInt(TOTALPICS/3,2
-					//Pause 
-					//"Test
-				
-					//gets name of the pictures
-					LPICNAME->L4(TOTALPICS
-					//gets size of the pictures
-					//GetSize(LPICSLOT)+GetSize(RPICSLOT)->L5(TOTALPICS		
-				End
-				//Closes the palette
-				Close(PALSLOT
-			End
-		End
-		// Close the right half of the image
-		Close(RPICSLOT
-	End
-	// Close the left half of the image
-	Close(LPICSLOT
+  // Open the variable - we are sure it exists because it's detected
+  Open(LPIC,"r")->LPICSLOT	
+  // Write the name to the allocated memory
+  Seek(8,0,LPICSLOT
+  Alloc(9)->LPICNAME
+  //FUTURE NOTE: you can read directly to a list (ex Read(L1,8,1,LPICSLOT) )
+  Read(LPICNAME,8,1,LPICSLOT
+  
+  // Detect right half of the images
+  0->RPOS
+  While Detect(^^oRPOS,Str2->RPIC
+    // Open the variable - we are sure it exists because it's detected
+    Open(RPIC,"r"->RPICSLOT
+    
+    // Write the name
+    Seek(8,0,RPICSLOT
+    Read(RPICNAME,8,1,RPICSLOT
+    
+    // Compare names compare returns 0 if true
+    If not(Compare(LPICNAME,RPICNAME
+      // Yay, they matched!
+      //store right palette to mem
+      //get palette name
+      //Seek(8,0,RPICSLOT
+      //Read(RPICPAL,7,1,RPICSLOT
+      //search for it
+      0->PALPOS
+      While Detect(^^oPALPOS,Str3->PAL
+        Open(PAL,"r")->PALSLOT
+        Seek(8,0,PALSLOT
+        Read(PALNAME,8,1,PALSLOT
+        If not(Compare(LPICNAME,PALNAME
+          //Now store the data pointer into L1
+          TOTALPICS+3->TOTALPICS
+          
+          GetDataPtr(LPICSLOT)->L1(TOTALPICS
+          GetDataPtr(RPICSLOT)->L2(TOTALPICS
+          GetDataPtr(PALSLOT)->L3(TOTALPICS
+          
+          FillRectangle_NoClip(170,10,20,15
+          SetTextXY(170,10
+          PrintInt(TOTALPICS/3,2
+          //Pause 
+          //"Test
+          
+          //gets name of the pictures
+          LPICNAME->L4(TOTALPICS
+          //gets size of the pictures
+          //GetSize(LPICSLOT)+GetSize(RPICSLOT)->L5(TOTALPICS		
+        End
+        //Closes the palette
+        Close(PALSLOT
+      End
+    End
+    // Close the right half of the image
+    Close(RPICSLOT
+  End
+  // Close the left half of the image
+  Close(LPICSLOT
 End
 //end of Detect( LPIC
 
@@ -150,20 +163,20 @@ SetTextFGColor(1
 
 //if no pictures are detected
 If TOTALPICS=0
-	det(9,0
-	det(3
-	//background text black
-	SetTextBGColor(255
-	//text white
-	SetTextFGColor(192
-	det(18,"No Pictures Detected!",80,1
-	SetTextFGColor(0
-	det(18,"Convert some images and send them to your",5,11
-	det(18,"calculator using the HDp\ic converter!",5,21
-	det(18,"Tutorial:  https://youtu.be/s1-g8oSueQg",5,31
-	det(18,"Press any key to quit",80,41
-	While not(getKey
-	End
+  det(9,0
+  det(3
+  //background text black
+  SetTextBGColor(255
+  //text white
+  SetTextFGColor(192
+  det(18,"No Pictures Detected!",80,1
+  SetTextFGColor(0
+  det(18,"Convert some images and send them to your",5,11
+  det(18,"calculator using the HDp\ic converter!",5,21
+  det(18,"Tutorial:  https://youtu.be/s1-g8oSueQg",5,31
+  det(18,"Press any key to quit",80,41
+  While not(getKey
+  End
 End
 ReturnIf TOTALPICS=0
 //divides total pics by 3 to get the correct number of half-pictures detected
@@ -195,22 +208,22 @@ SetTextBGColor(0
 //displays the images text name (the var 'I' was initialized above) the Y is for text positioning
 0->Y
 If I<1
-	1->I
+  1->I
 End
-	
+
 While (15+I-Y)>=I and I*3<=TOTALPICS
-	{L4+I*3}->HEADERTEXT
-	//gets proper text position
-	20->TEXTX
-	4+15*Y->TEXTY
-	//prints out the image name, to make sure double buffering works, I have to display it on both buffers :(
-	SetDraw(not(det(8
-	PrintStringXY(HEADERTEXT,TEXTX,TEXTY
-	SetDraw(not(det(8
-	PrintStringXY(HEADERTEXT,TEXTX,TEXTY
-	
-	I+1->I
-	Y+1->Y
+  {L4+I*3}->HEADERTEXT
+  //gets proper text position
+  20->TEXTX
+  4+15*Y->TEXTY
+  //prints out the image name, to make sure double buffering works, I have to display it on both buffers :(
+  SetDraw(not(det(8
+  PrintStringXY(HEADERTEXT,TEXTX,TEXTY
+  SetDraw(not(det(8
+  PrintStringXY(HEADERTEXT,TEXTX,TEXTY
+  
+  I+1->I
+  Y+1->Y
 End
 Return
 
@@ -234,6 +247,24 @@ L3(SELECTEDPIC*3)->PAL
 det(4,PAL,512,0
 Return
 
+//thanks to calclover, mateo, and lax18 for this
+Lbl SORTVAT
+"FDCB21862A9D25D0CDDD31D1D0FDCB2146CA5831D1E5CD7931D1D1E52A0832D11815CD7931D1ED4B0B32D1B7E5ED42E1281401FAFFFF09E5D5CD8331D1D1E130E10106000009EB7EC60701060000094FED430E32D1ED531132D1D5E5B7ED52E1D12846E5112332D1EDB82A1132D1C1C5B7ED42E5C1E123E5ED5B0E32D1B7ED52EBE1EDB0212332D1ED4B0E32D1ED5B1132D1EDB82A0B32D1ED4B0E32D1B7ED42220B32D1E1C3AE30D1E1220B32D1C3AE30D1FDCB21C6220832D1CD7931D1220B32D1C3AE30D101FAFFFF09CD7931D1C3DD31D1010000004E0CB7ED42C9FDCB218EFDCB21962B1B06407EB830068077FDCB21CE1AB830068012FDCB21D6E5D52313461A0E00B8280430020C472B1B1ABE200C10F8D1E1CDC631D10DC03FC9D1E1F5FDCB214E28047ED64077FDCB215628041AD64012F1C9EB2A9A25D0B7ED52C8EB7EE61FE5210532D101030000EDB1E1C26C31D12B2B2B5E2B562B7E2B37C9050615"->SORTVAT
+Copy(|ED130A6,SORTVAT,354)
+Asm(CDA630D1)
+Return
+
+Lbl PUSHLIST
+While NEXTPIC>ELEMENT
+  L1(NEXTPIC)->L1(NEXTPIC+3)
+  L2(NEXTPIC)->L2(NEXTPIC+3)
+  L3(NEXTPIC)->L3(NEXTPIC+3)
+  L4(NEXTPIC)->L4(NEXTPIC+3)
+End
+Return
+
+
+
 //selection GUI
 Lbl SELECTOR
 
@@ -248,109 +279,109 @@ Call DISPTHUMB
 //----------NEW----------------
 SwapDraw
 While KEY!=15
-	getKey->KEY
-	If KEY!=0
-
-		//detecs if the up or down arrow keys are pressed and updates the y postition of cursor accordingly
-		If ((SELECTEDPIC*3)<TOTALPICS or ((SELECTEDPIC*3)=TOTALPICS and KEY=4)) and ((SELECTEDPIC>1) or (SELECTEDPIC=1 and KEY=1))
-			dbd(0
-			(KEY=1)-(KEY=4)->YPOS
-
-			//updates the picture selected
-			YPOS+SELECTEDPIC->SELECTEDPIC
-			
-			//sets color to black
-			SetColor(0
-			//clears the rectangular selector
-			SetDraw(0
-			Rectangle_NoClip(RECTX,RECTY,70,12)
-			SetDraw(1
-			If (SELECTEDPIC=2 or (SELECTEDPIC=(TOTALPICS/3)-1)
-					//sets color to black
-					SetColor(0
-					//clears the rectangular selector on top and bottom
-					Rectangle_NoClip(18,2,70,12)
-					Rectangle_NoClip(18,227,70,12)
-					SetDraw(not(det(8
-					Rectangle_NoClip(18,2,70,12)
-					Rectangle_NoClip(18,227,70,12)
-					SetDraw(not(det(8
-			End
-			
-			//updates the rectangle coordinates 
-			YPOS*15+RECTY->RECTY
-			If RECTY>=227
-				227->RECTY
-				SELECTEDPIC-15->I
-				Call DISPNAMES
-			End
-			//checks if the box is at the top of the screen or is trying to move above top
-			If RECTY<=2 or I>500
-				2->RECTY
-				SELECTEDPIC-1->I
-				If I>500
-					1->I
-				End
-				Call DISPNAMES
-			End
-			
-			Call DISPTHUMB
-			//sets color to white
-			SetColor(1
-			//displays rectangular selector
-			Rectangle_NoClip(RECTX,RECTY,70,12)
-		End
-		SwapDraw
-		//
-		If (KEY=9 or KEY=54)
-			//stores the selection into a restorer variable
-			SELECTEDPIC->ORIGSELECTED
-			//stores the picture selected the +6*PAGE accounts for multiple pages
-			L1(SELECTEDPIC*3)->LPIC
-			L2(SELECTEDPIC*3)->RPIC
-			L3(SELECTEDPIC*3)->PAL
-			det(5,0
-			Sprite_NoClip(LPIC,0,0)
-			Sprite_NoClip(RPIC,*{LPIC},0)
-			det(4,PAL,512,0
-			SwapDraw
-			
-			While KEY!=15
-			//Gets the correct picture that was selected into L and RPIC
-				getKey->KEY
-					
-				If (KEY=53 or KEY=2 or KEY=4) and SELECTEDPIC>1
-					SELECTEDPIC-1->SELECTEDPIC
-				End
-				If (KEY=49 or KEY=3 or KEY=1) and SELECTEDPIC*3<TOTALPICS
-					SELECTEDPIC+1->SELECTEDPIC
-				End
-				//displays the picture
-				If KEY
-					L1(SELECTEDPIC*3)->LPIC
-					L2(SELECTEDPIC*3)->RPIC
-					L3(SELECTEDPIC*3)->PAL
-					det(5,0
-					
-					Sprite_NoClip(LPIC,0,0)
-					Sprite_NoClip(RPIC,*{LPIC},0)
-					det(4,PAL,512,0
-					SwapDraw
-					
-				End
-			End
-			//restores selected pic so the selector will open the correct pic
-			ORIGSELECTED->SELECTEDPIC
-			Call LOADTHUMB
-			Call DISPTHUMB
-			
-			//det(3
-			//makes sure the program wont quit
-			0->KEY
-			
-		End
-		Call DISPTHUMB
-	End
+  getKey->KEY
+  If KEY!=0
+    
+    //detecs if the up or down arrow keys are pressed and updates the y postition of cursor accordingly
+    If ((SELECTEDPIC*3)<TOTALPICS or ((SELECTEDPIC*3)=TOTALPICS and KEY=4)) and ((SELECTEDPIC>1) or (SELECTEDPIC=1 and KEY=1))
+      dbd(0
+      (KEY=1)-(KEY=4)->YPOS
+      
+      //updates the picture selected
+      YPOS+SELECTEDPIC->SELECTEDPIC
+      
+      //sets color to black
+      SetColor(0
+      //clears the rectangular selector
+      SetDraw(0
+      Rectangle_NoClip(RECTX,RECTY,70,12)
+      SetDraw(1
+      If (SELECTEDPIC=2 or (SELECTEDPIC=(TOTALPICS/3)-1)
+        //sets color to black
+        SetColor(0
+        //clears the rectangular selector on top and bottom
+        Rectangle_NoClip(18,2,70,12)
+        Rectangle_NoClip(18,227,70,12)
+        SetDraw(not(det(8
+        Rectangle_NoClip(18,2,70,12)
+        Rectangle_NoClip(18,227,70,12)
+        SetDraw(not(det(8
+      End
+      
+      //updates the rectangle coordinates 
+      YPOS*15+RECTY->RECTY
+      If RECTY>=227
+        227->RECTY
+        SELECTEDPIC-15->I
+        Call DISPNAMES
+      End
+      //checks if the box is at the top of the screen or is trying to move above top
+      If RECTY<=2 or I>500
+        2->RECTY
+        SELECTEDPIC-1->I
+        If I>500
+          1->I
+        End
+        Call DISPNAMES
+      End
+      
+      Call DISPTHUMB
+      //sets color to white
+      SetColor(1
+      //displays rectangular selector
+      Rectangle_NoClip(RECTX,RECTY,70,12)
+    End
+    SwapDraw
+    //
+    If (KEY=9 or KEY=54)
+      //stores the selection into a restorer variable
+      SELECTEDPIC->ORIGSELECTED
+      //stores the picture selected the +6*PAGE accounts for multiple pages
+      L1(SELECTEDPIC*3)->LPIC
+      L2(SELECTEDPIC*3)->RPIC
+      L3(SELECTEDPIC*3)->PAL
+      det(5,0
+      Sprite_NoClip(LPIC,0,0)
+      Sprite_NoClip(RPIC,*{LPIC},0)
+      det(4,PAL,512,0
+      SwapDraw
+      
+      While KEY!=15
+        //Gets the correct picture that was selected into L and RPIC
+        getKey->KEY
+        
+        If (KEY=53 or KEY=2 or KEY=4) and SELECTEDPIC>1
+          SELECTEDPIC-1->SELECTEDPIC
+        End
+        If (KEY=49 or KEY=3 or KEY=1) and SELECTEDPIC*3<TOTALPICS
+          SELECTEDPIC+1->SELECTEDPIC
+        End
+        //displays the picture
+        If KEY
+          L1(SELECTEDPIC*3)->LPIC
+          L2(SELECTEDPIC*3)->RPIC
+          L3(SELECTEDPIC*3)->PAL
+          det(5,0
+          
+          Sprite_NoClip(LPIC,0,0)
+          Sprite_NoClip(RPIC,*{LPIC},0)
+          det(4,PAL,512,0
+          SwapDraw
+          
+        End
+      End
+      //restores selected pic so the selector will open the correct pic
+      ORIGSELECTED->SELECTEDPIC
+      Call LOADTHUMB
+      Call DISPTHUMB
+      
+      //det(3
+      //makes sure the program wont quit
+      0->KEY
+      
+    End
+    Call DISPTHUMB
+  End
 End
 
 Return

@@ -50,6 +50,11 @@ By TheLastMillennial and the help of Peter "PT_" Tillema
 
 ## Changelog
 
+### v4.0.256
+- First full release!
+- Added VAT sorting.
+- Fixed minor visual bugs.
+
 ### v4.0.208
 - Resdesigned GUI completely.
 - Improved image quality drastically.
@@ -75,6 +80,7 @@ Thank you to everyone who has helped me with this project!
 - Matt "MateoConLechuga" Waltz
 - Peter "PT_" Tillema
 - Beckadamtheinventor
+- calclover2514
 - _iPhoenix_
 - Hooloovoo
 - Runer112
