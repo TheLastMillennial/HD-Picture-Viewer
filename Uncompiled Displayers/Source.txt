@@ -4,12 +4,11 @@
 
 //dbd(0
 //WARNING: the following code is so horrible, it crashed the ICE debugger and froze CEmu! :P
-//Sorts vat alphabetically
-Call SORTVAT
-
 0->APOS
 1->I
 0->KEY
+//records how long a key was pressed
+0->KEYP
 0->PAGE
 0->TOTALPICS
 10->THUMBNAILX
@@ -27,6 +26,11 @@ Call SORTVAT
 0->LASCII
 //this is used for pushing down the list
 TOTALPICS->NEXTPIC
+0->ZOOM
+0->ZOOMX
+0->ZOOMY
+//speed of zoom panning
+1->ZOOMS
 
 " "->Str4
 "HDPICV3L"->Str1
@@ -63,34 +67,40 @@ Lbl DETECTSOMEPICS
 0->TOTALPICS
 sum(0)
 // Allocate memory for picture names
-Alloc(9)->LPICNAME
-Alloc(9)->RPICNAME
+Alloc(10)->LPICNAME
+Alloc(10)->RPICNAME
 //palettes
-Alloc(9)->LPICPAL
-Alloc(9)->RPICPAL
+Alloc(10)->LPICPAL
+Alloc(10)->RPICPAL
 
 Alloc(256)->PALNAME
 
-0->LPOS
+
 
 det(0
 SetColor(255
 SetTextFGColor(0
 SetTextBGColor(255
-PrintStringXY("Loading, Images Found:",10,10
-PrintStringXY("By: TheLastMillennial 2019      Version: 4.0.2DEV",10,227
+PrintStringXY("By: TheLastMillennial 2019      Version: 4.0.DEV",10,227
+PrintStringXY("Sorting VAT.\.\. (This may take a while)",10,10
+//sorts vat alphabetically
+//Call SORTVAT
+FillRectangle_NoClip(10,10,320,15
+PrintStringXY("VAT sorted!",10,10
+PrintStringXY("Loading, Images Found:",10,22
+
 
 
 //bubble sort, heapsort, O(nlogn)				
-
+0->LPOS
 While Detect(^^oLPOS,Str1->LPIC
   // Open the variable - we are sure it exists because it's detected
   Open(LPIC,"r")->LPICSLOT	
   // Write the name to the allocated memory
   Seek(8,0,LPICSLOT
-  Alloc(9)->LPICNAME
   //FUTURE NOTE: you can read directly to a list (ex Read(L1,8,1,LPICSLOT) )
-  Read(LPICNAME,8,1,LPICSLOT
+	Read(LPICNAME,8,1,LPICSLOT
+	0->*{LPICNAME+8}
   
   // Detect right half of the images
   0->RPOS
@@ -100,7 +110,8 @@ While Detect(^^oLPOS,Str1->LPIC
     
     // Write the name
     Seek(8,0,RPICSLOT
-    Read(RPICNAME,8,1,RPICSLOT
+		Read(RPICNAME,8,1,RPICSLOT
+		0->*{RPICNAME+8}
     
     // Compare names compare returns 0 if true
     If not(Compare(LPICNAME,RPICNAME
@@ -114,7 +125,8 @@ While Detect(^^oLPOS,Str1->LPIC
       While Detect(^^oPALPOS,Str3->PAL
         Open(PAL,"r")->PALSLOT
         Seek(8,0,PALSLOT
-        Read(PALNAME,8,1,PALSLOT
+				Read(PALNAME,8,1,PALSLOT
+				0->*{PALNAME+8}
         If not(Compare(LPICNAME,PALNAME
           //Now store the data pointer into L1
           TOTALPICS+3->TOTALPICS
@@ -122,9 +134,10 @@ While Detect(^^oLPOS,Str1->LPIC
           GetDataPtr(LPICSLOT)->L1(TOTALPICS
           GetDataPtr(RPICSLOT)->L2(TOTALPICS
           GetDataPtr(PALSLOT)->L3(TOTALPICS
-          
-          FillRectangle_NoClip(170,10,20,15
-          SetTextXY(170,10
+
+		  //displays the progress back to the user
+          FillRectangle_NoClip(170,22,20,15
+          SetTextXY(170,22
           PrintInt(TOTALPICS/3,2
           //Pause 
           //"Test
@@ -227,11 +240,14 @@ While (15+I-Y)>=I and I*3<=TOTALPICS
 End
 Return
 
+//displays the thumbnail to the right of the image names
 Lbl DISPTHUMB
 L1(SELECTEDPIC*3)->LPIC
 L2(SELECTEDPIC*3)->RPIC
 L3(SELECTEDPIC*3)->PAL
+//sets the correct palette 
 Call SETPALETTE
+//clears the old thumbnail
 SetColor(0
 Rectangle_NoClip(120,0,200,120
 det(4,PAL,512,0
@@ -357,7 +373,8 @@ While KEY!=15
           SELECTEDPIC+1->SELECTEDPIC
         End
         //displays the picture
-        If KEY
+		If KEY
+					
           L1(SELECTEDPIC*3)->LPIC
           L2(SELECTEDPIC*3)->RPIC
           L3(SELECTEDPIC*3)->PAL
@@ -368,12 +385,93 @@ While KEY!=15
           det(4,PAL,512,0
           SwapDraw
           
-        End
+				End
+				//toggle zoom DEV FEATURE (disabled)
+				If KEY=5100
+					not(ZOOM->ZOOM
+					//activate zoom
+					If ZOOM
+						L1(SELECTEDPIC*3)->LPIC
+          				L2(SELECTEDPIC*3)->RPIC
+          				L3(SELECTEDPIC*3)->PAL
+						det(5,0
+						ScaledSprite_NoClip(RPIC,(*{LPIC})*2+ZOOMX,ZOOMY,2,2)
+						ScaledSprite_NoClip(LPIC,ZOOMX,ZOOMY,2,2)
+          				det(4,PAL,512,0
+						SwapDraw
+					Else
+						Sprite_NoClip(LPIC,0,0)
+          				Sprite_NoClip(RPIC,*{LPIC},0)
+          				det(4,PAL,512,0
+          				SwapDraw
+					End
+				End
+				
+				//zoom loop
+				While ZOOM=1
+					getKey->KEY
+					
+					If KEY=51 or KEY=15
+						not(ZOOM->ZOOM
+					End
+					//panning
+					If (KEY=2)
+						// and ZOOMX<(*{LPIC})*4
+          				(8*ZOOMS)+ZOOMX->ZOOMX
+					End
+					If (KEY=3)
+						// and ZOOMX>~1*((*{LPIC})*4)
+          				ZOOMX-(8*ZOOMS)->ZOOMX
+					End
+					If (KEY=4)
+						// and ZOOMY<960
+						(8*ZOOMS)+ZOOMY->ZOOMY
+					End
+					If (KEY=1)
+						// and ZOOMY>~1*960
+          				ZOOMY-(8*ZOOMS)->ZOOMY
+					End
+					If KEY
+						SetDraw(1
+						If ZOOMX<240
+							ScaledSprite_NoClip(LPIC,ZOOMX,ZOOMY,2,2)
+						End
+						SetDraw(0
+						If ZOOMX>=2
+							//ScaledSprite_NoClip(LPIC,ZOOMX,ZOOMY,2,2)
+						End
+						If ZOOMX<240
+							det(13,1,0+ZOOMX*(ZOOMX>0),0+ZOOMY*(ZOOMY>0),(*{LPIC})*2+ZOOMX*(ZOOMX<=(*{LPIC})*2),240+ZOOMY*(ZOOMY<240)
+						End
+						
+						
+						//ScaledSprite_NoClip(RPIC,(*{LPIC})*2+ZOOMX,ZOOMY,2,2)
+						//ScaledSprite_NoClip(LPIC,ZOOMX,ZOOMY,2,2)
+          				det(4,PAL,512,0
+						
+
+						//panning acceleration
+						1+KEYP->KEYP
+						If KEYP>5
+							ZOOMS*2->ZOOMS
+						Else
+							1->ZOOMS
+							0->KEYP
+						End
+						
+					End
+				End
+				
       End
       //restores selected pic so the selector will open the correct pic
       ORIGSELECTED->SELECTEDPIC
       Call LOADTHUMB
-      Call DISPTHUMB
+		Call DISPTHUMB
+		//sets color to white
+      SetColor(1
+      //displays rectangular selector
+      Rectangle_NoClip(RECTX,RECTY,70,12)
+		SwapDraw
       
       //det(3
       //makes sure the program wont quit
