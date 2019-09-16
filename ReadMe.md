@@ -50,6 +50,9 @@ By TheLastMillennial and the help of Peter "PT_" Tillema
 
 ## Changelog
 
+### v4.0.273
+- Fixed bug where images weren't detected when run via Cesium
+
 ### v4.0.256
 - First full release!
 - Added VAT sorting.
@@ -75,7 +78,7 @@ By TheLastMillennial and the help of Peter "PT_" Tillema
 - Initial GitHub upload.
 
 ## Credits
-Thank you to everyone who has helped me with this project! 
+Thank you to everyone who has helped me fix code and report bugs! 
 
 - Matt "MateoConLechuga" Waltz
 - Peter "PT_" Tillema
