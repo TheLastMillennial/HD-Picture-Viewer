@@ -9,6 +9,7 @@
 0->KEY
 //records how long a key was pressed
 0->KEYP
+0->OPENANS
 0->PAGE
 0->TOTALPICS
 10->THUMBNAILX
@@ -39,10 +40,13 @@ TOTALPICS->NEXTPIC
 
 //this code resized the full image to thumbnail-size 
 DefineSprite(100,150->THUMBNAIL
-
+//detects if Ans has an image name stored to it
+dbd(0
+Call DETECTANS
 
 //Main loop
 While KEY!=15
+
   //detects images
   Call DETECTALLPICS
   //draws to buffer
@@ -57,25 +61,67 @@ While KEY!=15
 End
 Goto STOP
 
+Lbl DETECTANS
+dbd(0
+CloseAll
+OpenVar('Ans',"r",4)->ANSSLOT
+det(0
+SetTextXY(10,10
+PrintInt(ANSSLOT,8)
+Pause 
+ReturnIf not(ANSSLOT)
+Alloc(11->ANSPTR
+Alloc(11->BUFFER
+Alloc(8->ANSSTR
+
+
+GetDataPtr(ANSSLOT)->ANSPTR
+//gets first two chars from Ans
+2->REMLEN
+Call GETSTR
+//null terminates string
+0->*{BUFFER
+//checks if Ans has the key term HD as the first 2 chars
+If not(Compare(BUFFER,"HD")
+  //Yes! It wants us to find a pic
+  1->OPENANS
+  //get first 10 chars ofAns
+  10->REMLEN
+  Call GETSTR
+  0->*{BUFFER
+  //copies the chars to Str5
+  Copy(Str5,BUFFER,10
+  //copies the last 8 chars to ANSSTR and STR4
+  sub(Str5,2,8->ANSSTR
+  Copy(Str4,ANSSTR,8
+  //adds proper headers
+  Str1+Str4->Str1
+  Str2+Str4->Str2
+  Str3+Str4->Str3
+  Call DETECTSOMEPICS
+  
+End
+Return
+
+
+//gets 10 chars of string from ptr, thanks to backadamtheinventor for this!
+Lbl GETSTR
+//probably temporary infinite loop
+10->REMLEN
+While 1
+sum(17,^^oANSPTR,0,^^oLENT->STR
+Copy(BUFFER,STR,min(LEN,REMLEN
+BUFFER+LEN->BUFFER
+ReturnIf REMLEN<LEN
+  REMLEN-LEN->REMLEN
+End
+//Return
+
+//find all the pictures
 Lbl DETECTALLPICS
 "HDPICV3L"->Str1
 "HDPICV3R"->Str2
 "HDPALV1B"->Str3
-
-Lbl DETECTSOMEPICS
-
-0->TOTALPICS
-sum(0)
-// Allocate memory for picture names
-Alloc(10)->LPICNAME
-Alloc(10)->RPICNAME
-//palettes
-Alloc(10)->LPICPAL
-Alloc(10)->RPICPAL
-
-Alloc(256)->PALNAME
-
-
 
 det(0
 SetColor(255
@@ -89,6 +135,17 @@ FillRectangle_NoClip(10,10,320,15
 PrintStringXY("VAT sorted!",10,10
 PrintStringXY("Loading, Images Found:",10,22
 
+//used for detecting only pic stored in Ans
+Lbl DETECTSOMEPICS
+
+0->TOTALPICS
+sum(0)
+// Allocate memory for picture names
+Alloc(9)->LPICNAME
+Alloc(9)->RPICNAME
+//palette
+
+Alloc(256)->PALNAME
 
 
 //bubble sort, heapsort, O(nlogn)				
@@ -100,7 +157,7 @@ While Detect(^^oLPOS,Str1->LPIC
   Seek(8,0,LPICSLOT
   //FUTURE NOTE: you can read directly to a list (ex Read(L1,8,1,LPICSLOT) )
 	Read(LPICNAME,8,1,LPICSLOT
-	0->*{LPICNAME+8}
+	0->*{LPICNAME+9}
   
   // Detect right half of the images
   0->RPOS
@@ -111,7 +168,7 @@ While Detect(^^oLPOS,Str1->LPIC
     // Write the name
     Seek(8,0,RPICSLOT
 		Read(RPICNAME,8,1,RPICSLOT
-		0->*{RPICNAME+8}
+		0->*{RPICNAME+9}
     
     // Compare names compare returns 0 if true
     If not(Compare(LPICNAME,RPICNAME
@@ -126,21 +183,35 @@ While Detect(^^oLPOS,Str1->LPIC
         Open(PAL,"r")->PALSLOT
         Seek(8,0,PALSLOT
 				Read(PALNAME,8,1,PALSLOT
-				0->*{PALNAME+8}
+				0->*{PALNAME+9}
         If not(Compare(LPICNAME,PALNAME
-          //Now store the data pointer into L1
-          TOTALPICS+3->TOTALPICS
           
-          GetDataPtr(LPICSLOT)->L1(TOTALPICS
-          GetDataPtr(RPICSLOT)->L2(TOTALPICS
-          GetDataPtr(PALSLOT)->L3(TOTALPICS
+          If OPENANS
+            //if we ARE detecting only one pic, just display what you've found then stop
+            SetDraw(1
+            det(5,0
+      			Sprite_NoClip(LPIC,0,0)
+      			Sprite_NoClip(RPIC,*{LPIC},0)
+            det(4,PAL,512,0
+            SwapDraw
+            While not(getKey
+            End
 
-		  //displays the progress back to the user
-          FillRectangle_NoClip(170,22,20,15
-          SetTextXY(170,22
-          PrintInt(TOTALPICS/3,2
-          //Pause 
-          //"Test
+            Goto STOP
+          Else
+            //if we're not detecting only one pic
+            //Now store the data pointer into L1
+          	TOTALPICS+3->TOTALPICS
+          
+          	GetDataPtr(LPICSLOT)->L1(TOTALPICS
+          	GetDataPtr(RPICSLOT)->L2(TOTALPICS
+          	GetDataPtr(PALSLOT)->L3(TOTALPICS
+		  			//displays the progress back to the user
+          	FillRectangle_NoClip(170,22,20,15
+          	SetTextXY(170,22
+            PrintInt(TOTALPICS/3,2
+          End
+
           
           //gets name of the pictures
           LPICNAME->L4(TOTALPICS
@@ -466,12 +537,12 @@ While KEY!=15
       //restores selected pic so the selector will open the correct pic
       ORIGSELECTED->SELECTEDPIC
       Call LOADTHUMB
-		Call DISPTHUMB
-		//sets color to white
+			Call DISPTHUMB
+			//sets color to white
       SetColor(1
       //displays rectangular selector
       Rectangle_NoClip(RECTX,RECTY,70,12)
-		SwapDraw
+			SwapDraw
       
       //det(3
       //makes sure the program wont quit
