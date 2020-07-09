@@ -77,7 +77,7 @@ uint24_t rebuildDB(uint8_t p){
   */
   while((var_name = ti_DetectVar(&search_pos, "HDPALV10", TI_APPVAR_TYPE)) != NULL) {
     //writes appvar name to db
-    ti_Write(var_name,8,1,database);
+    //ti_Write(var_name,8,1,database);
     imagesFound++;
     //finds the name, letter ID, and size of entire image this palette belongs to.
     palette = ti_Open(var_name,"r");

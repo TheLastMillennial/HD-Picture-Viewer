@@ -86,7 +86,9 @@ Thank you to everyone who has helped me fix code and report bugs!
 - calclover2514
 - _iPhoenix_
 - Hooloovoo
+- Epsilon5
 - Runer112
+- Jacobly
 - Iambian
 - SahilS
 - SM84CE

@@ -153,7 +153,7 @@ _rebuildDB:
 	CALL	_ti_Open
 	POP	BC
 	POP	BC
-	LD	(IX+-4),A
+	LD	(IX+-5),A
 ;   72	  /*
 ;   73	  * Searches for palettes. This is a lot easier than searching for every single
 ;   74	  * image square because there's is guarunteed to only be one palette per image.
@@ -164,21 +164,7 @@ _rebuildDB:
 	JR	L_11
 L_12:
 ;   79	    //writes appvar name to db
-;   80	    ti_Write(var_name,8,1,database);
-	LD	C,(IX+-4)
-	LD	B,0
-	PUSH	BC
-	LD	BC,1
-	PUSH	BC
-	LD	BC,8
-	PUSH	BC
-	LD	BC,(IX+-8)
-	PUSH	BC
-	CALL	_ti_Write
-	POP	BC
-	POP	BC
-	POP	BC
-	POP	BC
+;   80	    //ti_Write(var_name,8,1,database);
 ;   81	    imagesFound++;
 	LD	BC,(IX+-3)
 	INC	BC
@@ -192,10 +178,10 @@ L_12:
 	CALL	_ti_Open
 	POP	BC
 	POP	BC
-	LD	(IX+-5),A
+	LD	(IX+-4),A
 ;   84	    //seeks past useless info
 ;   85	    ti_Seek(8,SEEK_CUR,palette);
-	LD	C,(IX+-5)
+	LD	C,(IX+-4)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
@@ -207,7 +193,7 @@ L_12:
 	POP	BC
 	POP	BC
 ;   86	    ti_Seek(16,SEEK_CUR,database);
-	LD	C,(IX+-4)
+	LD	C,(IX+-5)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
@@ -220,7 +206,7 @@ L_12:
 	POP	BC
 ;   87	    //reads the important info (16 bytes)
 ;   88	    ti_Read(&imgInfo,16,1,palette);
-	LD	C,(IX+-5)
+	LD	C,(IX+-4)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
@@ -235,7 +221,7 @@ L_12:
 	POP	BC
 ;   89	    //Writes the info to the database
 ;   90	    ti_Write(imgInfo,16,1,database);
-	LD	C,(IX+-4)
+	LD	C,(IX+-5)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
@@ -249,7 +235,7 @@ L_12:
 	POP	BC
 	POP	BC
 ;   91	    ti_Close(palette);
-	LD	C,(IX+-5)
+	LD	C,(IX+-4)
 	LD	B,0
 	PUSH	BC
 	CALL	_ti_Close
@@ -324,17 +310,17 @@ L_15:
 ;_ti_CloseAll                        IMPORT  -----   function
 ;_ti_DetectVar                       IMPORT  -----   function
 ;_ti_Close                           IMPORT  -----   function
+;_ti_Write                           IMPORT  -----   function
 ;_ti_Read                            IMPORT  -----   function
 ;_ti_Seek                            IMPORT  -----   function
-;_ti_Write                           IMPORT  -----   function
 ;_ti_Open                            IMPORT  -----   function
 ;_0temp9                             STATIC      8   variable
 ;imgInfo                              IX-67     48   variable
 ;myData                               IX-19      8   variable
 ;search_pos                           IX-11      3   variable
 ;var_name                              IX-8      3   variable
-;palette                               IX-5      1   variable
-;database                              IX-4      1   variable
+;database                              IX-5      1   variable
+;palette                               IX-4      1   variable
 ;imagesFound                           IX-3      3   variable
 ;p                                     IX+6      1   parameter
 
