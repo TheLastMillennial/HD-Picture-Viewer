@@ -458,7 +458,7 @@ L__15:
 ;  119	//checks if the database is already created. If not, it creates it.
 ;  120	uint8_t databaseReady(){
 _databaseReady:
-	LD	HL,-25
+	LD	HL,-27
 	CALL	__frameset
 ;  121	  char *var_name;
 ;  122	  uint8_t *search_pos = NULL, exists=0, ready = 0;
@@ -466,15 +466,15 @@ _databaseReady:
 	LD	(IX+-6),BC
 	LD	(IX+-3),0
 ;  123	  ti_var_t myAppVar;
-;  124	  char myData[8]="HDDATV10"; //remember have one more space than text you're saving
-	LEA	DE,IX+-17
+;  124	  char myData[9]="HDDATV10"; //remember have one more space than text you're saving
+	LEA	DE,IX+-18
 	LD	HL,_1temp18
-	LD	BC,8
+	LD	BC,9
 	LDIR	
-;  125	  char compare[8]="HDDATV10";
-	LEA	DE,IX+-25
+;  125	  char compare[9]="HDDATV10";
+	LEA	DE,IX+-27
 	LD	HL,_2temp19
-	LD	BC,8
+	LD	BC,9
 	LDIR	
 ;  126	  //tries to find database using known header
 ;  127	  while((var_name = ti_DetectVar(&search_pos, myData, TI_APPVAR_TYPE)) != NULL) {
@@ -486,7 +486,7 @@ L_21:
 L_20:
 	LD	BC,21
 	PUSH	BC
-	PEA	IX+-17
+	PEA	IX+-18
 	PEA	IX+-6
 	CALL	_ti_DetectVar
 	POP	BC
@@ -517,8 +517,8 @@ L_33:
 	POP	BC
 	LD	(IX+-2),A
 ;  137	    if(!myAppVar)
-;  138	    ready = 0;
-;  139	    if(ti_Write(&myData,sizeof(myData),1,myAppVar)!=1)
+;  138	    ready = 3;
+;  139	    if(ti_Write(&myData,8,1,myAppVar)!=1)
 	LD	C,(IX+-2)
 	LD	B,0
 	PUSH	BC
@@ -526,21 +526,21 @@ L_33:
 	PUSH	BC
 	LD	BC,8
 	PUSH	BC
-	PEA	IX+-17
+	PEA	IX+-18
 	CALL	_ti_Write
 	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
-;  140	    ready = 0;
+;  140	    ready = 4;
 ;  141	    if (ti_Rewind(myAppVar) == EOF)
 	LD	C,(IX+-2)
 	LD	B,0
 	PUSH	BC
 	CALL	_ti_Rewind
 	POP	BC
-;  142	    ready = 0;
-;  143	    if (ti_Read(&myData, sizeof(myData), 1, myAppVar) != 1)
+;  142	    ready = 5;
+;  143	    if (ti_Read(&myData,8, 1, myAppVar) != 1)
 	LD	C,(IX+-2)
 	LD	B,0
 	PUSH	BC
@@ -548,23 +548,23 @@ L_33:
 	PUSH	BC
 	LD	BC,8
 	PUSH	BC
-	PEA	IX+-17
+	PEA	IX+-18
 	CALL	_ti_Read
 	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
-;  144	    ready = 0;
+;  144	    ready = 6;
 ;  145	    if (strcmp(myData,compare)!=0)
-	PEA	IX+-25
-	PEA	IX+-17
+	PEA	IX+-27
+	PEA	IX+-18
 	CALL	_strcmp
 	POP	BC
 	POP	BC
 	CALL	__icmpzero
 	JR	Z,L_30
-;  146	    ready = 0;
-	LD	(IX+-1),0
+;  146	    ready = 7;
+	LD	(IX+-1),7
 ;  147	    else{
 	JR	L_35
 L_30:
@@ -633,12 +633,30 @@ L_37:
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  165	    return 0;
+;  165	    gfx_SetTextXY(120,190);
+	LD	BC,190
+	PUSH	BC
+	LD	BC,120
+	PUSH	BC
+	CALL	_gfx_SetTextXY
+	POP	BC
+	POP	BC
+;  166	    gfx_PrintUInt(ready,1);
+	LD	BC,1
+	PUSH	BC
+	LD	A,(IX+-1)
+	UEXT	HL
+	LD	L,A
+	PUSH	HL
+	CALL	_gfx_PrintUInt
+	POP	BC
+	POP	BC
+;  167	    return 0;
 	XOR	A,A
-;  166	  }
-;  167	
-;  168	
-;  169	}
+;  168	  }
+;  169	
+;  170	
+;  171	}
 L_40:
 	LD	SP,IX
 	POP	IX
@@ -647,6 +665,8 @@ L_40:
 
 ;**************************** _databaseReady ***************************
 ;Name                         Addr/Register   Size   Type
+;_gfx_PrintUInt                      IMPORT  -----   function
+;_gfx_SetTextXY                      IMPORT  -----   function
 ;_PrintCenteredX                     IMPORT  -----   function
 ;_gfx_SetTextFGColor                 IMPORT  -----   function
 ;_ti_CloseAll                        IMPORT  -----   function
@@ -656,10 +676,10 @@ L_40:
 ;_ti_Write                           IMPORT  -----   function
 ;_ti_Open                            IMPORT  -----   function
 ;_ti_DetectVar                       IMPORT  -----   function
-;_2temp19                            STATIC      8   variable
-;_1temp18                            STATIC      8   variable
-;compare                              IX-25      8   variable
-;myData                               IX-17      8   variable
+;_2temp19                            STATIC      9   variable
+;_1temp18                            STATIC      9   variable
+;compare                              IX-27      9   variable
+;myData                               IX-18      9   variable
 ;var_name                              IX-9      3   variable
 ;search_pos                            IX-6      3   variable
 ;exists                                IX-3      1   variable
@@ -667,7 +687,7 @@ L_40:
 ;ready                                 IX-1      1   variable
 
 
-; Stack Frame Size: 31 (bytes)
+; Stack Frame Size: 33 (bytes)
 ;       Spill Code: 0 (instruction)
 
 
@@ -697,6 +717,7 @@ _1temp18:
 	DB	86
 	DB	49
 	DB	48
+	DB	0
 _2temp19:
 	DB	72
 	DB	68
@@ -706,14 +727,15 @@ _2temp19:
 	DB	86
 	DB	49
 	DB	48
+	DB	0
 	SEGMENT CODE
-;  170	
-;  171	//makes a loading bar and fills it in depending on progress made (p) / tasks left (t)
-;  172	void SetLoadingBarProgress(uint8_t p, uint8_t t){
+;  172	
+;  173	//makes a loading bar and fills it in depending on progress made (p) / tasks left (t)
+;  174	void SetLoadingBarProgress(uint8_t p, uint8_t t){
 _SetLoadingBarProgress:
 	LD	HL,-4
 	CALL	__frameset
-;  173	  p=((double)p/(double)t)*200.0;
+;  175	  p=((double)p/(double)t)*200.0;
 	UEXT	HL
 	LD	L,(IX+6)
 	LD	A,H
@@ -736,21 +758,21 @@ _SetLoadingBarProgress:
 	CALL	__fmul
 	CALL	__ftol
 	LD	(IX+6),C
-;  174	  //ensures loading bar doesn't go past max point
-;  175	  if (p>200)
+;  176	  //ensures loading bar doesn't go past max point
+;  177	  if (p>200)
 	LD	A,200
 	CP	A,(IX+6)
 	JR	NC,L_42
-;  176	  p=200;
+;  178	  p=200;
 	LD	(IX+6),200
 L_42:
-;  177	
-;  178	  gfx_SetColor(128);
+;  179	
+;  180	  gfx_SetColor(128);
 	LD	BC,128
 	PUSH	BC
 	CALL	_gfx_SetColor
 	POP	BC
-;  179	  gfx_FillRectangle_NoClip(60,153,(uint8_t)p,7);
+;  181	  gfx_FillRectangle_NoClip(60,153,(uint8_t)p,7);
 	LD	BC,7
 	PUSH	BC
 	LD	A,(IX+6)
@@ -766,8 +788,8 @@ L_42:
 	POP	BC
 	POP	BC
 	POP	BC
-;  180	
-;  181	}
+;  182	
+;  183	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -785,17 +807,17 @@ L_42:
 ;       Spill Code: 0 (instruction)
 
 
-;  182	
-;  183	//creates a simple splash screen when program starts
-;  184	void SplashScreen(){
+;  184	
+;  185	//creates a simple splash screen when program starts
+;  186	void SplashScreen(){
 _SplashScreen:
-;  185	  //sets color to grey
-;  186	  gfx_SetColor(181);
+;  187	  //sets color to grey
+;  188	  gfx_SetColor(181);
 	LD	BC,181
 	PUSH	BC
 	CALL	_gfx_SetColor
 	POP	BC
-;  187	  gfx_FillRectangle_NoClip(60,80,LCD_WIDTH-120,LCD_HEIGHT-160);
+;  189	  gfx_FillRectangle_NoClip(60,80,LCD_WIDTH-120,LCD_HEIGHT-160);
 	LD	BC,80
 	PUSH	BC
 	LD	BC,200
@@ -809,13 +831,13 @@ _SplashScreen:
 	POP	BC
 	POP	BC
 	POP	BC
-;  188	  /* Print a string */
-;  189	  PrintCentered("HD Picture Viewer");
+;  190	  /* Print a string */
+;  191	  PrintCentered("HD Picture Viewer");
 	LD	BC,L__34
 	PUSH	BC
 	CALL	_PrintCentered
 	POP	BC
-;  190	}
+;  192	}
 	RET	
 
 
@@ -835,13 +857,13 @@ L__34:
 	DB	"HD Picture Viewer"
 	DB	0
 	SEGMENT CODE
-;  191	
-;  192	/* Prints a screen centered string */
-;  193	void PrintCentered(const char *str)
-;  194	{
+;  193	
+;  194	/* Prints a screen centered string */
+;  195	void PrintCentered(const char *str)
+;  196	{
 _PrintCentered:
 	CALL	__frameset0
-;  195	  gfx_PrintStringXY(str,(LCD_WIDTH - gfx_GetStringWidth(str)) / 2, (LCD_HEIGHT - 8) / 2);
+;  197	  gfx_PrintStringXY(str,(LCD_WIDTH - gfx_GetStringWidth(str)) / 2, (LCD_HEIGHT - 8) / 2);
 	LD	BC,116
 	PUSH	BC
 	LD	BC,(IX+6)
@@ -861,7 +883,7 @@ _PrintCentered:
 	POP	BC
 	POP	BC
 	POP	BC
-;  196	}
+;  198	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -878,12 +900,12 @@ _PrintCentered:
 ;       Spill Code: 0 (instruction)
 
 
-;  197	/* Prints a X centered string */
-;  198	void PrintCenteredX(const char *str, uint8_t y)
-;  199	{
+;  199	/* Prints a X centered string */
+;  200	void PrintCenteredX(const char *str, uint8_t y)
+;  201	{
 _PrintCenteredX:
 	CALL	__frameset0
-;  200	  gfx_PrintStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2, y);
+;  202	  gfx_PrintStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2, y);
 	LD	A,(IX+9)
 	UEXT	HL
 	LD	L,A
@@ -905,7 +927,7 @@ _PrintCenteredX:
 	POP	BC
 	POP	BC
 	POP	BC
-;  201	}
+;  203	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -923,12 +945,12 @@ _PrintCenteredX:
 ;       Spill Code: 0 (instruction)
 
 
-;  202	/* Prints a Y centered string */
-;  203	void PrintCenteredY(const char *str, uint8_t x)
-;  204	{
+;  204	/* Prints a Y centered string */
+;  205	void PrintCenteredY(const char *str, uint8_t x)
+;  206	{
 _PrintCenteredY:
 	CALL	__frameset0
-;  205	  gfx_PrintStringXY(str, x, (LCD_HEIGHT - 8) / 2);
+;  207	  gfx_PrintStringXY(str, x, (LCD_HEIGHT - 8) / 2);
 	LD	BC,116
 	PUSH	BC
 	LD	A,(IX+9)
@@ -941,7 +963,7 @@ _PrintCenteredY:
 	POP	BC
 	POP	BC
 	POP	BC
-;  206	}
+;  208	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -958,13 +980,13 @@ _PrintCenteredY:
 ;       Spill Code: 0 (instruction)
 
 
-;  207	
-;  208	
-;  209	/* Draw text on the homescreen at the given X/Y location */
-;  210	void printText(int8_t xpos, int8_t ypos, const char *text) {
+;  209	
+;  210	
+;  211	/* Draw text on the homescreen at the given X/Y location */
+;  212	void printText(int8_t xpos, int8_t ypos, const char *text) {
 _printText:
 	CALL	__frameset0
-;  211	  os_SetCursorPos(ypos, xpos);
+;  213	  os_SetCursorPos(ypos, xpos);
 	LD	C,(IX+6)
 	LD	B,0
 	PUSH	BC
@@ -973,12 +995,12 @@ _printText:
 	CALL	_os_SetCursorPos
 	POP	BC
 	POP	BC
-;  212	  os_PutStrFull(text);
+;  214	  os_PutStrFull(text);
 	LD	BC,(IX+12)
 	PUSH	BC
 	CALL	_os_PutStrFull
 	POP	BC
-;  213	}
+;  215	}
 	LD	SP,IX
 	POP	IX
 	RET	

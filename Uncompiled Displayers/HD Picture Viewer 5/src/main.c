@@ -121,8 +121,8 @@ uint8_t databaseReady(){
   char *var_name;
   uint8_t *search_pos = NULL, exists=0, ready = 0;
   ti_var_t myAppVar;
-  char myData[8]="HDDATV10"; //remember have one more space than text you're saving
-  char compare[8]="HDDATV10";
+  char myData[9]="HDDATV10"; //remember have one more space than text you're saving
+  char compare[9]="HDDATV10";
   //tries to find database using known header
   while((var_name = ti_DetectVar(&search_pos, myData, TI_APPVAR_TYPE)) != NULL) {
     exists=1;
@@ -135,15 +135,15 @@ uint8_t databaseReady(){
     //creates the database appvar and writes the header. Checks if wrote successfuly
     myAppVar=ti_Open("HDPICDB", "w");
     if(!myAppVar)
-    ready = 0;
-    if(ti_Write(&myData,sizeof(myData),1,myAppVar)!=1)
-    ready = 0;
+    ready = 3;
+    if(ti_Write(&myData,8,1,myAppVar)!=1)
+    ready = 4;
     if (ti_Rewind(myAppVar) == EOF)
-    ready = 0;
-    if (ti_Read(&myData, sizeof(myData), 1, myAppVar) != 1)
-    ready = 0;
+    ready = 5;
+    if (ti_Read(&myData,8, 1, myAppVar) != 1)
+    ready = 6;
     if (strcmp(myData,compare)!=0)
-    ready = 0;
+    ready = 7;
     else{
       ready = 1;
     }
@@ -162,6 +162,8 @@ uint8_t databaseReady(){
   }else{
     gfx_SetTextFGColor(224);
     PrintCenteredX("failure",180);
+    gfx_SetTextXY(120,190);
+    gfx_PrintUInt(ready,1);
     return 0;
   }
 
