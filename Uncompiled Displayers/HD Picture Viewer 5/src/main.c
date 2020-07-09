@@ -49,6 +49,8 @@ int main(void)
   SetLoadingBarProgress(++tasksFinished,TASKS_TO_FINISH);
 
 
+  err:
+  //PrintCenteredX("Test",10);
   /* Waits for a keypress */
   while (!os_GetCSC());
   ti_CloseAll();
@@ -57,21 +59,16 @@ int main(void)
   /* Return 0 for success */
   return 0;
 
-  err:
-  while (!os_GetCSC());
-  ti_CloseAll();
-  gfx_End();
-  return 1;
 }
 
 
 /* Functions */
 uint24_t rebuildDB(uint8_t p){
-  char *var_name, *imgInfo, nameBuffer[10];
+  char *var_name, *imgInfo[16], nameBuffer[10];
   uint8_t *search_pos = NULL;
   uint24_t imagesFound=0;
   char myData[8]="HDPALV1",names[8];
-  ti_var_t database = ti_Open("HDPICDB","a"), palette;
+  ti_var_t database = ti_Open("HDPICDB","a+"), palette;
   /*
   * Searches for palettes. This is a lot easier than searching for every single
   * image square because there's is guarunteed to only be one palette per image.
@@ -80,18 +77,22 @@ uint24_t rebuildDB(uint8_t p){
   */
   while((var_name = ti_DetectVar(&search_pos, "HDPALV10", TI_APPVAR_TYPE)) != NULL) {
     //writes appvar name to db
-    ti_Write(&var_name,8,1,database);
+    ti_Write(var_name,8,1,database);
     imagesFound++;
-    //find the name, letter ID, and size of entire image this palette belongs to.
+    //finds the name, letter ID, and size of entire image this palette belongs to.
     palette = ti_Open(var_name,"r");
+    //seeks past useless info
     ti_Seek(8,SEEK_CUR,palette);
+    ti_Seek(16,SEEK_CUR,database);
+    //reads the important info (16 bytes)
     ti_Read(&imgInfo,16,1,palette);
-    ti_Write(&imgInfo,16,1,palette);
+    //Writes the info to the database
+    ti_Write(imgInfo,16,1,database);
     ti_Close(palette);
   }
   //closes the database
 
-  ti_Close(database);
+  ti_CloseAll();
   gfx_SetTextXY(100,195);
   gfx_PrintUInt(imagesFound,3);
   if (imagesFound==0){
@@ -112,6 +113,8 @@ void noImagesFound(){
   PrintCenteredX("Press any key to quit",41);
   return;
 }
+
+
 
 //checks if the database is already created. If not, it creates it.
 uint8_t databaseReady(){

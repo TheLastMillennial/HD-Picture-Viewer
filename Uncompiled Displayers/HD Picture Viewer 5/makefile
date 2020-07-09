@@ -5,10 +5,10 @@
 # Set COMPRESSED to "YES" to create a compressed program
 # ----------------------------
 
-NAME        ?= DEMO
+NAME        ?= HDPICV
 COMPRESSED  ?= NO
 ICON        ?= icon.png
-DESCRIPTION ?= "CE C SDK Demo"
+DESCRIPTION ?= "High Definition Picture Viewer 5 Dev              By TLM"
 
 # ----------------------------
 

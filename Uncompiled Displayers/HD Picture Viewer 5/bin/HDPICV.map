@@ -6,10 +6,10 @@ libs     D1A9EF D1AA50            61h
 startup  D1AA50 D1AA8F            3Fh
 cleanup  D1AA8F D1AAA3            14h
 exit     D1AAA3 D1AAA9             6h
-code     D1AAA9 D1AF90           4E7h
-data     D1AF90 D1AFB2            22h
-strsect  D1AFB2 D1B09E            ECh
-text     D1B09E D1B0B6            18h
+code     D1AAA9 D1AF8C           4E3h
+data     D1AF8C D1AFAE            22h
+strsect  D1AFAE D1B09B            EDh
+text     D1B09B D1B0B3            18h
 bss      D031F6 D031F6 D13FD6      0h
 header   D1A87F D1A882             3h
 
@@ -172,15 +172,15 @@ _exit                     = D1AAA5
 __exit                    = D1AA7E
 __exitsp                  = D1AA7E
 __errsp                   = D1AA7E
-_printText                = D1AF6E
-_PrintCenteredY           = D1AF4D
-_PrintCenteredX           = D1AF18
-_PrintCentered            = D1AEE6
-_SplashScreen             = D1AEB5
-_SetLoadingBarProgress    = D1AE36
-_databaseReady            = D1ACFD
-_noImagesFound            = D1AC98
-_rebuildDB                = D1AB64
+_printText                = D1AF6A
+_PrintCenteredY           = D1AF49
+_PrintCenteredX           = D1AF14
+_PrintCentered            = D1AEE2
+_SplashScreen             = D1AEB1
+_SetLoadingBarProgress    = D1AE32
+_databaseReady            = D1ACF9
+_noImagesFound            = D1AC94
+_rebuildDB                = D1AB4F
 _main                     = D1AAE6
 _ti_CloseAll              = D1AA03
 _ti_Open                  = D1AA07
