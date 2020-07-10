@@ -2,19 +2,20 @@ Segment  Base   Top    High   Length
 -------- ------ ------ ------ -------
 icon     D1A882 D1A997           115h
 launcher D1A997 D1A9EF            58h
-libs     D1A9EF D1AA72            83h
-startup  D1AA72 D1AAB1            3Fh
-cleanup  D1AAB1 D1AAC5            14h
-exit     D1AAC5 D1AACB             6h
-code     D1AACB D1B507           A3Ch
-data     D1B507 D1B52C            25h
-strsect  D1B52C D1B62B            FFh
-text     D1B62B D1B645            1Ah
+libs     D1A9EF D1AA7A            8Bh
+startup  D1AA7A D1AAB9            3Fh
+cleanup  D1AAB9 D1AACD            14h
+exit     D1AACD D1AAD3             6h
+code     D1AAD3 D1B584           AB1h
+data     D1B584 D1B5A9            25h
+strsect  D1B5A9 D1B6A8            FFh
+text     D1B6A8 D1B6C2            1Ah
 bss      D031F6 D031FC D13FD6      6h
 header   D1A87F D1A882             3h
 
 Label                       Value
 -------------------------   ------
+_delay                    = D1AAD3
 _boot_GetBootMajorVer     = 000080
 _boot_GetHardwareVer      = 000084
 _boot_GetBootMinorVer     = 00008C
@@ -150,46 +151,46 @@ _asm_DisableAPD           = 021134
 _asm_EnableAPD            = 021138
 _asm_DrawStatusBar        = 021A3C
 _asm_ArcChk               = 022040
-_os_DisableHomeTextBuffer = D1AACB
-_os_EnableHomeTextBuffer  = D1AADD
-__frameset0               = D1AAEF
-__frameset                = D1AAFA
+_os_DisableHomeTextBuffer = D1AB1C
+_os_EnableHomeTextBuffer  = D1AB2E
+__frameset0               = D1AB40
+__frameset                = D1AB4B
 _strcmp                   = 0000C8
 __fmul                    = 000288
 __imul_b                  = 000158
 __imul_b                  = 000150
 __ishru_b                 = 000184
 __ishru_b                 = 000188
-__s_sbrk                  = D1AB08
+__s_sbrk                  = D1AB59
 __icmpzero                = 000138
 __fdiv                    = 000278
 __ftol                    = 00027C
 __ultof                   = 000280
-_malloc                   = D1AB59
+_malloc                   = D1ABAA
 __alloc_base              = D031F6
-_free                     = D1AC01
+_free                     = D1AC52
 __findlibload             = D1A997
 __program_icon            = D1A887
 __program_description     = D1A989
-__ccleanup                = D1AAB1
+__ccleanup                = D1AAB9
 _errno                    = D008DC
 _init                     = D1A882
-_exit                     = D1AAC7
-__exit                    = D1AAA0
-__exitsp                  = D1AAA0
-__errsp                   = D1AAA0
-_printText                = D1B4E5
-_PrintCenteredY           = D1B4C4
-_PrintCenteredX           = D1B48F
-_PrintCentered            = D1B45D
-_SplashScreen             = D1B42C
-_SetLoadingBarProgress    = D1B3AD
-_databaseReady            = D1B251
-_noImagesFound            = D1B1EC
-_rebuildDB                = D1B06D
-_printNames               = D1AF18
-_DisplayHomeScreen        = D1AD77
-_main                     = D1ACFF
+_exit                     = D1AACF
+__exit                    = D1AAA8
+__exitsp                  = D1AAA8
+__errsp                   = D1AAA8
+_printText                = D1B562
+_PrintCenteredY           = D1B541
+_PrintCenteredX           = D1B50C
+_PrintCentered            = D1B4DA
+_SplashScreen             = D1B4A9
+_SetLoadingBarProgress    = D1B42A
+_databaseReady            = D1B2CE
+_noImagesFound            = D1B269
+_rebuildDB                = D1B0EA
+_printNames               = D1AF8C
+_DisplayHomeScreen        = D1ADC8
+_main                     = D1AD50
 _ti_CloseAll              = D1AA03
 _ti_Open                  = D1AA07
 _ti_Close                 = D1AA0B
@@ -210,6 +211,8 @@ _gfx_SetTextBGColor       = D1AA4C
 _gfx_SetTextFGColor       = D1AA50
 _gfx_GetStringWidth       = D1AA54
 _gfx_VertLine             = D1AA58
-_gfx_FillRectangle_NoClip = D1AA5C
-_gfx_SetTextScale         = D1AA60
-_kb_Scan                  = D1AA6E
+_gfx_HorizLine_NoClip     = D1AA5C
+_gfx_VertLine_NoClip      = D1AA60
+_gfx_FillRectangle_NoClip = D1AA64
+_gfx_SetTextScale         = D1AA68
+_kb_Scan                  = D1AA76

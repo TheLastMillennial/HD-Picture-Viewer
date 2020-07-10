@@ -20,42 +20,46 @@
 ;   14	#define BYTES_PER_IMAGE_NAME 9 //8 for image name, 1 for null terminator
 ;   15	#define MAX_IMAGES 936 //Max images is this because max combinations of appvars goes up to that
 ;   16	#define TASKS_TO_FINISH 2
-;   17	
-;   18	
-;   19	/* Function Prototyptes */
-;   20	uint8_t databaseReady();
-;   21	void DisplayHomeScreen(uint24_t pics);
-;   22	void noImagesFound();
-;   23	void PrintCentered(const char *str);
-;   24	void PrintCenteredX(const char *str, uint8_t y);
-;   25	void PrintCenteredY(const char *str, uint8_t x);
-;   26	void printNames(uint8_t start, char *picNames, uint24_t numOfPics);
-;   27	void printText(int8_t xpos, int8_t ypos, const char *text);
-;   28	uint24_t rebuildDB(uint8_t p);
-;   29	void SplashScreen();
-;   30	void SetLoadingBarProgress(uint8_t p, uint8_t t);
-;   31	
-;   32	/* Main function, called first */
-;   33	int main(void)
-;   34	{
+;   17	#define X_MARGIN 8
+;   18	#define Y_MARGIN 43
+;   19	#define Y_SPACING 25
+;   20	
+;   21	
+;   22	
+;   23	/* Function Prototyptes */
+;   24	uint8_t databaseReady();
+;   25	void DisplayHomeScreen(uint24_t pics);
+;   26	void noImagesFound();
+;   27	void PrintCentered(const char *str);
+;   28	void PrintCenteredX(const char *str, uint8_t y);
+;   29	void PrintCenteredY(const char *str, uint8_t x);
+;   30	void printNames(uint24_t start, char *picNames, uint24_t numOfPics);
+;   31	void printText(int8_t xpos, int8_t ypos, const char *text);
+;   32	uint24_t rebuildDB(uint8_t p);
+;   33	void SplashScreen();
+;   34	void SetLoadingBarProgress(uint8_t p, uint8_t t);
+;   35	
+;   36	/* Main function, called first */
+;   37	int main(void)
+;   38	{
 _main:
 	LD	HL,-4
 	CALL	__frameset
-;   35	  uint8_t ready=0, tasksFinished = 0;
+;   39	  uint8_t ready=0, tasksFinished = 0;
 	LD	(IX+-1),0
-;   36	  uint24_t picsDetected=0;
+;   40	  uint24_t picsDetected=0;
 	LD	BC,0
 	LD	(IX+-4),BC
-;   37	  /* Clear the homescreen */
-;   38	  //os_ClrHome();
-;   39	
-;   40	  gfx_Begin();
+;   41	  /* Clear the homescreen */
+;   42	  //os_ClrHome();
+;   43	
+;   44	  gfx_Begin();
 	CALL	_gfx_Begin
-;   41	  ti_CloseAll();
+;   45	  ti_CloseAll();
 	CALL	_ti_CloseAll
-;   42	  SplashScreen();
+;   46	  SplashScreen();
 	CALL	_SplashScreen
-;   43	  SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
+;   47	  SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
 	LD	BC,2
 	PUSH	BC
 	LD	BC,1
@@ -63,59 +67,59 @@ _main:
 	CALL	_SetLoadingBarProgress
 	POP	BC
 	POP	BC
-;   44	  //checks if the database exists and is ready 0 failure; 1 created; 2 exists
-;   45	  ready = databaseReady();
+;   48	  //checks if the database exists and is ready 0 failure; 1 created; 2 exists
+;   49	  ready = databaseReady();
 	CALL	_databaseReady
 	LD	(IX+-1),A
-;   46	  if (ready==0)
+;   50	  if (ready==0)
 	OR	A,A
 	JR	Z,L_6
-;   47	  goto err;
-;   48	
-;   49	
-;   50	  picsDetected=rebuildDB(tasksFinished);
+;   51	  goto err;
+;   52	
+;   53	
+;   54	  picsDetected=rebuildDB(tasksFinished);
 	LD	BC,1
 	PUSH	BC
 	CALL	_rebuildDB
 	POP	BC
 	LD	(IX+-4),HL
-;   51	  if(picsDetected==0)
+;   55	  if(picsDetected==0)
 	CALL	__icmpzero
 	JR	Z,L_6
-;   52	  goto err;
-;   53	  //returns how many images were found. 0 means quit.
-;   54	
-;   55	  SetLoadingBarProgress(++tasksFinished,TASKS_TO_FINISH);
+;   56	  goto err;
+;   57	  //returns how many images were found. 0 means quit.
+;   58	
+;   59	  SetLoadingBarProgress(++tasksFinished,TASKS_TO_FINISH);
 	LD	BC,2
 	PUSH	BC
 	PUSH	BC
 	CALL	_SetLoadingBarProgress
 	POP	BC
 	POP	BC
-;   56	  DisplayHomeScreen(picsDetected);
+;   60	  DisplayHomeScreen(picsDetected);
 	LD	BC,(IX+-4)
 	PUSH	BC
 	CALL	_DisplayHomeScreen
 	POP	BC
-;   57	
-;   58	  err:
-;   59	  /* Waits for a keypress */
-;   60	  while (!os_GetCSC());
+;   61	
+;   62	  err:
+;   63	  /* Waits for a keypress */
+;   64	  while (!os_GetCSC());
 L_6:
 	CALL	_os_GetCSC
 	OR	A,A
 	JR	Z,L_6
-;   61	  ti_CloseAll();
+;   65	  ti_CloseAll();
 	CALL	_ti_CloseAll
-;   62	  gfx_End();
+;   66	  gfx_End();
 	CALL	_gfx_End
 	OR	A,A
-;   63	
-;   64	  /* Return 0 for success */
-;   65	  return 0;
+;   67	
+;   68	  /* Return 0 for success */
+;   69	  return 0;
 	SBC	HL,HL
-;   66	
-;   67	}
+;   70	
+;   71	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -140,22 +144,22 @@ L_6:
 ;       Spill Code: 0 (instruction)
 
 
-;   68	
-;   69	/* Functions */
-;   70	
-;   71	void DisplayHomeScreen(uint24_t pics){
+;   72	
+;   73	/* Functions */
+;   74	
+;   75	void DisplayHomeScreen(uint24_t pics){
 _DisplayHomeScreen:
-	LD	HL,-10
+	LD	HL,-17
 	CALL	__frameset
-;   72	  char *picNames = malloc(pics*BYTES_PER_IMAGE_NAME); //BYTES_PER_IMAGE_NAME = 9
+;   76	  char *picNames = malloc(pics*BYTES_PER_IMAGE_NAME); //BYTES_PER_IMAGE_NAME = 9
 	LD	HL,(IX+6)
 	LD	A,9
 	CALL	__imul_b
 	PUSH	HL
 	CALL	_malloc
 	POP	BC
-	LD	(IX+-7),HL
-;   73	  ti_var_t database = ti_Open("HDPICDB","r");
+	LD	(IX+-9),HL
+;   77	  ti_var_t database = ti_Open("HDPICDB","r");
 	LD	BC,L__4
 	PUSH	BC
 	LD	BC,L__5
@@ -163,36 +167,37 @@ _DisplayHomeScreen:
 	CALL	_ti_Open
 	POP	BC
 	POP	BC
-	LD	(IX+-8),A
-;   74	  uint24_t i;
-;   75	  uint8_t Ypos=10, startName=0;
-	LD	(IX+-9),10
-	LD	(IX+-1),0
-;   76	  kb_key_t key = kb_Data[7];
-;   77	
-;   78	
-;   79	  //makes the screen black and text white
-;   80	  gfx_FillScreen(0); //This won't let anything be displayed on top of it for some reason!?
+	LD	(IX+-10),A
+;   78	  uint24_t i,startName=0;
 	LD	BC,0
+	LD	(IX+-3),BC
+;   79	  uint8_t Ypos=10;
+	LD	(IX+-12),10
+;   80	  kb_key_t key = kb_Data[7];
+;   81	  bool up,down,left,right;
+;   82	
+;   83	
+;   84	  //makes the screen black and text white
+;   85	  gfx_FillScreen(0);
 	PUSH	BC
 	CALL	_gfx_FillScreen
 	POP	BC
-;   81	  gfx_SetTextFGColor(254);
+;   86	  gfx_SetTextFGColor(254);
 	LD	BC,254
 	PUSH	BC
 	CALL	_gfx_SetTextFGColor
 	POP	BC
-;   82	  gfx_SetTextBGColor(0);
+;   87	  gfx_SetTextBGColor(0);
 	LD	BC,0
 	PUSH	BC
 	CALL	_gfx_SetTextBGColor
 	POP	BC
-;   83	  gfx_SetColor(255);
+;   88	  gfx_SetColor(255);
 	LD	BC,255
 	PUSH	BC
 	CALL	_gfx_SetColor
 	POP	BC
-;   84	  gfx_VertLine(140,20,200);
+;   89	  gfx_VertLine(140,20,200);
 	LD	BC,200
 	PUSH	BC
 	LD	BC,20
@@ -203,11 +208,11 @@ _DisplayHomeScreen:
 	POP	BC
 	POP	BC
 	POP	BC
-;   85	
-;   86	
-;   87	  //seeks to the first image name
-;   88	  ti_Seek(8,SEEK_SET,database);
-	LD	C,(IX+-8)
+;   90	
+;   91	
+;   92	  //seeks to the first image name
+;   93	  ti_Seek(8,SEEK_SET,database);
+	LD	C,(IX+-10)
 	LD	B,0
 	PUSH	BC
 	LD	BC,0
@@ -218,25 +223,25 @@ _DisplayHomeScreen:
 	POP	BC
 	POP	BC
 	POP	BC
-;   89	  //PrintCenteredX("Test1",30);
-;   90	  //loops through every picture that was detected and store the image name to picNames
-;   91	  for(i=0;i<=pics;i++){
+;   94	  //PrintCenteredX("Test1",30);
+;   95	  //loops through every picture that was detected and store the image name to picNames
+;   96	  for(i=0;i<=pics;i++){
 	LD	BC,0
-	LD	(IX+-4),BC
+	LD	(IX+-6),BC
 	JR	L_12
 L_10:
-;   92	    ti_Read(&picNames[i * BYTES_PER_IMAGE_NAME],8,1,database);
-	LD	C,(IX+-8)
+;   97	    ti_Read(&picNames[i * BYTES_PER_IMAGE_NAME],8,1,database);
+	LD	C,(IX+-10)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
 	PUSH	BC
 	LD	BC,8
 	PUSH	BC
-	LD	HL,(IX+-4)
+	LD	HL,(IX+-6)
 	LD	A,9
 	CALL	__imul_b
-	LD	BC,(IX+-7)
+	LD	BC,(IX+-9)
 	ADD	HL,BC
 	PUSH	HL
 	CALL	_ti_Read
@@ -244,18 +249,18 @@ L_10:
 	POP	BC
 	POP	BC
 	POP	BC
-;   93	    picNames[i * BYTES_PER_IMAGE_NAME + BYTES_PER_IMAGE_NAME - 1] = 0;
-	LD	HL,(IX+-4)
+;   98	    picNames[i * BYTES_PER_IMAGE_NAME + BYTES_PER_IMAGE_NAME - 1] = 0;
+	LD	HL,(IX+-6)
 	LD	A,9
 	CALL	__imul_b
 	LD	IY,HL
 	LEA	BC,IY+9
 	DEC	BC
-	LD	HL,(IX+-7)
+	LD	HL,(IX+-9)
 	ADD	HL,BC
 	LD	(HL),0
-;   94	    ti_Seek(16,SEEK_CUR,database);
-	LD	C,(IX+-8)
+;   99	    ti_Seek(16,SEEK_CUR,database);
+	LD	C,(IX+-10)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
@@ -266,38 +271,36 @@ L_10:
 	POP	BC
 	POP	BC
 	POP	BC
-;   95	    //PrintCenteredX("Test2",40);
-;   96	    Ypos+=15;
-	LD	A,(IX+-9)
+;  100	    //PrintCenteredX("Test2",40);
+;  101	    Ypos+=15;
+	LD	A,(IX+-12)
 	ADD	A,15
-	LD	(IX+-9),A
-	LD	BC,(IX+-4)
+	LD	(IX+-12),A
+	LD	BC,(IX+-6)
 	INC	BC
-	LD	(IX+-4),BC
-;   97	    //PrintCenteredX(&picNames[i*BYTES_PER_IMAGE_NAME],Ypos);
-;   98	
-;   99	  }
+	LD	(IX+-6),BC
+;  102	    //PrintCenteredX(&picNames[i*BYTES_PER_IMAGE_NAME],Ypos);
+;  103	
+;  104	  }
 L_12:
-	LD	BC,(IX+-4)
+	LD	BC,(IX+-6)
 	LD	HL,(IX+6)
 	OR	A,A
 	SBC	HL,BC
 	JR	NC,L_10
-;  100	
-;  101	  /* Keypress handler */
-;  102	  kb_Scan();
-	CALL	_kb_Scan
-;  103	  gfx_SetTextXY(10,10);
+;  105	
+;  106	  /* Keypress handler */
+;  107	  gfx_SetTextXY(10,10);
 	LD	BC,10
 	PUSH	BC
 	PUSH	BC
 	CALL	_gfx_SetTextXY
 	POP	BC
 	POP	BC
-;  104	  printNames(startName, picNames, pics);
+;  108	  printNames(startName, picNames, pics);
 	LD	BC,(IX+6)
 	PUSH	BC
-	LD	BC,(IX+-7)
+	LD	BC,(IX+-9)
 	PUSH	BC
 	LD	BC,0
 	PUSH	BC
@@ -305,86 +308,112 @@ L_12:
 	POP	BC
 	POP	BC
 	POP	BC
-;  105	  do{
-L_22:
-;  106	    key = kb_Data[7];
-	LD	A,(16056350)
-	LD	(IX+-10),A
-;  107	
-;  108	    /* increases the name to start on and redraws the text */
-;  109	    if(key==kb_Down){
-	CP	A,1
-	JR	NZ,L_20
-;  110	      if (++startName>=pics)
-	INC	(IX+-1)
-	LD	A,(IX+-1)
-	UEXT	HL
-	LD	L,A
-	OR	A,A
-	LD	BC,(IX+6)
-	SBC	HL,BC
-	JR	C,L_15
-;  111	      startName=pics;
-	LD	A,(IX+6)
-	LD	(IX+-1),A
-L_15:
-;  112	      printNames(startName, picNames, pics);
-	LD	BC,(IX+6)
-	PUSH	BC
-	LD	BC,(IX+-7)
-	PUSH	BC
-	LD	C,(IX+-1)
-	LD	B,0
-	PUSH	BC
-	CALL	_printNames
-	POP	BC
-	POP	BC
-	POP	BC
-;  113	    }
-L_20:
-;  114	    //key = kb_Data[3];
-;  115	
-;  116	    /* decreases the name to start on and redraws the text */
-;  117	    if(key==kb_Up){
-	LD	A,(IX+-10)
-	CP	A,8
-	JR	NZ,L_21
-;  118	      if (--startName<0)
-	DEC	(IX+-1)
-	LD	A,(IX+-1)
-	OR	A,A
-	JR	NC,L_18
-;  119	      startName=pics;
-	LD	A,(IX+6)
-	LD	(IX+-1),A
-L_18:
-;  120	      printNames(startName, picNames, pics);
-	LD	BC,(IX+6)
-	PUSH	BC
-	LD	BC,(IX+-7)
-	PUSH	BC
-	LD	C,(IX+-1)
-	LD	B,0
-	PUSH	BC
-	CALL	_printNames
-	POP	BC
-	POP	BC
-	POP	BC
-;  121	    }
-L_21:
-;  122	    kb_Scan();
+;  109	  do{
+L_24:
+;  110	    //scans the keys for keypress
+;  111	    kb_Scan();
 	CALL	_kb_Scan
-;  123	  }   while(kb_Data[6]!=kb_Clear);
+;  112	    //checks if up or down arrow key were pressed
+;  113	    key = kb_Data[7];
+	LD	A,(16056350)
+	LD	(IX+-11),A
+;  114	    down= key & kb_Down;
+	AND	A,1
+	LD	(IX+-14),A
+;  115	    up  = key & kb_Up;
+	LD	A,(IX+-11)
+	AND	A,8
+	LD	(IX+-13),A
+;  116	    //if any key was pressed
+;  117	    if(key){
+	LD	A,(IX+-11)
+	OR	A,A
+	JR	Z,L_25
+;  118	      /* increases the name to start on and redraws the text */
+;  119	      if(up){
+	LD	A,(IX+-13)
+	OR	A,A
+	JR	Z,L_22
+;  120	        //PrintCenteredX("DOWN",10);
+;  121	        startName++;
+	LD	BC,(IX+-3)
+	INC	BC
+	LD	(IX+-3),BC
+;  122	        if (startName>(pics-1)) //makes sure user can't scroll too far
+	LD	IY,(IX+6)
+	LEA	IY,IY+-1
+	LD	(IX+-17),IY
+	LD	BC,(IX+-3)
+	LD	HL,(IX+-17)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_16
+;  123	        startName=pics-1;
+	LD	BC,(IX+-17)
+	LD	(IX+-3),BC
+L_16:
+;  124	        printNames(startName, picNames, pics);
+	LD	BC,(IX+6)
+	PUSH	BC
+	LD	BC,(IX+-9)
+	PUSH	BC
+	LD	BC,(IX+-3)
+	PUSH	BC
+	CALL	_printNames
+	POP	BC
+	POP	BC
+	POP	BC
+;  125	      }
+L_22:
+;  126	      //key = kb_Data[3];
+;  127	
+;  128	      /* decreases the name to start on and redraws the text */
+;  129	      if(down){
+	LD	A,(IX+-14)
+	OR	A,A
+	JR	Z,L_25
+;  130	        //PrintCenteredX(" UP ",10);
+;  131	        startName--;
+	LD	IY,(IX+-3)
+	LEA	IY,IY+-1
+	LD	(IX+-3),IY
+;  132	        if (startName>MAX_IMAGES) //checks if startName underflowed from 0 to 16 million or something
+	LD	BC,IY
+	LD	HL,936
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_20
+;  133	        startName=0;
+	LD	BC,0
+	LD	(IX+-3),BC
+L_20:
+;  134	        printNames(startName, picNames, pics);
+	LD	BC,(IX+6)
+	PUSH	BC
+	LD	BC,(IX+-9)
+	PUSH	BC
+	LD	BC,(IX+-3)
+	PUSH	BC
+	CALL	_printNames
+	POP	BC
+	POP	BC
+	POP	BC
+;  135	      }
+;  136	    }
+;  137	
+;  138	
+;  139	  }   while(kb_Data[6]!=kb_Clear);
+L_25:
 	LD	A,(16056348)
 	CP	A,64
-	JR	NZ,L_22
-;  124	
-;  125	  free(picNames);
-	LD	BC,(IX+-7)
+	JR	NZ,L_24
+;  140	
+;  141	  free(picNames);
+	LD	BC,(IX+-9)
 	PUSH	BC
 	CALL	_free
 	POP	BC
-;  126	}
+;  142	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -393,9 +422,9 @@ L_21:
 ;**************************** _DisplayHomeScreen ***************************
 ;Name                         Addr/Register   Size   Type
 ;_free                               IMPORT  -----   function
+;_kb_Scan                            IMPORT  -----   function
 ;_printNames                         IMPORT  -----   function
 ;_gfx_SetTextXY                      IMPORT  -----   function
-;_kb_Scan                            IMPORT  -----   function
 ;_ti_Read                            IMPORT  -----   function
 ;_ti_Seek                            IMPORT  -----   function
 ;_gfx_VertLine                       IMPORT  -----   function
@@ -405,16 +434,19 @@ L_21:
 ;_gfx_FillScreen                     IMPORT  -----   function
 ;_ti_Open                            IMPORT  -----   function
 ;_malloc                             IMPORT  -----   function
-;key                                  IX-10      1   variable
-;Ypos                                  IX-9      1   variable
-;database                              IX-8      1   variable
-;picNames                              IX-7      3   variable
-;i                                     IX-4      3   variable
-;startName                             IX-1      1   variable
+;G_0                                  IX-17      3   variable
+;down                                 IX-14      1   variable
+;up                                   IX-13      1   variable
+;Ypos                                 IX-12      1   variable
+;key                                  IX-11      1   variable
+;database                             IX-10      1   variable
+;picNames                              IX-9      3   variable
+;i                                     IX-6      3   variable
+;startName                             IX-3      3   variable
 ;pics                                  IX+6      3   parameter
 
 
-; Stack Frame Size: 19 (bytes)
+; Stack Frame Size: 26 (bytes)
 ;       Spill Code: 0 (instruction)
 
 
@@ -426,28 +458,31 @@ L__5:
 	DB	"HDPICDB"
 	DB	0
 	SEGMENT CODE
-;  127	
-;  128	/* This UI keeps the user selection in the middle of the screen. */
-;  129	void printNames(uint8_t start, char *picNames, uint24_t numOfPics){
+;  143	
+;  144	/* This UI keeps the user selection in the middle of the screen. */
+;  145	void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
 _printNames:
-	LD	HL,-2
+	LD	HL,-9
 	CALL	__frameset
-;  130	  uint8_t i, y=30;
-	LD	(IX+-2),30
-;  131	
-;  132	  gfx_SetTextScale(2,2);
+;  146	  uint24_t i, Yoffset=0, y=0;
+	LD	BC,0
+	LD	(IX+-9),BC
+	LD	(IX+-6),BC
+;  147	
+;  148	  //clears old text and sets up for new text
+;  149	  gfx_SetTextScale(2,2);
 	LD	BC,2
 	PUSH	BC
 	PUSH	BC
 	CALL	_gfx_SetTextScale
 	POP	BC
 	POP	BC
-;  133	  gfx_SetColor(0);
+;  150	  gfx_SetColor(0);
 	LD	BC,0
 	PUSH	BC
 	CALL	_gfx_SetColor
 	POP	BC
-;  134	  gfx_FillRectangle_NoClip(0,0,140,240);
+;  151	  gfx_FillRectangle_NoClip(0,0,140,240);
 	LD	BC,240
 	PUSH	BC
 	LD	BC,140
@@ -460,136 +495,143 @@ _printNames:
 	POP	BC
 	POP	BC
 	POP	BC
-;  135	  gfx_SetColor(255);
+;  152	  gfx_SetColor(255);
 	LD	BC,255
 	PUSH	BC
 	CALL	_gfx_SetColor
 	POP	BC
-;  136	
-;  137	  /* draw the text on the screen. Starts displaying the name at element start
-;  138	  * then iterates until out of pics or about to draw off the screen */
-;  139	  for(i=start;i<numOfPics && y<180;i++){
-	LD	A,(IX+6)
-	LD	(IX+-1),A
-	JR	L_32
-L_30:
-;  140	    y = i * 20 + 30;
-	LD	B,20
-	LD	C,(IX+-1)
-	MLT	BC
-	LD	A,C
-	ADD	A,30
-	LD	(IX+-2),A
-;  141	    /*if the selected start name is under 6, that means we need to start drawing
-;  142	    * farther down the screen for the text to fit */
-;  143	    if(start<6)
-	LD	A,(IX+6)
-	CP	A,6
-	JR	NC,L_29
-;  144	    y = 120 + i * 20;
-	LD	B,20
-	LD	C,(IX+-1)
-	MLT	BC
-	LD	A,C
-	ADD	A,120
-	LD	(IX+-2),A
-L_29:
-;  145	    gfx_SetTextScale(1,1);
-	LD	BC,1
+;  153	
+;  154	  //re-draws UI lines
+;  155	  gfx_HorizLine_NoClip(0,120,6);
+	LD	BC,6
 	PUSH	BC
+	LD	BC,120
 	PUSH	BC
-	CALL	_gfx_SetTextScale
-	POP	BC
-	POP	BC
-;  146	    gfx_SetTextXY(200,10);
-	LD	BC,10
+	LD	BC,0
 	PUSH	BC
-	LD	BC,200
+	CALL	_gfx_HorizLine_NoClip
+	POP	BC
+	POP	BC
+	POP	BC
+;  156	  gfx_HorizLine_NoClip(134,120,6);
+	LD	BC,6
 	PUSH	BC
-	CALL	_gfx_SetTextXY
-	POP	BC
-	POP	BC
-;  147	    gfx_PrintUInt(i,3);
-	LD	BC,3
+	LD	BC,120
 	PUSH	BC
-	LD	A,(IX+-1)
-	UEXT	HL
-	LD	L,A
-	PUSH	HL
-	CALL	_gfx_PrintUInt
+	LD	BC,134
+	PUSH	BC
+	CALL	_gfx_HorizLine_NoClip
 	POP	BC
 	POP	BC
-;  148	    gfx_SetTextXY(200,20);
+	POP	BC
+;  157	  gfx_HorizLine_NoClip(6,110,128);
+	LD	BC,128
+	PUSH	BC
+	LD	BC,110
+	PUSH	BC
+	LD	BC,6
+	PUSH	BC
+	CALL	_gfx_HorizLine_NoClip
+	POP	BC
+	POP	BC
+	POP	BC
+;  158	  gfx_HorizLine_NoClip(6,130,128);
+	LD	BC,128
+	PUSH	BC
+	LD	BC,130
+	PUSH	BC
+	LD	BC,6
+	PUSH	BC
+	CALL	_gfx_HorizLine_NoClip
+	POP	BC
+	POP	BC
+	POP	BC
+;  159	  gfx_VertLine_NoClip(6,110,20);
 	LD	BC,20
 	PUSH	BC
-	LD	BC,200
+	LD	BC,110
 	PUSH	BC
-	CALL	_gfx_SetTextXY
-	POP	BC
-	POP	BC
-;  149	    gfx_PrintUInt(y,3);
-	LD	BC,3
+	LD	BC,6
 	PUSH	BC
-	LD	A,(IX+-2)
-	UEXT	HL
-	LD	L,A
-	PUSH	HL
-	CALL	_gfx_PrintUInt
+	CALL	_gfx_VertLine_NoClip
 	POP	BC
 	POP	BC
-;  150	    gfx_SetTextXY(200,30);
-	LD	BC,30
+	POP	BC
+;  160	  gfx_VertLine_NoClip(134,110,21);
+	LD	BC,21
 	PUSH	BC
-	LD	BC,200
+	LD	BC,110
 	PUSH	BC
-	CALL	_gfx_SetTextXY
-	POP	BC
-	POP	BC
-;  151	    gfx_PrintUInt(start,3);
-	LD	BC,3
+	LD	BC,134
 	PUSH	BC
-	LD	A,(IX+6)
-	UEXT	HL
-	LD	L,A
-	PUSH	HL
-	CALL	_gfx_PrintUInt
+	CALL	_gfx_VertLine_NoClip
 	POP	BC
 	POP	BC
-;  152	    gfx_SetTextXY(200,40);
-	LD	BC,40
+	POP	BC
+;  161	
+;  162	  /*if the selected start name is under 6, that means we need to start drawing
+;  163	  * farther down the screen for the text to go in the right spot */
+;  164	  if(startName<6){
+	LD	HL,(IX+6)
+	LD	BC,6
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_34
+;  165	    Yoffset = 70 - startName * Y_SPACING;
+	LD	HL,(IX+6)
+;  166	    startName = 0;
+	LD	BC,0
+	LD	A,25
+	CALL	__imul_b
+	LD	DE,HL
+	LD	HL,70
+	OR	A,A
+	SBC	HL,DE
+	LD	(IX+-9),HL
+	LD	(IX+6),BC
+;  167	
+;  168	  }
+L_34:
+;  169	
+;  170	
+;  171	  /* draw the text on the screen. Starts displaying the name at element start
+;  172	  * then iterates until out of pics or about to draw off the screen */
+;  173	  for(i=startName;i<numOfPics && y<180;i++){
+	LD	BC,(IX+6)
+	LD	(IX+-3),BC
+	JR	L_33
+L_31:
+;  174	    //calculates where the text should be drawn
+;  175	    y = i * Y_SPACING + Y_MARGIN + Yoffset;
+	LD	HL,(IX+-3)
+	LD	A,25
+	CALL	__imul_b
+	LD	IY,HL
+	LEA	HL,IY+43
+	LD	BC,(IX+-9)
+	ADD	HL,BC
+	LD	(IX+-6),HL
+;  176	
+;  177	    /* debug stuff
+;  178	    gfx_SetTextScale(1,1);
+;  179	    gfx_SetTextXY(200,10);
+;  180	    gfx_PrintUInt(i,3);
+;  181	    gfx_SetTextXY(200,20);
+;  182	    gfx_PrintUInt(y,3);
+;  183	    gfx_SetTextXY(200,30);
+;  184	    gfx_PrintUInt(startName,3);
+;  185	    gfx_SetTextXY(200,40);
+;  186	    gfx_PrintUInt(numOfPics,3);
+;  187	    gfx_SetTextScale(2,2);
+;  188	    */
+;  189	
+;  190	    gfx_PrintStringXY(&picNames[i*BYTES_PER_IMAGE_NAME],X_MARGIN,y);
+	LD	BC,HL
 	PUSH	BC
-	LD	BC,200
-	PUSH	BC
-	CALL	_gfx_SetTextXY
-	POP	BC
-	POP	BC
-;  153	    gfx_PrintUInt(numOfPics,3);
-	LD	BC,3
-	PUSH	BC
-	LD	BC,(IX+12)
-	PUSH	BC
-	CALL	_gfx_PrintUInt
-	POP	BC
-	POP	BC
-;  154	
-;  155	    gfx_SetTextScale(2,2);
-	LD	BC,2
-	PUSH	BC
-	PUSH	BC
-	CALL	_gfx_SetTextScale
-	POP	BC
-	POP	BC
-;  156	    gfx_PrintStringXY(&picNames[i*BYTES_PER_IMAGE_NAME],10,y);
-	LD	A,(IX+-2)
-	UEXT	HL
-	LD	L,A
-	PUSH	HL
-	LD	BC,10
-	PUSH	BC
-	LD	A,(IX+-1)
-	UEXT	HL
-	LD	L,A
 	LD	A,9
+	LD	BC,8
+	PUSH	BC
+	LD	HL,(IX+-3)
 	CALL	__imul_b
 	LD	BC,(IX+9)
 	ADD	HL,BC
@@ -598,22 +640,31 @@ L_29:
 	POP	BC
 	POP	BC
 	POP	BC
-	INC	(IX+-1)
-;  157	
-;  158	  }
-L_32:
-	LD	A,(IX+-1)
-	UEXT	HL
-	LD	L,A
-	OR	A,A
-	LD	BC,(IX+12)
-	SBC	HL,BC
-	JR	NC,L_33
-	LD	A,(IX+-2)
-	CP	A,180
-	JR	C,L_30
-;  159	}
+	LD	BC,(IX+-3)
+	INC	BC
+	LD	(IX+-3),BC
+;  191	    //while(!os_GetCSC());
+;  192	
+;  193	  }
 L_33:
+	LD	BC,(IX+12)
+	LD	HL,(IX+-3)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_35
+	LD	BC,180
+	LD	HL,(IX+-6)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_31
+L_35:
+;  194	  //slows down scrolling speed
+;  195	  delay(250);
+	LD	BC,250
+	PUSH	BC
+	CALL	_delay
+	POP	BC
+;  196	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -621,51 +672,58 @@ L_33:
 
 ;**************************** _printNames ***************************
 ;Name                         Addr/Register   Size   Type
+;_delay                              IMPORT  -----   function
 ;_gfx_PrintStringXY                  IMPORT  -----   function
-;_gfx_PrintUInt                      IMPORT  -----   function
-;_gfx_SetTextXY                      IMPORT  -----   function
+;_gfx_VertLine_NoClip                IMPORT  -----   function
+;_gfx_HorizLine_NoClip               IMPORT  -----   function
 ;_gfx_FillRectangle_NoClip           IMPORT  -----   function
 ;_gfx_SetColor                       IMPORT  -----   function
 ;_gfx_SetTextScale                   IMPORT  -----   function
-;y                                     IX-2      1   variable
-;i                                     IX-1      1   variable
+;Yoffset                               IX-9      3   variable
+;y                                     IX-6      3   variable
+;i                                     IX-3      3   variable
 ;numOfPics                            IX+12      3   parameter
 ;picNames                              IX+9      3   parameter
-;start                                 IX+6      1   parameter
+;startName                             IX+6      3   parameter
 
 
-; Stack Frame Size: 17 (bytes)
+; Stack Frame Size: 24 (bytes)
 ;       Spill Code: 0 (instruction)
 
 
-;  160	
-;  161	
-;  162	
-;  163	uint24_t rebuildDB(uint8_t p){
+;  197	
+;  198	
+;  199	
+;  200	
+;  201	
+;  202	
+;  203	/* Rebuilds the database of images on the calculator*/
+;  204	
+;  205	uint24_t rebuildDB(uint8_t p){
 _rebuildDB:
 	LD	HL,-67
 	CALL	__frameset
-;  164	  char *var_name, *imgInfo[16], nameBuffer[10];
-;  165	  uint8_t *search_pos = NULL;
+;  206	  char *var_name, *imgInfo[16], nameBuffer[10];
+;  207	  uint8_t *search_pos = NULL;
 	LD	BC,0
 	LD	(IX+-11),BC
-;  166	  uint24_t imagesFound=0;
+;  208	  uint24_t imagesFound=0;
 	LD	(IX+-4),BC
-;  167	  char myData[8]="HDPALV1",names[8];
+;  209	  char myData[8]="HDPALV1",names[8];
 	LEA	DE,IX+-19
-;  168	  ti_var_t database = ti_Open("HDPICDB","w"), palette;
-	LD	BC,L__17
-	PUSH	BC
+;  210	  ti_var_t database = ti_Open("HDPICDB","w"), palette;
 	LD	BC,L__18
 	PUSH	BC
-	LD	HL,_0temp34
+	LD	BC,L__19
+	PUSH	BC
+	LD	HL,_0temp37
 	LD	BC,8
 	LDIR	
 	CALL	_ti_Open
 	POP	BC
 	POP	BC
 	LD	(IX+-1),A
-;  169	  ti_Write("HDDATV10",8,1,database);//Rewrites the header because w overwrites everything
+;  211	  ti_Write("HDDATV10",8,1,database);//Rewrites the header because w overwrites everything
 	LD	C,(IX+-1)
 	LD	B,0
 	PUSH	BC
@@ -673,29 +731,29 @@ _rebuildDB:
 	PUSH	BC
 	LD	BC,8
 	PUSH	BC
-	LD	BC,L__19
+	LD	BC,L__20
 	PUSH	BC
 	CALL	_ti_Write
 	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
-;  170	
-;  171	  //resets splash screen for new loading SetLoadingBarProgress
-;  172	  SplashScreen();
+;  212	
+;  213	  //resets splash screen for new loading SetLoadingBarProgress
+;  214	  SplashScreen();
 	CALL	_SplashScreen
-;  173	
-;  174	  /*
-;  175	  * Searches for palettes. This is a lot easier than searching for every single
-;  176	  * image square because there's is guarunteed to only be one palette per image.
-;  177	  * The palette containts all the useful information such as the image size and
-;  178	  * the two letter ID for each appvar. This makes it easy to find every square via a loop.
-;  179	  */
-;  180	  while((var_name = ti_DetectVar(&search_pos, "HDPALV10", TI_APPVAR_TYPE)) != NULL) {
-	JR	L_35
-L_36:
-;  181	    //sets progress of how many images were found
-;  182	    SetLoadingBarProgress(++imagesFound,MAX_IMAGES);
+;  215	
+;  216	  /*
+;  217	  * Searches for palettes. This is a lot easier than searching for every single
+;  218	  * image square because there's is guarunteed to only be one palette per image.
+;  219	  * The palette containts all the useful information such as the image size and
+;  220	  * the two letter ID for each appvar. This makes it easy to find every square via a loop.
+;  221	  */
+;  222	  while((var_name = ti_DetectVar(&search_pos, "HDPALV10", TI_APPVAR_TYPE)) != NULL) {
+	JR	L_38
+L_39:
+;  223	    //sets progress of how many images were found
+;  224	    SetLoadingBarProgress(++imagesFound,MAX_IMAGES);
 	LD	BC,(IX+-4)
 	INC	BC
 	LD	(IX+-4),BC
@@ -707,9 +765,9 @@ L_36:
 	CALL	_SetLoadingBarProgress
 	POP	BC
 	POP	BC
-;  183	    //finds the name, letter ID, and size of entire image this palette belongs to.
-;  184	    palette = ti_Open(var_name,"r");
-	LD	BC,L__20
+;  225	    //finds the name, letter ID, and size of entire image this palette belongs to.
+;  226	    palette = ti_Open(var_name,"r");
+	LD	BC,L__21
 	PUSH	BC
 	LD	BC,(IX+-8)
 	PUSH	BC
@@ -717,8 +775,8 @@ L_36:
 	POP	BC
 	POP	BC
 	LD	(IX+-5),A
-;  185	    //seeks past useless info
-;  186	    ti_Seek(8,SEEK_CUR,palette);
+;  227	    //seeks past useless info
+;  228	    ti_Seek(8,SEEK_CUR,palette);
 	LD	C,(IX+-5)
 	LD	B,0
 	PUSH	BC
@@ -730,7 +788,7 @@ L_36:
 	POP	BC
 	POP	BC
 	POP	BC
-;  187	    ti_Seek(16,SEEK_CUR,database);
+;  229	    ti_Seek(16,SEEK_CUR,database);
 	LD	C,(IX+-1)
 	LD	B,0
 	PUSH	BC
@@ -742,8 +800,8 @@ L_36:
 	POP	BC
 	POP	BC
 	POP	BC
-;  188	    //reads the important info (16 bytes)
-;  189	    ti_Read(&imgInfo,16,1,palette);
+;  230	    //reads the important info (16 bytes)
+;  231	    ti_Read(&imgInfo,16,1,palette);
 	LD	C,(IX+-5)
 	LD	B,0
 	PUSH	BC
@@ -757,8 +815,8 @@ L_36:
 	POP	BC
 	POP	BC
 	POP	BC
-;  190	    //Writes the info to the database
-;  191	    ti_Write(imgInfo,16,1,database);
+;  232	    //Writes the info to the database
+;  233	    ti_Write(imgInfo,16,1,database);
 	LD	C,(IX+-1)
 	LD	B,0
 	PUSH	BC
@@ -772,18 +830,18 @@ L_36:
 	POP	BC
 	POP	BC
 	POP	BC
-;  192	    //closes palette for next iteration
-;  193	    ti_Close(palette);
+;  234	    //closes palette for next iteration
+;  235	    ti_Close(palette);
 	LD	C,(IX+-5)
 	LD	B,0
 	PUSH	BC
 	CALL	_ti_Close
 	POP	BC
-;  194	  }
-L_35:
+;  236	  }
+L_38:
 	LD	BC,21
 	PUSH	BC
-	LD	BC,L__21
+	LD	BC,L__22
 	PUSH	BC
 	PEA	IX+-11
 	CALL	_ti_DetectVar
@@ -792,17 +850,17 @@ L_35:
 	POP	BC
 	LD	(IX+-8),HL
 	CALL	__icmpzero
-	JR	NZ,L_36
-;  195	  //closes the database
-;  196	  ti_Close(database);
+	JR	NZ,L_39
+;  237	  //closes the database
+;  238	  ti_Close(database);
 	LD	C,(IX+-1)
 	LD	B,0
 	PUSH	BC
 	CALL	_ti_Close
 	POP	BC
-;  197	  gfx_End();
+;  239	  gfx_End();
 	CALL	_gfx_End
-;  198	  ti_SetArchiveStatus(true,database);
+;  240	  ti_SetArchiveStatus(true,database);
 	LD	C,(IX+-1)
 	LD	B,0
 	PUSH	BC
@@ -811,11 +869,11 @@ L_35:
 	CALL	_ti_SetArchiveStatus
 	POP	BC
 	POP	BC
-;  199	  gfx_Begin();
+;  241	  gfx_Begin();
 	CALL	_gfx_Begin
-;  200	  SplashScreen();
+;  242	  SplashScreen();
 	CALL	_SplashScreen
-;  201	  gfx_SetTextXY(100,195);
+;  243	  gfx_SetTextXY(100,195);
 	LD	BC,195
 	PUSH	BC
 	LD	BC,100
@@ -823,7 +881,7 @@ L_35:
 	CALL	_gfx_SetTextXY
 	POP	BC
 	POP	BC
-;  202	  gfx_PrintUInt(imagesFound,3);
+;  244	  gfx_PrintUInt(imagesFound,3);
 	LD	BC,3
 	PUSH	BC
 	LD	BC,(IX+-4)
@@ -831,15 +889,15 @@ L_35:
 	CALL	_gfx_PrintUInt
 	POP	BC
 	POP	BC
-;  203	  if (imagesFound==0){
+;  245	  if (imagesFound==0){
 	LD	HL,(IX+-4)
 	CALL	__icmpzero
-	JR	NZ,L_39
-;  204	    noImagesFound();
+	JR	NZ,L_42
+;  246	    noImagesFound();
 	CALL	_noImagesFound
-;  205	  }
-L_39:
-;  206	  SetLoadingBarProgress(++p,TASKS_TO_FINISH);
+;  247	  }
+L_42:
+;  248	  SetLoadingBarProgress(++p,TASKS_TO_FINISH);
 	INC	(IX+6)
 	LD	BC,2
 	PUSH	BC
@@ -849,12 +907,12 @@ L_39:
 	CALL	_SetLoadingBarProgress
 	POP	BC
 	POP	BC
-;  207	
-;  208	
-;  209	
-;  210	  return imagesFound;
+;  249	
+;  250	
+;  251	
+;  252	  return imagesFound;
 	LD	HL,(IX+-4)
-;  211	}
+;  253	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -876,7 +934,7 @@ L_39:
 ;_SplashScreen                       IMPORT  -----   function
 ;_ti_Write                           IMPORT  -----   function
 ;_ti_Open                            IMPORT  -----   function
-;_0temp34                            STATIC      8   variable
+;_0temp37                            STATIC      8   variable
 ;imgInfo                              IX-67     48   variable
 ;myData                               IX-19      8   variable
 ;search_pos                           IX-11      3   variable
@@ -892,23 +950,23 @@ L_39:
 
 
 	SEGMENT STRSECT
-L__17:
+L__18:
 	DB	"w"
 	DB	0
-L__18:
+L__19:
 	DB	"HDPICDB"
 	DB	0
-L__19:
+L__20:
 	DB	"HDDATV10"
 	DB	0
-L__20:
+L__21:
 	DB	"r"
 	DB	0
-L__21:
+L__22:
 	DB	"HDPALV10"
 	DB	0
 	SEGMENT TEXT
-_0temp34:
+_0temp37:
 	DB	72
 	DB	68
 	DB	80
@@ -918,61 +976,61 @@ _0temp34:
 	DB	49
 	DB	0
 	SEGMENT CODE
-;  212	
-;  213	void noImagesFound(){
+;  254	
+;  255	void noImagesFound(){
 _noImagesFound:
-;  214	  gfx_SetTextFGColor(192);
+;  256	  gfx_SetTextFGColor(192);
 	LD	BC,192
 	PUSH	BC
 	CALL	_gfx_SetTextFGColor
 	POP	BC
-;  215	  PrintCenteredX("No Pictures Detected!",1);
+;  257	  PrintCenteredX("No Pictures Detected!",1);
 	LD	BC,1
-	PUSH	BC
-	LD	BC,L__25
-	PUSH	BC
-	CALL	_PrintCenteredX
-	POP	BC
-	POP	BC
-;  216	  gfx_SetTextFGColor(0);
-	LD	BC,0
-	PUSH	BC
-	CALL	_gfx_SetTextFGColor
-	POP	BC
-;  217	  PrintCenteredX("Convert some images and send them to your",11);
-	LD	BC,11
 	PUSH	BC
 	LD	BC,L__26
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  218	  PrintCenteredX("calculator using the HDpic converter!",21);
-	LD	BC,21
+;  258	  gfx_SetTextFGColor(0);
+	LD	BC,0
+	PUSH	BC
+	CALL	_gfx_SetTextFGColor
+	POP	BC
+;  259	  PrintCenteredX("Convert some images and send them to your",11);
+	LD	BC,11
 	PUSH	BC
 	LD	BC,L__27
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  219	  PrintCenteredX("Tutorial:  https://youtu.be/s1-g8oSueQg",31);
-	LD	BC,31
+;  260	  PrintCenteredX("calculator using the HDpic converter!",21);
+	LD	BC,21
 	PUSH	BC
 	LD	BC,L__28
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  220	  PrintCenteredX("Press any key to quit",41);
-	LD	BC,41
+;  261	  PrintCenteredX("Tutorial:  https://youtu.be/s1-g8oSueQg",31);
+	LD	BC,31
 	PUSH	BC
 	LD	BC,L__29
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  221	  return;
-;  222	}
+;  262	  PrintCenteredX("Press any key to quit",41);
+	LD	BC,41
+	PUSH	BC
+	LD	BC,L__30
+	PUSH	BC
+	CALL	_PrintCenteredX
+	POP	BC
+	POP	BC
+;  263	  return;
+;  264	}
 	RET	
 
 
@@ -987,52 +1045,52 @@ _noImagesFound:
 
 
 	SEGMENT STRSECT
-L__25:
+L__26:
 	DB	"No Pictures Detected!"
 	DB	0
-L__26:
+L__27:
 	DB	"Convert some images and send them to your"
 	DB	0
-L__27:
+L__28:
 	DB	"calculator using the HDpic converter!"
 	DB	0
-L__28:
+L__29:
 	DB	"Tutorial:  https://youtu.be/s1-g8oSueQg"
 	DB	0
-L__29:
+L__30:
 	DB	"Press any key to quit"
 	DB	0
 	SEGMENT CODE
-;  223	
-;  224	//checks if the database is already created. If not, it creates it.
-;  225	uint8_t databaseReady(){
+;  265	
+;  266	//checks if the database is already created. If not, it creates it.
+;  267	uint8_t databaseReady(){
 _databaseReady:
 	LD	HL,-27
 	CALL	__frameset
-;  226	  char *var_name;
-;  227	  uint8_t *search_pos = NULL, exists=0, ready = 0;
+;  268	  char *var_name;
+;  269	  uint8_t *search_pos = NULL, exists=0, ready = 0;
 	LD	BC,0
 	LD	(IX+-6),BC
 	LD	(IX+-3),0
-;  228	  ti_var_t myAppVar;
-;  229	  char myData[9]="HDDATV10"; //remember have one more space than text you're saving
+;  270	  ti_var_t myAppVar;
+;  271	  char myData[9]="HDDATV10"; //remember have one more space than text you're saving
 	LEA	DE,IX+-18
-	LD	HL,_1temp42
+	LD	HL,_1temp45
 	LD	BC,9
 	LDIR	
-;  230	  char compare[9]="HDDATV10";
+;  272	  char compare[9]="HDDATV10";
 	LEA	DE,IX+-27
-	LD	HL,_2temp43
+	LD	HL,_2temp46
 	LD	BC,9
 	LDIR	
-;  231	  //tries to find database using known header
-;  232	  while((var_name = ti_DetectVar(&search_pos, myData, TI_APPVAR_TYPE)) != NULL) {
-	JR	L_44
-L_45:
-;  233	    exists=1;
+;  273	  //tries to find database using known header
+;  274	  while((var_name = ti_DetectVar(&search_pos, myData, TI_APPVAR_TYPE)) != NULL) {
+	JR	L_47
+L_48:
+;  275	    exists=1;
 	LD	(IX+-3),1
-;  234	  }
-L_44:
+;  276	  }
+L_47:
 	LD	BC,21
 	PUSH	BC
 	PEA	IX+-18
@@ -1043,31 +1101,31 @@ L_44:
 	POP	BC
 	LD	(IX+-9),HL
 	CALL	__icmpzero
-	JR	NZ,L_45
-;  235	  //if file already exists, simply return
-;  236	  if (exists == 1)
+	JR	NZ,L_48
+;  277	  //if file already exists, simply return
+;  278	  if (exists == 1)
 	LD	A,(IX+-3)
 	CP	A,1
-	JR	NZ,L_57
-;  237	  ready = 2;
+	JR	NZ,L_60
+;  279	  ready = 2;
 	LD	(IX+-1),2
-;  238	  else{
-	JR	L_59
-L_57:
-;  239	    //if file doesn't already exist, create it.
-;  240	    //creates the database appvar and writes the header. Checks if wrote successfuly
-;  241	    myAppVar=ti_Open("HDPICDB", "w");
-	LD	BC,L__33
-	PUSH	BC
+;  280	  else{
+	JR	L_62
+L_60:
+;  281	    //if file doesn't already exist, create it.
+;  282	    //creates the database appvar and writes the header. Checks if wrote successfuly
+;  283	    myAppVar=ti_Open("HDPICDB", "w");
 	LD	BC,L__34
+	PUSH	BC
+	LD	BC,L__35
 	PUSH	BC
 	CALL	_ti_Open
 	POP	BC
 	POP	BC
 	LD	(IX+-2),A
-;  242	    if(!myAppVar)
-;  243	    ready = 3;
-;  244	    if(ti_Write(&myData,8,1,myAppVar)!=1)
+;  284	    if(!myAppVar)
+;  285	    ready = 3;
+;  286	    if(ti_Write(&myData,8,1,myAppVar)!=1)
 	LD	C,(IX+-2)
 	LD	B,0
 	PUSH	BC
@@ -1081,15 +1139,15 @@ L_57:
 	POP	BC
 	POP	BC
 	POP	BC
-;  245	    ready = 4;
-;  246	    if (ti_Rewind(myAppVar) == EOF)
+;  287	    ready = 4;
+;  288	    if (ti_Rewind(myAppVar) == EOF)
 	LD	C,(IX+-2)
 	LD	B,0
 	PUSH	BC
 	CALL	_ti_Rewind
 	POP	BC
-;  247	    ready = 5;
-;  248	    if (ti_Read(&myData,8, 1, myAppVar) != 1)
+;  289	    ready = 5;
+;  290	    if (ti_Read(&myData,8, 1, myAppVar) != 1)
 	LD	C,(IX+-2)
 	LD	B,0
 	PUSH	BC
@@ -1103,78 +1161,60 @@ L_57:
 	POP	BC
 	POP	BC
 	POP	BC
-;  249	    ready = 6;
-;  250	    if (strcmp(myData,compare)!=0)
+;  291	    ready = 6;
+;  292	    if (strcmp(myData,compare)!=0)
 	PEA	IX+-27
 	PEA	IX+-18
 	CALL	_strcmp
 	POP	BC
 	POP	BC
 	CALL	__icmpzero
-	JR	Z,L_54
-;  251	    ready = 7;
+	JR	Z,L_57
+;  293	    ready = 7;
 	LD	(IX+-1),7
-;  252	    else{
-	JR	L_59
-L_54:
-;  253	      ready = 1;
+;  294	    else{
+	JR	L_62
+L_57:
+;  295	      ready = 1;
 	LD	(IX+-1),1
-;  254	    }
-;  255	  }
-L_59:
-;  256	  ti_CloseAll();
+;  296	    }
+;  297	  }
+L_62:
+;  298	  ti_CloseAll();
 	CALL	_ti_CloseAll
-;  257	
-;  258	  //checks what happened
-;  259	  if(ready==1){
+;  299	
+;  300	  //checks what happened
+;  301	  if(ready==1){
 	LD	A,(IX+-1)
 	CP	A,1
-	JR	NZ,L_63
-;  260	    gfx_SetTextFGColor(195);
+	JR	NZ,L_66
+;  302	    gfx_SetTextFGColor(195);
 	LD	BC,195
 	PUSH	BC
 	CALL	_gfx_SetTextFGColor
 	POP	BC
-;  261	    PrintCenteredX("created",180);
+;  303	    PrintCenteredX("created",180);
 	LD	BC,180
 	PUSH	BC
-	LD	BC,L__41
+	LD	BC,L__42
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  262	    return 1;
+;  304	    return 1;
 	LD	A,1
-	JR	L_64
-;  263	  }else if(ready==2){
-L_63:
+	JR	L_67
+;  305	  }else if(ready==2){
+L_66:
 	LD	A,(IX+-1)
 	CP	A,2
-	JR	NZ,L_61
-;  264	    gfx_SetTextFGColor(004);
+	JR	NZ,L_64
+;  306	    gfx_SetTextFGColor(004);
 	LD	BC,4
 	PUSH	BC
 	CALL	_gfx_SetTextFGColor
 	POP	BC
-;  265	    PrintCenteredX("exists",180);
-	LD	BC,180
-	PUSH	BC
-	LD	BC,L__43
-	PUSH	BC
-	CALL	_PrintCenteredX
-	POP	BC
-	POP	BC
-;  266	    return 2;
-	LD	A,2
-	JR	L_64
-;  267	  }else{
-L_61:
-;  268	    gfx_SetTextFGColor(224);
-	LD	BC,224
-	PUSH	BC
-	CALL	_gfx_SetTextFGColor
-	POP	BC
-;  269	    PrintCenteredX("failure",180);
+;  307	    PrintCenteredX("exists",180);
 	LD	BC,180
 	PUSH	BC
 	LD	BC,L__44
@@ -1182,7 +1222,25 @@ L_61:
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  270	    gfx_SetTextXY(120,190);
+;  308	    return 2;
+	LD	A,2
+	JR	L_67
+;  309	  }else{
+L_64:
+;  310	    gfx_SetTextFGColor(224);
+	LD	BC,224
+	PUSH	BC
+	CALL	_gfx_SetTextFGColor
+	POP	BC
+;  311	    PrintCenteredX("failure",180);
+	LD	BC,180
+	PUSH	BC
+	LD	BC,L__45
+	PUSH	BC
+	CALL	_PrintCenteredX
+	POP	BC
+	POP	BC
+;  312	    gfx_SetTextXY(120,190);
 	LD	BC,190
 	PUSH	BC
 	LD	BC,120
@@ -1190,7 +1248,7 @@ L_61:
 	CALL	_gfx_SetTextXY
 	POP	BC
 	POP	BC
-;  271	    gfx_PrintUInt(ready,1);
+;  313	    gfx_PrintUInt(ready,1);
 	LD	BC,1
 	PUSH	BC
 	LD	A,(IX+-1)
@@ -1200,13 +1258,13 @@ L_61:
 	CALL	_gfx_PrintUInt
 	POP	BC
 	POP	BC
-;  272	    return 0;
+;  314	    return 0;
 	XOR	A,A
-;  273	  }
-;  274	
-;  275	
-;  276	}
-L_64:
+;  315	  }
+;  316	
+;  317	
+;  318	}
+L_67:
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -1225,8 +1283,8 @@ L_64:
 ;_ti_Write                           IMPORT  -----   function
 ;_ti_Open                            IMPORT  -----   function
 ;_ti_DetectVar                       IMPORT  -----   function
-;_2temp43                            STATIC      9   variable
-;_1temp42                            STATIC      9   variable
+;_2temp46                            STATIC      9   variable
+;_1temp45                            STATIC      9   variable
 ;compare                              IX-27      9   variable
 ;myData                               IX-18      9   variable
 ;var_name                              IX-9      3   variable
@@ -1241,23 +1299,23 @@ L_64:
 
 
 	SEGMENT STRSECT
-L__33:
+L__34:
 	DB	"w"
 	DB	0
-L__34:
+L__35:
 	DB	"HDPICDB"
 	DB	0
-L__41:
+L__42:
 	DB	"created"
 	DB	0
-L__43:
+L__44:
 	DB	"exists"
 	DB	0
-L__44:
+L__45:
 	DB	"failure"
 	DB	0
 	SEGMENT TEXT
-_1temp42:
+_1temp45:
 	DB	72
 	DB	68
 	DB	68
@@ -1267,7 +1325,7 @@ _1temp42:
 	DB	49
 	DB	48
 	DB	0
-_2temp43:
+_2temp46:
 	DB	72
 	DB	68
 	DB	68
@@ -1278,13 +1336,13 @@ _2temp43:
 	DB	48
 	DB	0
 	SEGMENT CODE
-;  277	
-;  278	//makes a loading bar and fills it in depending on progress made (p) / tasks left (t)
-;  279	void SetLoadingBarProgress(uint8_t p, uint8_t t){
+;  319	
+;  320	//makes a loading bar and fills it in depending on progress made (p) / tasks left (t)
+;  321	void SetLoadingBarProgress(uint8_t p, uint8_t t){
 _SetLoadingBarProgress:
 	LD	HL,-4
 	CALL	__frameset
-;  280	  p=((double)p/(double)t)*200.0;
+;  322	  p=((double)p/(double)t)*200.0;
 	UEXT	HL
 	LD	L,(IX+6)
 	LD	A,H
@@ -1307,21 +1365,21 @@ _SetLoadingBarProgress:
 	CALL	__fmul
 	CALL	__ftol
 	LD	(IX+6),C
-;  281	  //ensures loading bar doesn't go past max point
-;  282	  if (p>200)
+;  323	  //ensures loading bar doesn't go past max point
+;  324	  if (p>200)
 	LD	A,200
 	CP	A,(IX+6)
-	JR	NC,L_66
-;  283	  p=200;
+	JR	NC,L_69
+;  325	  p=200;
 	LD	(IX+6),200
-L_66:
-;  284	
-;  285	  gfx_SetColor(128);
+L_69:
+;  326	
+;  327	  gfx_SetColor(128);
 	LD	BC,128
 	PUSH	BC
 	CALL	_gfx_SetColor
 	POP	BC
-;  286	  gfx_FillRectangle_NoClip(60,153,(uint8_t)p,7);
+;  328	  gfx_FillRectangle_NoClip(60,153,(uint8_t)p,7);
 	LD	BC,7
 	PUSH	BC
 	LD	A,(IX+6)
@@ -1337,8 +1395,8 @@ L_66:
 	POP	BC
 	POP	BC
 	POP	BC
-;  287	
-;  288	}
+;  329	
+;  330	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -1356,17 +1414,17 @@ L_66:
 ;       Spill Code: 0 (instruction)
 
 
-;  289	
-;  290	//creates a simple splash screen when program starts
-;  291	void SplashScreen(){
+;  331	
+;  332	//creates a simple splash screen when program starts
+;  333	void SplashScreen(){
 _SplashScreen:
-;  292	  //sets color to grey
-;  293	  gfx_SetColor(181);
+;  334	  //sets color to grey
+;  335	  gfx_SetColor(181);
 	LD	BC,181
 	PUSH	BC
 	CALL	_gfx_SetColor
 	POP	BC
-;  294	  gfx_FillRectangle_NoClip(60,80,LCD_WIDTH-120,LCD_HEIGHT-160);
+;  336	  gfx_FillRectangle_NoClip(60,80,LCD_WIDTH-120,LCD_HEIGHT-160);
 	LD	BC,80
 	PUSH	BC
 	LD	BC,200
@@ -1380,13 +1438,13 @@ _SplashScreen:
 	POP	BC
 	POP	BC
 	POP	BC
-;  295	  /* Print a string */
-;  296	  PrintCentered("HD Picture Viewer");
-	LD	BC,L__48
+;  337	  /* Print a string */
+;  338	  PrintCentered("HD Picture Viewer");
+	LD	BC,L__49
 	PUSH	BC
 	CALL	_PrintCentered
 	POP	BC
-;  297	}
+;  339	}
 	RET	
 
 
@@ -1402,17 +1460,17 @@ _SplashScreen:
 
 
 	SEGMENT STRSECT
-L__48:
+L__49:
 	DB	"HD Picture Viewer"
 	DB	0
 	SEGMENT CODE
-;  298	
-;  299	/* Prints a screen centered string */
-;  300	void PrintCentered(const char *str)
-;  301	{
+;  340	
+;  341	/* Prints a screen centered string */
+;  342	void PrintCentered(const char *str)
+;  343	{
 _PrintCentered:
 	CALL	__frameset0
-;  302	  gfx_PrintStringXY(str,(LCD_WIDTH - gfx_GetStringWidth(str)) / 2, (LCD_HEIGHT - 8) / 2);
+;  344	  gfx_PrintStringXY(str,(LCD_WIDTH - gfx_GetStringWidth(str)) / 2, (LCD_HEIGHT - 8) / 2);
 	LD	BC,116
 	PUSH	BC
 	LD	BC,(IX+6)
@@ -1432,7 +1490,7 @@ _PrintCentered:
 	POP	BC
 	POP	BC
 	POP	BC
-;  303	}
+;  345	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -1449,12 +1507,12 @@ _PrintCentered:
 ;       Spill Code: 0 (instruction)
 
 
-;  304	/* Prints a X centered string */
-;  305	void PrintCenteredX(const char *str, uint8_t y)
-;  306	{
+;  346	/* Prints a X centered string */
+;  347	void PrintCenteredX(const char *str, uint8_t y)
+;  348	{
 _PrintCenteredX:
 	CALL	__frameset0
-;  307	  gfx_PrintStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2, y);
+;  349	  gfx_PrintStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2, y);
 	LD	A,(IX+9)
 	UEXT	HL
 	LD	L,A
@@ -1476,7 +1534,7 @@ _PrintCenteredX:
 	POP	BC
 	POP	BC
 	POP	BC
-;  308	}
+;  350	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -1494,12 +1552,12 @@ _PrintCenteredX:
 ;       Spill Code: 0 (instruction)
 
 
-;  309	/* Prints a Y centered string */
-;  310	void PrintCenteredY(const char *str, uint8_t x)
-;  311	{
+;  351	/* Prints a Y centered string */
+;  352	void PrintCenteredY(const char *str, uint8_t x)
+;  353	{
 _PrintCenteredY:
 	CALL	__frameset0
-;  312	  gfx_PrintStringXY(str, x, (LCD_HEIGHT - 8) / 2);
+;  354	  gfx_PrintStringXY(str, x, (LCD_HEIGHT - 8) / 2);
 	LD	BC,116
 	PUSH	BC
 	LD	A,(IX+9)
@@ -1512,7 +1570,7 @@ _PrintCenteredY:
 	POP	BC
 	POP	BC
 	POP	BC
-;  313	}
+;  355	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -1529,13 +1587,13 @@ _PrintCenteredY:
 ;       Spill Code: 0 (instruction)
 
 
-;  314	
-;  315	
-;  316	/* Draw text on the homescreen at the given X/Y location */
-;  317	void printText(int8_t xpos, int8_t ypos, const char *text) {
+;  356	
+;  357	
+;  358	/* Draw text on the homescreen at the given X/Y location */
+;  359	void printText(int8_t xpos, int8_t ypos, const char *text) {
 _printText:
 	CALL	__frameset0
-;  318	  os_SetCursorPos(ypos, xpos);
+;  360	  os_SetCursorPos(ypos, xpos);
 	LD	C,(IX+6)
 	LD	B,0
 	PUSH	BC
@@ -1544,12 +1602,12 @@ _printText:
 	CALL	_os_SetCursorPos
 	POP	BC
 	POP	BC
-;  319	  os_PutStrFull(text);
+;  361	  os_PutStrFull(text);
 	LD	BC,(IX+12)
 	PUSH	BC
 	CALL	_os_PutStrFull
 	POP	BC
-;  320	}
+;  362	}
 	LD	SP,IX
 	POP	IX
 	RET	
@@ -1587,7 +1645,9 @@ _printText:
 	XREF _gfx_PrintUInt:ROM
 	XREF _gfx_SetTextScale:ROM
 	XREF _gfx_FillRectangle_NoClip:ROM
+	XREF _gfx_VertLine_NoClip:ROM
 	XREF _gfx_VertLine:ROM
+	XREF _gfx_HorizLine_NoClip:ROM
 	XREF _gfx_FillScreen:ROM
 	XREF _gfx_SetColor:ROM
 	XREF _gfx_End:ROM
@@ -1597,6 +1657,7 @@ _printText:
 	XREF _os_GetCSC:ROM
 	XREF _os_PutStrFull:ROM
 	XREF _os_SetCursorPos:ROM
+	XREF _delay:ROM
 	XREF __fmul:ROM
 	XREF __fdiv:ROM
 	XREF __ftol:ROM

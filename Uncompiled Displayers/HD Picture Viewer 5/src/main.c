@@ -14,6 +14,10 @@
 #define BYTES_PER_IMAGE_NAME 9 //8 for image name, 1 for null terminator
 #define MAX_IMAGES 936 //Max images is this because max combinations of appvars goes up to that
 #define TASKS_TO_FINISH 2
+#define X_MARGIN 8
+#define Y_MARGIN 43
+#define Y_SPACING 25
+
 
 
 /* Function Prototyptes */
@@ -23,7 +27,7 @@ void noImagesFound();
 void PrintCentered(const char *str);
 void PrintCenteredX(const char *str, uint8_t y);
 void PrintCenteredY(const char *str, uint8_t x);
-void printNames(uint8_t start, char *picNames, uint24_t numOfPics);
+void printNames(uint24_t start, char *picNames, uint24_t numOfPics);
 void printText(int8_t xpos, int8_t ypos, const char *text);
 uint24_t rebuildDB(uint8_t p);
 void SplashScreen();
@@ -71,13 +75,14 @@ int main(void)
 void DisplayHomeScreen(uint24_t pics){
   char *picNames = malloc(pics*BYTES_PER_IMAGE_NAME); //BYTES_PER_IMAGE_NAME = 9
   ti_var_t database = ti_Open("HDPICDB","r");
-  uint24_t i;
-  uint8_t Ypos=10, startName=0;
+  uint24_t i,startName=0;
+  uint8_t Ypos=10;
   kb_key_t key = kb_Data[7];
+  bool up,down,left,right;
 
 
   //makes the screen black and text white
-  gfx_FillScreen(0); //This won't let anything be displayed on top of it for some reason!?
+  gfx_FillScreen(0);
   gfx_SetTextFGColor(254);
   gfx_SetTextBGColor(0);
   gfx_SetColor(255);
@@ -99,66 +104,103 @@ void DisplayHomeScreen(uint24_t pics){
   }
 
   /* Keypress handler */
-  kb_Scan();
   gfx_SetTextXY(10,10);
   printNames(startName, picNames, pics);
   do{
-    key = kb_Data[7];
-
-    /* increases the name to start on and redraws the text */
-    if(key==kb_Down){
-      if (++startName>=pics)
-      startName=pics;
-      printNames(startName, picNames, pics);
-    }
-    //key = kb_Data[3];
-
-    /* decreases the name to start on and redraws the text */
-    if(key==kb_Up){
-      if (--startName<0)
-      startName=pics;
-      printNames(startName, picNames, pics);
-    }
+    //scans the keys for keypress
     kb_Scan();
+    //checks if up or down arrow key were pressed
+    key = kb_Data[7];
+    down= key & kb_Down;
+    up  = key & kb_Up;
+    //if any key was pressed
+    if(key){
+      /* increases the name to start on and redraws the text */
+      if(up){
+        //PrintCenteredX("DOWN",10);
+        startName++;
+        if (startName>(pics-1)) //makes sure user can't scroll too far
+        startName=pics-1;
+        printNames(startName, picNames, pics);
+      }
+      //key = kb_Data[3];
+
+      /* decreases the name to start on and redraws the text */
+      if(down){
+        //PrintCenteredX(" UP ",10);
+        startName--;
+        if (startName>MAX_IMAGES) //checks if startName underflowed from 0 to 16 million or something
+        startName=0;
+        printNames(startName, picNames, pics);
+      }
+    }
+
+
   }   while(kb_Data[6]!=kb_Clear);
 
   free(picNames);
 }
 
 /* This UI keeps the user selection in the middle of the screen. */
-void printNames(uint8_t start, char *picNames, uint24_t numOfPics){
-  uint8_t i, y=30;
+void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
+  uint24_t i, Yoffset=0, y=0;
 
+  //clears old text and sets up for new text
   gfx_SetTextScale(2,2);
   gfx_SetColor(0);
   gfx_FillRectangle_NoClip(0,0,140,240);
   gfx_SetColor(255);
 
+  //re-draws UI lines
+  gfx_HorizLine_NoClip(0,120,6);
+  gfx_HorizLine_NoClip(134,120,6);
+  gfx_HorizLine_NoClip(6,110,128);
+  gfx_HorizLine_NoClip(6,130,128);
+  gfx_VertLine_NoClip(6,110,20);
+  gfx_VertLine_NoClip(134,110,21);
+
+  /*if the selected start name is under 6, that means we need to start drawing
+  * farther down the screen for the text to go in the right spot */
+  if(startName<6){
+    Yoffset = 70 - startName * Y_SPACING;
+    startName = 0;
+
+  }
+
+
   /* draw the text on the screen. Starts displaying the name at element start
   * then iterates until out of pics or about to draw off the screen */
-  for(i=start;i<numOfPics && y<180;i++){
-    y = i * 20 + 30;
-    /*if the selected start name is under 6, that means we need to start drawing
-    * farther down the screen for the text to fit */
-    if(start<6)
-    y = 120 + i * 20;
+  for(i=startName;i<numOfPics && y<180;i++){
+    //calculates where the text should be drawn
+    y = i * Y_SPACING + Y_MARGIN + Yoffset;
+
+    /* debug stuff
     gfx_SetTextScale(1,1);
     gfx_SetTextXY(200,10);
     gfx_PrintUInt(i,3);
     gfx_SetTextXY(200,20);
     gfx_PrintUInt(y,3);
     gfx_SetTextXY(200,30);
-    gfx_PrintUInt(start,3);
+    gfx_PrintUInt(startName,3);
     gfx_SetTextXY(200,40);
     gfx_PrintUInt(numOfPics,3);
-
     gfx_SetTextScale(2,2);
-    gfx_PrintStringXY(&picNames[i*BYTES_PER_IMAGE_NAME],10,y);
+    */
+
+    gfx_PrintStringXY(&picNames[i*BYTES_PER_IMAGE_NAME],X_MARGIN,y);
+    //while(!os_GetCSC());
 
   }
+  //slows down scrolling speed
+  delay(250);
 }
 
 
+
+
+
+
+/* Rebuilds the database of images on the calculator*/
 
 uint24_t rebuildDB(uint8_t p){
   char *var_name, *imgInfo[16], nameBuffer[10];
