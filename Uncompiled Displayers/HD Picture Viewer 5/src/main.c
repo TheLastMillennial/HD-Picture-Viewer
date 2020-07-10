@@ -15,7 +15,7 @@
 #define MAX_IMAGES 936 //Max images is this because max combinations of appvars goes up to that
 #define TASKS_TO_FINISH 2
 #define X_MARGIN 8
-#define Y_MARGIN 43
+#define Y_MARGIN 38
 #define Y_SPACING 25
 
 
@@ -116,17 +116,19 @@ void DisplayHomeScreen(uint24_t pics){
     //if any key was pressed
     if(key){
       /* increases the name to start on and redraws the text */
-      if(up){
+      if(down){
         //PrintCenteredX("DOWN",10);
         startName++;
-        if (startName>(pics-1)) //makes sure user can't scroll too far
+        if (startName>(pics-1) && pics<3)
         startName=pics-1;
+        if (startName>pics-3 && pics-3>=0) //makes sure user can't scroll too far
+        startName=pics-3;
         printNames(startName, picNames, pics);
       }
       //key = kb_Data[3];
 
       /* decreases the name to start on and redraws the text */
-      if(down){
+      if(up){
         //PrintCenteredX(" UP ",10);
         startName--;
         if (startName>MAX_IMAGES) //checks if startName underflowed from 0 to 16 million or something
@@ -143,7 +145,7 @@ void DisplayHomeScreen(uint24_t pics){
 
 /* This UI keeps the user selection in the middle of the screen. */
 void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
-  uint24_t i, Yoffset=0, y=0;
+  uint24_t i, Yoffset=0, y=0, curName=0;
 
   //clears old text and sets up for new text
   gfx_SetTextScale(2,2);
@@ -153,46 +155,50 @@ void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
 
   //re-draws UI lines
   gfx_HorizLine_NoClip(0,120,6);
-  gfx_HorizLine_NoClip(134,120,6);
-  gfx_HorizLine_NoClip(6,110,128);
-  gfx_HorizLine_NoClip(6,130,128);
+  gfx_HorizLine_NoClip(136,120,6);
+  gfx_HorizLine_NoClip(6,110,130);
+  gfx_HorizLine_NoClip(6,130,130);
   gfx_VertLine_NoClip(6,110,20);
-  gfx_VertLine_NoClip(134,110,21);
+  gfx_VertLine_NoClip(136,110,21);
 
   /*if the selected start name is under 6, that means we need to start drawing
   * farther down the screen for the text to go in the right spot */
-  if(startName<6){
-    Yoffset = 70 - startName * Y_SPACING;
+  gfx_SetTextXY(200,30);
+  gfx_PrintUInt(startName,3);
+  if(startName<4){
+    Yoffset = 75 - startName * Y_SPACING;
     startName = 0;
-
+  }else{
+    startName-=4;
   }
+  curName=startName;
 
 
   /* draw the text on the screen. Starts displaying the name at element start
   * then iterates until out of pics or about to draw off the screen */
-  for(i=startName;i<numOfPics && y<180;i++){
+  for(i=0;i<numOfPics && y<180;i++){
     //calculates where the text should be drawn
     y = i * Y_SPACING + Y_MARGIN + Yoffset;
 
-    /* debug stuff
+    // debug stuff
     gfx_SetTextScale(1,1);
     gfx_SetTextXY(200,10);
     gfx_PrintUInt(i,3);
     gfx_SetTextXY(200,20);
     gfx_PrintUInt(y,3);
-    gfx_SetTextXY(200,30);
-    gfx_PrintUInt(startName,3);
     gfx_SetTextXY(200,40);
+    gfx_PrintUInt(curName,3);
+    gfx_SetTextXY(200,50);
     gfx_PrintUInt(numOfPics,3);
     gfx_SetTextScale(2,2);
-    */
 
-    gfx_PrintStringXY(&picNames[i*BYTES_PER_IMAGE_NAME],X_MARGIN,y);
+    //Prints out the correct name
+    gfx_PrintStringXY(&picNames[curName++*BYTES_PER_IMAGE_NAME],X_MARGIN,y);
     //while(!os_GetCSC());
 
   }
   //slows down scrolling speed
-  delay(250);
+  delay(150);
 }
 
 
