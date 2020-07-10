@@ -12,23 +12,29 @@
 #include <fileioc.h>
 
 /* globals */
-#define TASKS_TO_FINISH 3
+
+#define BYTES_PER_IMAGE_NAME 9 //8 for image name, 1 for null terminator
+#define MAX_IMAGES 936 //Max images is this because max combinations of appvars goes up to that
+#define TASKS_TO_FINISH 2
+
 
 /* Function Prototyptes */
 uint8_t databaseReady();
+void DisplayHomeScreen(uint24_t pics);
+void noImagesFound();
 void PrintCentered(const char *str);
 void PrintCenteredX(const char *str, uint8_t y);
 void PrintCenteredY(const char *str, uint8_t x);
 void printText(int8_t xpos, int8_t ypos, const char *text);
 uint24_t rebuildDB(uint8_t p);
 void SplashScreen();
-void noImagesFound();
 void SetLoadingBarProgress(uint8_t p, uint8_t t);
 
 /* Main function, called first */
 int main(void)
 {
   uint8_t ready=0, tasksFinished = 0;
+  uint24_t picsDetected=0;
   /* Clear the homescreen */
   //os_ClrHome();
 
@@ -41,13 +47,17 @@ int main(void)
   ready = databaseReady();
   if (ready==0)
   goto err;
-  //else if (ready ==1)
-  //returns how many images were found. 0 means quit.
-  if(rebuildDB(tasksFinished)==0)
+
+
+  picsDetected=rebuildDB(tasksFinished);
+  if(picsDetected==0)
   goto err;
+  //returns how many images were found. 0 means quit.
+
 
   SetLoadingBarProgress(++tasksFinished,TASKS_TO_FINISH);
-
+  while (!os_GetCSC());
+  DisplayHomeScreen(picsDetected);
 
   err:
   //PrintCenteredX("Test",10);
@@ -61,6 +71,33 @@ int main(void)
 
 }
 
+void DisplayHomeScreen(uint24_t pics){
+  char *picNames = malloc(pics*BYTES_PER_IMAGE_NAME); //BYTES_PER_IMAGE_NAME = 9
+  ti_var_t database = ti_Open("HDPICDB","r");
+  uint24_t i;
+  uint8_t Ypos=10;
+
+  //makes the screen black and text white
+  //gfx_FillScreen(0); //This won't let anything be displayed on top of it for some reason!?
+  gfx_SetTextFGColor(255);
+  gfx_SetTextBGColor(0);
+
+  //seeks to the first image name
+  ti_Seek(8,SEEK_SET,database);
+  //PrintCenteredX("Test1",30);
+  //loops through every picture that was detected and store the image name to picNames
+  for(i=0;i<pics;i++){
+    ti_Read(&picNames[i * BYTES_PER_IMAGE_NAME],8,1,database);
+    picNames[i * BYTES_PER_IMAGE_NAME + BYTES_PER_IMAGE_NAME - 1] = 0;
+    ti_Seek(16,SEEK_CUR,database);
+    //PrintCenteredX("Test2",40);
+    Ypos+=10;
+    PrintCenteredX(&picNames[i*BYTES_PER_IMAGE_NAME],Ypos);
+  }
+  free(picNames);
+
+}
+
 
 /* Functions */
 uint24_t rebuildDB(uint8_t p){
@@ -68,7 +105,12 @@ uint24_t rebuildDB(uint8_t p){
   uint8_t *search_pos = NULL;
   uint24_t imagesFound=0;
   char myData[8]="HDPALV1",names[8];
-  ti_var_t database = ti_Open("HDPICDB","a+"), palette;
+  ti_var_t database = ti_Open("HDPICDB","w"), palette;
+  ti_Write("HDDATV10",8,1,database);//Rewrites the header because w overwrites everything
+
+  //resets splash screen for new loading SetLoadingBarProgress
+  SplashScreen();
+
   /*
   * Searches for palettes. This is a lot easier than searching for every single
   * image square because there's is guarunteed to only be one palette per image.
@@ -76,9 +118,8 @@ uint24_t rebuildDB(uint8_t p){
   * the two letter ID for each appvar. This makes it easy to find every square via a loop.
   */
   while((var_name = ti_DetectVar(&search_pos, "HDPALV10", TI_APPVAR_TYPE)) != NULL) {
-    //writes appvar name to db
-    //ti_Write(var_name,8,1,database);
-    imagesFound++;
+    //sets progress of how many images were found
+    SetLoadingBarProgress(++imagesFound,MAX_IMAGES);
     //finds the name, letter ID, and size of entire image this palette belongs to.
     palette = ti_Open(var_name,"r");
     //seeks past useless info
@@ -88,18 +129,24 @@ uint24_t rebuildDB(uint8_t p){
     ti_Read(&imgInfo,16,1,palette);
     //Writes the info to the database
     ti_Write(imgInfo,16,1,database);
+    //closes palette for next iteration
     ti_Close(palette);
   }
   //closes the database
-
-  ti_CloseAll();
+  ti_Close(database);
+  gfx_End();
+  ti_SetArchiveStatus(true,database);
+  gfx_Begin();
+  SplashScreen();
   gfx_SetTextXY(100,195);
   gfx_PrintUInt(imagesFound,3);
   if (imagesFound==0){
     noImagesFound();
   }
-
   SetLoadingBarProgress(++p,TASKS_TO_FINISH);
+
+
+
   return imagesFound;
 }
 
@@ -113,8 +160,6 @@ void noImagesFound(){
   PrintCenteredX("Press any key to quit",41);
   return;
 }
-
-
 
 //checks if the database is already created. If not, it creates it.
 uint8_t databaseReady(){
