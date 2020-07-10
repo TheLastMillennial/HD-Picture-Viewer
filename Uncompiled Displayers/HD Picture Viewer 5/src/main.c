@@ -1,14 +1,12 @@
 #include <tice.h>
-
 #include <graphx.h>
+#include <keypadc.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <fileioc.h>
 
 /* globals */
@@ -25,6 +23,7 @@ void noImagesFound();
 void PrintCentered(const char *str);
 void PrintCenteredX(const char *str, uint8_t y);
 void PrintCenteredY(const char *str, uint8_t x);
+void printNames(uint8_t start, char *picNames, uint24_t numOfPics);
 void printText(int8_t xpos, int8_t ypos, const char *text);
 uint24_t rebuildDB(uint8_t p);
 void SplashScreen();
@@ -40,7 +39,6 @@ int main(void)
 
   gfx_Begin();
   ti_CloseAll();
-
   SplashScreen();
   SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
   //checks if the database exists and is ready 0 failure; 1 created; 2 exists
@@ -54,13 +52,10 @@ int main(void)
   goto err;
   //returns how many images were found. 0 means quit.
 
-
   SetLoadingBarProgress(++tasksFinished,TASKS_TO_FINISH);
-  while (!os_GetCSC());
   DisplayHomeScreen(picsDetected);
 
   err:
-  //PrintCenteredX("Test",10);
   /* Waits for a keypress */
   while (!os_GetCSC());
   ti_CloseAll();
@@ -71,35 +66,100 @@ int main(void)
 
 }
 
+/* Functions */
+
 void DisplayHomeScreen(uint24_t pics){
   char *picNames = malloc(pics*BYTES_PER_IMAGE_NAME); //BYTES_PER_IMAGE_NAME = 9
   ti_var_t database = ti_Open("HDPICDB","r");
   uint24_t i;
-  uint8_t Ypos=10;
+  uint8_t Ypos=10, startName=0;
+  kb_key_t key = kb_Data[7];
+
 
   //makes the screen black and text white
-  //gfx_FillScreen(0); //This won't let anything be displayed on top of it for some reason!?
-  gfx_SetTextFGColor(255);
+  gfx_FillScreen(0); //This won't let anything be displayed on top of it for some reason!?
+  gfx_SetTextFGColor(254);
   gfx_SetTextBGColor(0);
+  gfx_SetColor(255);
+  gfx_VertLine(140,20,200);
+
 
   //seeks to the first image name
   ti_Seek(8,SEEK_SET,database);
   //PrintCenteredX("Test1",30);
   //loops through every picture that was detected and store the image name to picNames
-  for(i=0;i<pics;i++){
+  for(i=0;i<=pics;i++){
     ti_Read(&picNames[i * BYTES_PER_IMAGE_NAME],8,1,database);
     picNames[i * BYTES_PER_IMAGE_NAME + BYTES_PER_IMAGE_NAME - 1] = 0;
     ti_Seek(16,SEEK_CUR,database);
     //PrintCenteredX("Test2",40);
-    Ypos+=10;
-    PrintCenteredX(&picNames[i*BYTES_PER_IMAGE_NAME],Ypos);
-  }
-  free(picNames);
+    Ypos+=15;
+    //PrintCenteredX(&picNames[i*BYTES_PER_IMAGE_NAME],Ypos);
 
+  }
+
+  /* Keypress handler */
+  kb_Scan();
+  gfx_SetTextXY(10,10);
+  printNames(startName, picNames, pics);
+  do{
+    key = kb_Data[7];
+
+    /* increases the name to start on and redraws the text */
+    if(key==kb_Down){
+      if (++startName>=pics)
+      startName=pics;
+      printNames(startName, picNames, pics);
+    }
+    //key = kb_Data[3];
+
+    /* decreases the name to start on and redraws the text */
+    if(key==kb_Up){
+      if (--startName<0)
+      startName=pics;
+      printNames(startName, picNames, pics);
+    }
+    kb_Scan();
+  }   while(kb_Data[6]!=kb_Clear);
+
+  free(picNames);
+}
+
+/* This UI keeps the user selection in the middle of the screen. */
+void printNames(uint8_t start, char *picNames, uint24_t numOfPics){
+  uint8_t i, y=30;
+
+  gfx_SetTextScale(2,2);
+  gfx_SetColor(0);
+  gfx_FillRectangle_NoClip(0,0,140,240);
+  gfx_SetColor(255);
+
+  /* draw the text on the screen. Starts displaying the name at element start
+  * then iterates until out of pics or about to draw off the screen */
+  for(i=start;i<numOfPics && y<180;i++){
+    y = i * 20 + 30;
+    /*if the selected start name is under 6, that means we need to start drawing
+    * farther down the screen for the text to fit */
+    if(start<6)
+    y = 120 + i * 20;
+    gfx_SetTextScale(1,1);
+    gfx_SetTextXY(200,10);
+    gfx_PrintUInt(i,3);
+    gfx_SetTextXY(200,20);
+    gfx_PrintUInt(y,3);
+    gfx_SetTextXY(200,30);
+    gfx_PrintUInt(start,3);
+    gfx_SetTextXY(200,40);
+    gfx_PrintUInt(numOfPics,3);
+
+    gfx_SetTextScale(2,2);
+    gfx_PrintStringXY(&picNames[i*BYTES_PER_IMAGE_NAME],10,y);
+
+  }
 }
 
 
-/* Functions */
+
 uint24_t rebuildDB(uint8_t p){
   char *var_name, *imgInfo[16], nameBuffer[10];
   uint8_t *search_pos = NULL;

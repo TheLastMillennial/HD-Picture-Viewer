@@ -2,14 +2,14 @@ Segment  Base   Top    High   Length
 -------- ------ ------ ------ -------
 icon     D1A882 D1A997           115h
 launcher D1A997 D1A9EF            58h
-libs     D1A9EF D1AA58            69h
-startup  D1AA58 D1AA97            3Fh
-cleanup  D1AA97 D1AAAB            14h
-exit     D1AAAB D1AAB1             6h
-code     D1AAB1 D1B2FA           849h
-data     D1B2FA D1B31F            25h
-strsect  D1B31F D1B41E            FFh
-text     D1B41E D1B438            1Ah
+libs     D1A9EF D1AA72            83h
+startup  D1AA72 D1AAB1            3Fh
+cleanup  D1AAB1 D1AAC5            14h
+exit     D1AAC5 D1AACB             6h
+code     D1AACB D1B507           A3Ch
+data     D1B507 D1B52C            25h
+strsect  D1B52C D1B62B            FFh
+text     D1B62B D1B645            1Ah
 bss      D031F6 D031FC D13FD6      6h
 header   D1A87F D1A882             3h
 
@@ -150,45 +150,46 @@ _asm_DisableAPD           = 021134
 _asm_EnableAPD            = 021138
 _asm_DrawStatusBar        = 021A3C
 _asm_ArcChk               = 022040
-_os_DisableHomeTextBuffer = D1AAB1
-_os_EnableHomeTextBuffer  = D1AAC3
-__frameset0               = D1AAD5
-__frameset                = D1AAE0
+_os_DisableHomeTextBuffer = D1AACB
+_os_EnableHomeTextBuffer  = D1AADD
+__frameset0               = D1AAEF
+__frameset                = D1AAFA
 _strcmp                   = 0000C8
 __fmul                    = 000288
 __imul_b                  = 000158
 __imul_b                  = 000150
 __ishru_b                 = 000184
 __ishru_b                 = 000188
-__s_sbrk                  = D1AAEE
+__s_sbrk                  = D1AB08
 __icmpzero                = 000138
 __fdiv                    = 000278
 __ftol                    = 00027C
 __ultof                   = 000280
-_malloc                   = D1AB3F
+_malloc                   = D1AB59
 __alloc_base              = D031F6
-_free                     = D1ABE7
+_free                     = D1AC01
 __findlibload             = D1A997
 __program_icon            = D1A887
 __program_description     = D1A989
-__ccleanup                = D1AA97
+__ccleanup                = D1AAB1
 _errno                    = D008DC
 _init                     = D1A882
-_exit                     = D1AAAD
-__exit                    = D1AA86
-__exitsp                  = D1AA86
-__errsp                   = D1AA86
-_printText                = D1B2D8
-_PrintCenteredY           = D1B2B7
-_PrintCenteredX           = D1B282
-_PrintCentered            = D1B250
-_SplashScreen             = D1B21F
-_SetLoadingBarProgress    = D1B1A0
-_databaseReady            = D1B044
-_noImagesFound            = D1AFDF
-_rebuildDB                = D1AE60
-_DisplayHomeScreen        = D1AD64
-_main                     = D1ACE5
+_exit                     = D1AAC7
+__exit                    = D1AAA0
+__exitsp                  = D1AAA0
+__errsp                   = D1AAA0
+_printText                = D1B4E5
+_PrintCenteredY           = D1B4C4
+_PrintCenteredX           = D1B48F
+_PrintCentered            = D1B45D
+_SplashScreen             = D1B42C
+_SetLoadingBarProgress    = D1B3AD
+_databaseReady            = D1B251
+_noImagesFound            = D1B1EC
+_rebuildDB                = D1B06D
+_printNames               = D1AF18
+_DisplayHomeScreen        = D1AD77
+_main                     = D1ACFF
 _ti_CloseAll              = D1AA03
 _ti_Open                  = D1AA07
 _ti_Close                 = D1AA0B
@@ -201,10 +202,14 @@ _ti_DetectVar             = D1AA23
 _gfx_Begin                = D1AA30
 _gfx_End                  = D1AA34
 _gfx_SetColor             = D1AA38
-_gfx_PrintUInt            = D1AA3C
-_gfx_PrintStringXY        = D1AA40
-_gfx_SetTextXY            = D1AA44
-_gfx_SetTextBGColor       = D1AA48
-_gfx_SetTextFGColor       = D1AA4C
-_gfx_GetStringWidth       = D1AA50
-_gfx_FillRectangle_NoClip = D1AA54
+_gfx_FillScreen           = D1AA3C
+_gfx_PrintUInt            = D1AA40
+_gfx_PrintStringXY        = D1AA44
+_gfx_SetTextXY            = D1AA48
+_gfx_SetTextBGColor       = D1AA4C
+_gfx_SetTextFGColor       = D1AA50
+_gfx_GetStringWidth       = D1AA54
+_gfx_VertLine             = D1AA58
+_gfx_FillRectangle_NoClip = D1AA5C
+_gfx_SetTextScale         = D1AA60
+_kb_Scan                  = D1AA6E
