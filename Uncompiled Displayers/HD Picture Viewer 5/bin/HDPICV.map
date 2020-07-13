@@ -6,10 +6,10 @@ libs     D1A9EF D1AA7A            8Bh
 startup  D1AA7A D1AAB9            3Fh
 cleanup  D1AAB9 D1AACD            14h
 exit     D1AACD D1AAD3             6h
-code     D1AAD3 D1B684           BB1h
-data     D1B684 D1B6A9            25h
-strsect  D1B6A9 D1B7A8            FFh
-text     D1B7A8 D1B7C2            1Ah
+code     D1AAD3 D1B906           E33h
+data     D1B906 D1B92B            25h
+strsect  D1B92B D1BA3A           10Fh
+text     D1BA3A D1BA54            1Ah
 bss      D031F6 D031FC D13FD6      6h
 header   D1A87F D1A882             3h
 
@@ -162,6 +162,8 @@ __imul_b                  = 000150
 __ishru_b                 = 000184
 __ishru_b                 = 000188
 __s_sbrk                  = D1AB59
+__idvrmu                  = 000140
+__idvrmu                  = 000144
 __icmpzero                = 000138
 __fdiv                    = 000278
 __ftol                    = 00027C
@@ -179,16 +181,18 @@ _exit                     = D1AACF
 __exit                    = D1AAA8
 __exitsp                  = D1AAA8
 __errsp                   = D1AAA8
-_printText                = D1B662
-_PrintCenteredY           = D1B641
-_PrintCenteredX           = D1B60C
-_PrintCentered            = D1B5DA
-_SplashScreen             = D1B5A9
-_SetLoadingBarProgress    = D1B52A
-_databaseReady            = D1B3CE
-_noImagesFound            = D1B369
-_rebuildDB                = D1B1EA
-_printNames               = D1AFBD
+_printText                = D1B8E4
+_PrintCenteredY           = D1B8C3
+_PrintCenteredX           = D1B88E
+_PrintCentered            = D1B85C
+_SplashScreen             = D1B82B
+_SetLoadingBarProgress    = D1B7AC
+_databaseReady            = D1B650
+_noImagesFound            = D1B5EB
+_rebuildDB                = D1B46C
+_printNames               = D1B2D7
+_combineSquareID          = D1B21A
+_DrawImage                = D1B021
 _DisplayHomeScreen        = D1ADC8
 _main                     = D1AD50
 _ti_CloseAll              = D1AA03

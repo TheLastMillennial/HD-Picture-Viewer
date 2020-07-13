@@ -17,12 +17,18 @@
 #define X_MARGIN 8
 #define Y_MARGIN 38
 #define Y_SPACING 25
+#define MAX_THUMBNAIL_WIDTH 160
+#define MAX_THUMBNAIL_HEIGHT 240
+#define THUMBNAIL_ZOOM 0
+
 
 
 
 /* Function Prototyptes */
+void combineSquareID(char *squareName, uint24_t x, uint24_t y, char *id);
 uint8_t databaseReady();
 void DisplayHomeScreen(uint24_t pics);
+void DrawImage(uint24_t picName);
 void noImagesFound();
 void PrintCentered(const char *str);
 void PrintCenteredX(const char *str, uint8_t y);
@@ -81,7 +87,7 @@ void DisplayHomeScreen(uint24_t pics){
   bool up,down,left,right;
 
 
-  //makes the screen black and text white
+  //makes the screen black and sets text white
   gfx_FillScreen(0);
   gfx_SetTextFGColor(254);
   gfx_SetTextBGColor(0);
@@ -96,7 +102,7 @@ void DisplayHomeScreen(uint24_t pics){
   for(i=0;i<=pics;i++){
     ti_Read(&picNames[i * BYTES_PER_IMAGE_NAME],8,1,database);
     picNames[i * BYTES_PER_IMAGE_NAME + BYTES_PER_IMAGE_NAME - 1] = 0;
-    ti_Seek(16,SEEK_CUR,database);
+    ti_Seek(8,SEEK_CUR,database);
     //PrintCenteredX("Test2",40);
     Ypos+=15;
     //PrintCenteredX(&picNames[i*BYTES_PER_IMAGE_NAME],Ypos);
@@ -106,6 +112,7 @@ void DisplayHomeScreen(uint24_t pics){
   /* Keypress handler */
   gfx_SetTextXY(10,10);
   printNames(startName, picNames, pics);
+  DrawImage(startName);
   do{
     //scans the keys for keypress
     kb_Scan();
@@ -119,11 +126,17 @@ void DisplayHomeScreen(uint24_t pics){
       if(down){
         //PrintCenteredX("DOWN",10);
         startName++;
-        if (startName>(pics-1) && pics<3)
+        //make sure user can't scroll down too far
+        if (startName>(pics-1))//If there's more than 4 images, then handle things normally
         startName=pics-1;
-        if (startName>pics-3 && pics-3>=0) //makes sure user can't scroll too far
+        if (startName>pics-1 && pics-1>0) //makes sure user can't scroll too far when there's only 1 image detected
+        startName=pics-1;
+        if (startName>pics-2 && pics-2>0) //makes sure user can't scroll too far when there's only 2 images detected
+        startName=pics-2;
+        if (startName>pics-3 && pics-3>0) //makes sure user can't scroll too far when there's only 3 images detected
         startName=pics-3;
         printNames(startName, picNames, pics);
+        DrawImage(startName);
       }
       //key = kb_Data[3];
 
@@ -131,9 +144,12 @@ void DisplayHomeScreen(uint24_t pics){
       if(up){
         //PrintCenteredX(" UP ",10);
         startName--;
-        if (startName>MAX_IMAGES) //checks if startName underflowed from 0 to 16 million or something
+        /*checks if startName underflowed from 0 to 16 million or something.
+        * Whatever the number, it shouldn't be less than the max number of images possible*/
+        if (startName>MAX_IMAGES)
         startName=0;
         printNames(startName, picNames, pics);
+        DrawImage(startName);
       }
     }
 
@@ -141,6 +157,78 @@ void DisplayHomeScreen(uint24_t pics){
   }   while(kb_Data[6]!=kb_Clear);
 
   free(picNames);
+}
+
+/* Draws the image stored in database at position startName.
+* Draws the image at location x,y starting at top left corner.
+* If x=-1 then make image horizontally centered in the screen.
+* If y=-1 then make image vertically centered on the screen.
+* Image will automatically be resized to same aspect ratio so you just set the max width and height (4,3 will fit the screen normally)
+*
+*/
+void DrawImage(uint24_t picName){
+  ti_var_t database = ti_Open("HDPICDB","r");
+  char imgWH[6], imgID[2], searchName[8];
+  //uint8_t wh=0,wt=0,wo=0,hh=0,ht=0,ho=0;
+  uint24_t i=0,widthSquares=0,heightSquares=0,widthPx=0,heightPx=0,xSquare=0,ySquare=0,xOffsetSquare=0,yOffsetSquare=0;
+  double scale;
+
+  //seeks past header (8bytes), imgName, and unselected images
+  ti_Seek(16+(16*picName),SEEK_CUR,database);
+  //reads the image width/height (6 bytes)
+  ti_Read(imgWH,6,1,database);
+  //reads the image letter ID (2 bytes)
+  ti_Read(imgID,2,1,database);
+  //closes database
+  ti_Close(database);
+
+  //Converts the width/height from a char array into two integers by converting char into decimal value
+  //then subtracting 48 to get the actuall number.
+  gfx_SetTextScale(1,1);
+  gfx_PrintStringXY(imgWH,170,10);
+
+  widthSquares=(int)imgWH[0]-48+(int)imgWH[1]-48+(int)imgWH[2]-48;
+  heightSquares=(int)imgWH[3]-48+(int)imgWH[4]-48+(int)imgWH[5]-48;
+  gfx_SetTextScale(1,1);
+  gfx_PrintStringXY("WS",170,60);
+  gfx_SetTextXY(200,60);
+  gfx_PrintUInt(widthSquares,3);
+  gfx_PrintStringXY("HS",170,70);
+  gfx_SetTextXY(200,70);
+  gfx_PrintUInt(heightSquares,3);
+
+  //makes sure image will fit on screen according to the max width/height provided in the requirements
+  /*if(widthSquares>(mWidth/80){
+  scale=4.0/(double)widthSquares;
+  if(heightSquares*scale>(mHeight/80)){
+  scale = 3.0/(double)heightSquares;
+}
+}else if(heightSquares>3){
+scale = 3.0/(double)heightSquares;
+}
+if (x<0){
+xOffsetSquare = (double)x/80
+}*/
+
+for(xSquare=0;xSquare<widthSquares;xSquare++){
+  for(ySquare=0;ySquare<heightSquares;ySquare++){
+    combineSquareID(&searchName,xSquare, ySquare, &imgID);//combines the separate parts into one name to search for
+    gfx_SetTextXY(200,80+10*ySquare);
+    while(!os_GetCSC());
+  }
+}
+}
+
+void combineSquareID(char *squareName, uint24_t x, uint24_t y, char *id){
+  squareName[0]=x/100;
+  squareName[1]=(x/10)-(x/100);
+  squareName[2]=x-(x/10)-(x/100);
+  squareName[3]=x/100;
+  squareName[4]=(x/10)-(x/100);
+  squareName[5]=x-(x/10)-(x/100);
+  squareName[6]=id[0];
+  squareName[7]=id[1];
+  //return squareName;
 }
 
 /* This UI keeps the user selection in the middle of the screen. */
@@ -155,13 +243,13 @@ void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
 
   //re-draws UI lines
   gfx_HorizLine_NoClip(0,120,6);
-  gfx_HorizLine_NoClip(136,120,6);
+  gfx_HorizLine_NoClip(136,120,5);
   gfx_HorizLine_NoClip(6,110,130);
   gfx_HorizLine_NoClip(6,130,130);
   gfx_VertLine_NoClip(6,110,20);
   gfx_VertLine_NoClip(136,110,21);
 
-  /*if the selected start name is under 6, that means we need to start drawing
+  /*if the selected start name is under 4, that means we need to start drawing
   * farther down the screen for the text to go in the right spot */
   gfx_SetTextXY(200,30);
   gfx_PrintUInt(startName,3);
@@ -180,6 +268,7 @@ void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
     //calculates where the text should be drawn
     y = i * Y_SPACING + Y_MARGIN + Yoffset;
 
+    /*
     // debug stuff
     gfx_SetTextScale(1,1);
     gfx_SetTextXY(200,10);
@@ -191,7 +280,7 @@ void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
     gfx_SetTextXY(200,50);
     gfx_PrintUInt(numOfPics,3);
     gfx_SetTextScale(2,2);
-
+    */
     //Prints out the correct name
     gfx_PrintStringXY(&picNames[curName++*BYTES_PER_IMAGE_NAME],X_MARGIN,y);
     //while(!os_GetCSC());
@@ -203,11 +292,7 @@ void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
 
 
 
-
-
-
 /* Rebuilds the database of images on the calculator*/
-
 uint24_t rebuildDB(uint8_t p){
   char *var_name, *imgInfo[16], nameBuffer[10];
   uint8_t *search_pos = NULL;
