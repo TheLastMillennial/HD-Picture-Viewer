@@ -2,20 +2,20 @@ Segment  Base   Top    High   Length
 -------- ------ ------ ------ -------
 icon     D1A882 D1A997           115h
 launcher D1A997 D1A9EF            58h
-libs     D1A9EF D1AA7A            8Bh
-startup  D1AA7A D1AAB9            3Fh
-cleanup  D1AAB9 D1AACD            14h
-exit     D1AACD D1AAD3             6h
-code     D1AAD3 D1B906           E33h
-data     D1B906 D1B92B            25h
-strsect  D1B92B D1BA3A           10Fh
-text     D1BA3A D1BA54            1Ah
+libs     D1A9EF D1AA86            97h
+startup  D1AA86 D1AAC5            3Fh
+cleanup  D1AAC5 D1AAD9            14h
+exit     D1AAD9 D1AADF             6h
+code     D1AADF D1BB66          1087h
+data     D1BB66 D1BB8B            25h
+strsect  D1BB8B D1BCF1           166h
+text     D1BCF1 D1BD0B            1Ah
 bss      D031F6 D031FC D13FD6      6h
 header   D1A87F D1A882             3h
 
 Label                       Value
 -------------------------   ------
-_delay                    = D1AAD3
+_delay                    = D1AADF
 _boot_GetBootMajorVer     = 000080
 _boot_GetHardwareVer      = 000084
 _boot_GetBootMinorVer     = 00008C
@@ -151,50 +151,51 @@ _asm_DisableAPD           = 021134
 _asm_EnableAPD            = 021138
 _asm_DrawStatusBar        = 021A3C
 _asm_ArcChk               = 022040
-_os_DisableHomeTextBuffer = D1AB1C
-_os_EnableHomeTextBuffer  = D1AB2E
-__frameset0               = D1AB40
-__frameset                = D1AB4B
+_os_DisableHomeTextBuffer = D1AB28
+_os_EnableHomeTextBuffer  = D1AB3A
+__frameset0               = D1AB4C
+__frameset                = D1AB57
 _strcmp                   = 0000C8
 __fmul                    = 000288
+_sprintf                  = 0000BC
 __imul_b                  = 000158
 __imul_b                  = 000150
 __ishru_b                 = 000184
 __ishru_b                 = 000188
-__s_sbrk                  = D1AB59
+__s_sbrk                  = D1AB65
 __idvrmu                  = 000140
 __idvrmu                  = 000144
 __icmpzero                = 000138
 __fdiv                    = 000278
 __ftol                    = 00027C
 __ultof                   = 000280
-_malloc                   = D1ABAA
+_malloc                   = D1ABB6
 __alloc_base              = D031F6
-_free                     = D1AC52
+_free                     = D1AC5E
 __findlibload             = D1A997
 __program_icon            = D1A887
 __program_description     = D1A989
-__ccleanup                = D1AAB9
+__ccleanup                = D1AAC5
 _errno                    = D008DC
 _init                     = D1A882
-_exit                     = D1AACF
-__exit                    = D1AAA8
-__exitsp                  = D1AAA8
-__errsp                   = D1AAA8
-_printText                = D1B8E4
-_PrintCenteredY           = D1B8C3
-_PrintCenteredX           = D1B88E
-_PrintCentered            = D1B85C
-_SplashScreen             = D1B82B
-_SetLoadingBarProgress    = D1B7AC
-_databaseReady            = D1B650
-_noImagesFound            = D1B5EB
-_rebuildDB                = D1B46C
-_printNames               = D1B2D7
-_combineSquareID          = D1B21A
-_DrawImage                = D1B021
-_DisplayHomeScreen        = D1ADC8
-_main                     = D1AD50
+_exit                     = D1AADB
+__exit                    = D1AAB4
+__exitsp                  = D1AAB4
+__errsp                   = D1AAB4
+_printText                = D1BB44
+_PrintCenteredY           = D1BB23
+_PrintCenteredX           = D1BAEE
+_PrintCentered            = D1BABC
+_SplashScreen             = D1BA8B
+_SetLoadingBarProgress    = D1BA0C
+_databaseReady            = D1B8B0
+_noImagesFound            = D1B84B
+_rebuildDB                = D1B6CC
+_printNames               = D1B537
+_combineSquareID          = D1B44F
+_DrawImage                = D1B03F
+_DisplayHomeScreen        = D1ADD4
+_main                     = D1AD5C
 _ti_CloseAll              = D1AA03
 _ti_Open                  = D1AA07
 _ti_Close                 = D1AA0B
@@ -203,20 +204,23 @@ _ti_Read                  = D1AA13
 _ti_Seek                  = D1AA17
 _ti_SetArchiveStatus      = D1AA1B
 _ti_Rewind                = D1AA1F
-_ti_DetectVar             = D1AA23
-_gfx_Begin                = D1AA30
-_gfx_End                  = D1AA34
-_gfx_SetColor             = D1AA38
-_gfx_FillScreen           = D1AA3C
-_gfx_PrintUInt            = D1AA40
-_gfx_PrintStringXY        = D1AA44
-_gfx_SetTextXY            = D1AA48
-_gfx_SetTextBGColor       = D1AA4C
-_gfx_SetTextFGColor       = D1AA50
-_gfx_GetStringWidth       = D1AA54
-_gfx_VertLine             = D1AA58
-_gfx_HorizLine_NoClip     = D1AA5C
-_gfx_VertLine_NoClip      = D1AA60
-_gfx_FillRectangle_NoClip = D1AA64
-_gfx_SetTextScale         = D1AA68
-_kb_Scan                  = D1AA76
+_ti_GetDataPtr            = D1AA23
+_ti_DetectVar             = D1AA27
+_gfx_Begin                = D1AA34
+_gfx_End                  = D1AA38
+_gfx_SetColor             = D1AA3C
+_gfx_SetPalette           = D1AA40
+_gfx_FillScreen           = D1AA44
+_gfx_PrintUInt            = D1AA48
+_gfx_PrintStringXY        = D1AA4C
+_gfx_SetTextXY            = D1AA50
+_gfx_SetTextBGColor       = D1AA54
+_gfx_SetTextFGColor       = D1AA58
+_gfx_GetStringWidth       = D1AA5C
+_gfx_VertLine             = D1AA60
+_gfx_HorizLine_NoClip     = D1AA64
+_gfx_VertLine_NoClip      = D1AA68
+_gfx_FillRectangle_NoClip = D1AA6C
+_gfx_ScaledSprite_NoClip  = D1AA70
+_gfx_SetTextScale         = D1AA74
+_kb_Scan                  = D1AA82

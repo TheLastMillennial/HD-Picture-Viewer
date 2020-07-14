@@ -130,11 +130,11 @@ void DisplayHomeScreen(uint24_t pics){
         if (startName>(pics-1))//If there's more than 4 images, then handle things normally
         startName=pics-1;
         if (startName>pics-1 && pics-1>0) //makes sure user can't scroll too far when there's only 1 image detected
-        startName=pics-1;
+        startName=pics;
         if (startName>pics-2 && pics-2>0) //makes sure user can't scroll too far when there's only 2 images detected
-        startName=pics-2;
+        startName=pics-1;
         if (startName>pics-3 && pics-3>0) //makes sure user can't scroll too far when there's only 3 images detected
-        startName=pics-3;
+        startName=pics-2;
         printNames(startName, picNames, pics);
         DrawImage(startName);
       }
@@ -167,18 +167,21 @@ void DisplayHomeScreen(uint24_t pics){
 *
 */
 void DrawImage(uint24_t picName){
-  ti_var_t database = ti_Open("HDPICDB","r");
-  char imgWH[6], imgID[2], searchName[8];
+  ti_var_t database = ti_Open("HDPICDB","r"),squareSlot,palSlot;
+
+  char imgWH[6], imgID[2], searchName[8], palName[8];
   //uint8_t wh=0,wt=0,wo=0,hh=0,ht=0,ho=0;
   uint24_t i=0,widthSquares=0,heightSquares=0,widthPx=0,heightPx=0,xSquare=0,ySquare=0,xOffsetSquare=0,yOffsetSquare=0;
+  uint16_t *palPtr[256];
   double scale;
+  gfx_sprite_t *squareImg;
 
   //seeks past header (8bytes), imgName, and unselected images
   ti_Seek(16+(16*picName),SEEK_CUR,database);
-  //reads the image width/height (6 bytes)
-  ti_Read(imgWH,6,1,database);
   //reads the image letter ID (2 bytes)
   ti_Read(imgID,2,1,database);
+  //reads the image width/height (6 bytes)
+  ti_Read(imgWH,6,1,database);
   //closes database
   ti_Close(database);
 
@@ -210,24 +213,75 @@ if (x<0){
 xOffsetSquare = (double)x/80
 }*/
 
-for(xSquare=0;xSquare<widthSquares;xSquare++){
-  for(ySquare=0;ySquare<heightSquares;ySquare++){
-    combineSquareID(&searchName,xSquare, ySquare, &imgID);//combines the separate parts into one name to search for
-    gfx_SetTextXY(200,80+10*ySquare);
-    while(!os_GetCSC());
+//sets correct palettes the
+sprintf(palName, "HP%.2s0000",imgID);
+palSlot = ti_Open(palName,"r");
+if (!palSlot){
+  PrintCenteredX(palName,120);
+  PrintCenteredX(" Palette does not exist!",130);
+  while(!os_GetCSC());
+  ti_CloseAll();
+  return;
+}
+
+ti_Seek(24,SEEK_SET,palSlot);
+squareImg = ti_GetDataPtr(palSlot);
+gfx_SetPalette(squareImg,512,0);
+
+gfx_SetTextScale(1,1);
+gfx_PrintStringXY("WS",170,60);
+gfx_SetTextXY(200,60);
+gfx_PrintUInt(widthSquares,3);
+gfx_PrintStringXY("HS",170,70);
+gfx_SetTextXY(200,70);
+gfx_PrintUInt(heightSquares,3);
+
+for(xSquare=0;xSquare<(widthSquares+1);xSquare++){
+  for(ySquare=0;ySquare<(heightSquares+1);ySquare++){
+    //combineSquareID(&searchName,xSquare, ySquare, &imgID);//combines the separate parts into one name to search for
+    sprintf(searchName, "%.2s%03u%03u",imgID, xSquare, ySquare);
+    gfx_PrintStringXY("XS",170,80);
+    gfx_SetTextXY(200,80);
+    gfx_PrintUInt(xSquare,3);
+    gfx_PrintStringXY("YS",170,90);
+    gfx_SetTextXY(200,90);
+    gfx_PrintUInt(ySquare,3);
+    gfx_PrintStringXY(searchName,200,100+10*ySquare);
+    //while(!os_GetCSC());
+    //squareSlot = ti_Open(searchName,"r");
+    /*This opens the variable with the name that was just assembled.
+    * It then gets the pointer to that and stores it in a graphics variable
+    */
+    squareSlot = ti_Open(searchName,"r");
+    if (!squareSlot){
+      PrintCenteredX(searchName,120);
+      PrintCentered("Square doesn't exist!");
+      while(!os_GetCSC());
+      ti_CloseAll();
+      return;
+    }
+    ti_Seek(16,SEEK_CUR,squareSlot);
+    squareImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
+    //displays the image
+    gfx_ScaledSprite_NoClip(squareImg,xSquare*80,ySquare*80,1,1);
+    ti_Close(squareSlot);
+    //[commandz] you'll want to either ti_Read the sprite out,
+    //or just open the file and use gfx_sprite_t *sprite = (gfx_sprite_t*)ti_GetDataPtr(slot);
   }
 }
+ti_Close(palSlot);
 }
 
 void combineSquareID(char *squareName, uint24_t x, uint24_t y, char *id){
   squareName[0]=x/100;
-  squareName[1]=(x/10)-(x/100);
-  squareName[2]=x-(x/10)-(x/100);
-  squareName[3]=x/100;
-  squareName[4]=(x/10)-(x/100);
-  squareName[5]=x-(x/10)-(x/100);
+  squareName[1]=(x/10)-((x/100)*100);
+  squareName[2]=x-((x/10)*10)-((x/100)*100);
+  squareName[3]=y/100;
+  squareName[4]=(y/10)-((y/100)*100);
+  squareName[5]=y-((y/10)*10)-((y/100)*100);
   squareName[6]=id[0];
   squareName[7]=id[1];
+  squareName[8]='\0';
   //return squareName;
 }
 
