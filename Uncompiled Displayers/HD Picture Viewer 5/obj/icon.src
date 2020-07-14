@@ -25,5 +25,5 @@ __program_icon:
 	db	0FFh, 0FFh, 0FFh, 0B5h, 0DEh, 0B6h, 06Dh, 02Dh, 02Dh, 04Dh, 096h, 0DEh, 0B5h, 0FFh, 0FFh, 0FFh
 	db	0FFh, 0FFh, 0FFh, 0FFh, 0FEh, 0B5h, 0B5h, 0D6h, 0D6h, 0B5h, 0B5h, 0DEh, 0FFh, 0FFh, 0FFh, 0FFh
 __program_description:
-	db	"CE C SDK Demo", 0
+	db	"High Definition Picture Viewer 5 Dev              By TLM", 0
 __program_description_end:

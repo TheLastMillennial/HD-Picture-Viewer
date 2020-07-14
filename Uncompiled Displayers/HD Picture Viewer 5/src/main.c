@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fileioc.h>
+#include <debug.h>
 
 /* globals */
 
@@ -168,13 +169,12 @@ void DisplayHomeScreen(uint24_t pics){
 */
 void DrawImage(uint24_t picName){
   ti_var_t database = ti_Open("HDPICDB","r"),squareSlot,palSlot;
-
-  char imgWH[6], imgID[2], searchName[8], palName[8];
-  //uint8_t wh=0,wt=0,wo=0,hh=0,ht=0,ho=0;
+  char imgWH[6], imgID[2], searchName[9], palName[9];
   uint24_t i=0,widthSquares=0,heightSquares=0,widthPx=0,heightPx=0,xSquare=0,ySquare=0,xOffsetSquare=0,yOffsetSquare=0;
   uint16_t *palPtr[256];
   double scale;
   gfx_sprite_t *squareImg;
+  gfx_FillScreen(0);
 
   //seeks past header (8bytes), imgName, and unselected images
   ti_Seek(16+(16*picName),SEEK_CUR,database);
@@ -188,17 +188,27 @@ void DrawImage(uint24_t picName){
   //Converts the width/height from a char array into two integers by converting char into decimal value
   //then subtracting 48 to get the actuall number.
   gfx_SetTextScale(1,1);
-  gfx_PrintStringXY(imgWH,170,10);
+  //gfx_PrintStringXY(imgWH,170,10);
+  dbg_sprintf(dbgout, imgWH);
 
-  widthSquares=(int)imgWH[0]-48+(int)imgWH[1]-48+(int)imgWH[2]-48;
-  heightSquares=(int)imgWH[3]-48+(int)imgWH[4]-48+(int)imgWH[5]-48;
+
+//converts the char numbers into uint numbers
+  widthSquares=(uint24_t)imgWH[0]-48+(uint24_t)imgWH[1]-48+(uint24_t)imgWH[2]-48;
+  heightSquares=(uint24_t)imgWH[3]-48+(uint24_t)imgWH[4]-48+(uint24_t)imgWH[5]-48;
+  //will not work unless this is here
+
+  /*
+  dbg_sprintf(dbgout, "WS value: %d\n", widthSquares);
+  dbg_sprintf(dbgout, "HS value: %d\n", heightSquares);
+  gfx_PrintUInt(widthSquares,3);
+  gfx_PrintUInt(heightSquares,3);
   gfx_SetTextScale(1,1);
   gfx_PrintStringXY("WS",170,60);
   gfx_SetTextXY(200,60);
   gfx_PrintUInt(widthSquares,3);
   gfx_PrintStringXY("HS",170,70);
   gfx_SetTextXY(200,70);
-  gfx_PrintUInt(heightSquares,3);
+  gfx_PrintUInt(heightSquares,3);*/
 
   //makes sure image will fit on screen according to the max width/height provided in the requirements
   /*if(widthSquares>(mWidth/80){
@@ -214,7 +224,7 @@ xOffsetSquare = (double)x/80
 }*/
 
 //sets correct palettes the
-sprintf(palName, "HP%.2s0000",imgID);
+sprintf(palName, "HP%.2s0000\0",imgID);
 palSlot = ti_Open(palName,"r");
 if (!palSlot){
   PrintCenteredX(palName,120);
@@ -224,29 +234,39 @@ if (!palSlot){
   return;
 }
 
+//gfx_SetDrawBuffer();
 ti_Seek(24,SEEK_SET,palSlot);
 squareImg = ti_GetDataPtr(palSlot);
 gfx_SetPalette(squareImg,512,0);
+ti_Close(palSlot);
+//Will not work without this here
 
+/*
+dbg_sprintf(dbgout, "WS value: %d\n", widthSquares);
+dbg_sprintf(dbgout, "HS value: %d\n", heightSquares);
+gfx_PrintUInt(widthSquares,3);
+gfx_PrintUInt(heightSquares,3);
+
+gfx_FillScreen(0);
 gfx_SetTextScale(1,1);
 gfx_PrintStringXY("WS",170,60);
 gfx_SetTextXY(200,60);
-gfx_PrintUInt(widthSquares,3);
+
 gfx_PrintStringXY("HS",170,70);
 gfx_SetTextXY(200,70);
-gfx_PrintUInt(heightSquares,3);
+gfx_PrintUInt(heightSquares,3);*/
+
 
 for(xSquare=0;xSquare<(widthSquares+1);xSquare++){
   for(ySquare=0;ySquare<(heightSquares+1);ySquare++){
-    //combineSquareID(&searchName,xSquare, ySquare, &imgID);//combines the separate parts into one name to search for
-    sprintf(searchName, "%.2s%03u%03u",imgID, xSquare, ySquare);
-    gfx_PrintStringXY("XS",170,80);
+    sprintf(searchName, "%.2s%03u%03u\0",imgID, xSquare, ySquare);//combines the separate parts into one name to search for
+    /*gfx_PrintStringXY("XS",170,80);
     gfx_SetTextXY(200,80);
     gfx_PrintUInt(xSquare,3);
     gfx_PrintStringXY("YS",170,90);
     gfx_SetTextXY(200,90);
     gfx_PrintUInt(ySquare,3);
-    gfx_PrintStringXY(searchName,200,100+10*ySquare);
+    gfx_PrintStringXY(searchName,200,100+10*ySquare);*/
     //while(!os_GetCSC());
     //squareSlot = ti_Open(searchName,"r");
     /*This opens the variable with the name that was just assembled.
@@ -264,12 +284,14 @@ for(xSquare=0;xSquare<(widthSquares+1);xSquare++){
     squareImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
     //displays the image
     gfx_ScaledSprite_NoClip(squareImg,xSquare*80,ySquare*80,1,1);
+
     ti_Close(squareSlot);
     //[commandz] you'll want to either ti_Read the sprite out,
     //or just open the file and use gfx_sprite_t *sprite = (gfx_sprite_t*)ti_GetDataPtr(slot);
   }
 }
-ti_Close(palSlot);
+//gfx_SwapDraw();
+//ti_Close(palSlot);
 }
 
 void combineSquareID(char *squareName, uint24_t x, uint24_t y, char *id){
