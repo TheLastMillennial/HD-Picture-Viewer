@@ -192,8 +192,8 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   dbg_sprintf(dbgout,"imgWH: %s \n", imgWH);
 
   //converts the char numbers into uint numbers
-  widthSquares= ((uint24_t)imgWH[0]-48)*100+((uint24_t)imgWH[1]-48)*10+(uint24_t)imgWH[2]-48;
-  heightSquares=((uint24_t)imgWH[3]-48)*100+((uint24_t)imgWH[4]-48)*10+(uint24_t)imgWH[5]-48;
+  widthSquares= ((uint24_t)imgWH[0]-'0')*100+((uint24_t)imgWH[1]-'0')*10+(uint24_t)imgWH[2]-'0';
+  heightSquares=((uint24_t)imgWH[3]-'0')*100+((uint24_t)imgWH[4]-'0')*10+(uint24_t)imgWH[5]-'0';
   maxWSquares = (maxWidth/80);
   maxHSquares = (maxHeight/80);
   dbg_sprintf(dbgout,"maxWS: %d\nwidthS: %d\nmaxHS: %d\nheightS: %d\n",maxWSquares,widthSquares,maxHSquares,heightSquares);
@@ -265,7 +265,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
         gfx_ScaleSprite(srcImg,outputImg);
 
         //displays the output image
-        gfx_ScaledSprite_NoClip(outputImg,xSquare*SQUARE_WIDTH_AND_HEIGHT,ySquare*SQUARE_WIDTH_AND_HEIGHT,1,1);
+        gfx_ScaledSprite_NoClip(outputImg,xSquare*(SQUARE_WIDTH_AND_HEIGHT*scale),ySquare*(SQUARE_WIDTH_AND_HEIGHT*scale),1,1);
 
         //cleans up
         ti_Close(squareSlot);

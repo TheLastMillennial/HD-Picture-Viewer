@@ -1403,13 +1403,13 @@ _DrawImage:
 
 .ENDEF
 
-.DEFINE "database"
+.DEFINE "scale"
 
 .CLASS 65
 
-.VALUE -1
+.VALUE -4
 
-.TYPE 12
+.TYPE 6
 
 .ENDEF
 
@@ -1417,7 +1417,7 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -2
+.VALUE -5
 
 .TYPE 12
 
@@ -1427,7 +1427,7 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -3
+.VALUE -6
 
 .TYPE 12
 
@@ -1437,7 +1437,7 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -6
+.VALUE -9
 
 .TYPE 14
 
@@ -1447,7 +1447,7 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -9
+.VALUE -12
 
 .TYPE 14
 
@@ -1457,19 +1457,19 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -12
+.VALUE -15
 
 .TYPE 14
 
 .ENDEF
 
-.DEFINE "scale"
+.DEFINE "database"
 
 .CLASS 65
 
 .VALUE -16
 
-.TYPE 6
+.TYPE 12
 
 .ENDEF
 
@@ -1551,7 +1551,7 @@ _DrawImage:
 
 .ENDEF
 
-.DEFINE "searchName"
+.DEFINE "palName"
 
 .CLASS 65
 
@@ -1563,7 +1563,7 @@ _DrawImage:
 
 .ENDEF
 
-.DEFINE "palName"
+.DEFINE "searchName"
 
 .CLASS 65
 
@@ -1590,7 +1590,7 @@ _DrawImage:
 	PUSH	IX
 	LD	IX,0
 	ADD	IX,SP
-	LD	HL,-848
+	LD	HL,-856
 	ADD	HL,SP
 	LD	SP,HL
 ;  171	  ti_var_t database = ti_Open("HDPICDB","r"),squareSlot,palSlot;
@@ -1603,7 +1603,7 @@ _DrawImage:
 	CALL	_ti_Open
 	POP	BC
 	POP	BC
-	LD	(IX+-1),A
+	LD	(IX+-16),A
 ;  172	  char imgWH[6], imgID[2], searchName[9], palName[9];
 ;  173	  uint24_t i=0,widthSquares=0,heightSquares=0, maxWSquares=0,maxHSquares=0,widthPx=0,heightPx=0,xSquare=0, newWpx=0, newHpx=0,ySquare=0,xOffsetSquare=0,yOffsetSquare=0;
 ;  174	  uint16_t *palPtr[256];
@@ -1613,8 +1613,8 @@ _DrawImage:
 
 	LD	BC,8388608
 	LD	A,63
-	LD	(IX+-16),BC
-	LD	(IX+-13),A
+	LD	(IX+-4),BC
+	LD	(IX+-1),A
 ;  177	  gfx_FillScreen(0);
 .LINE 177
 
@@ -1627,7 +1627,7 @@ _DrawImage:
 ;  180	  ti_Seek(16+(16*picName),SEEK_CUR,database);
 .LINE 180
 
-	LD	C,(IX+-1)
+	LD	C,(IX+-16)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
@@ -1648,7 +1648,7 @@ _DrawImage:
 ;  182	  ti_Read(imgID,2,1,database);
 .LINE 182
 
-	LD	C,(IX+-1)
+	LD	C,(IX+-16)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
@@ -1665,7 +1665,7 @@ _DrawImage:
 ;  184	  ti_Read(imgWH,6,1,database);
 .LINE 184
 
-	LD	C,(IX+-1)
+	LD	C,(IX+-16)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
@@ -1682,7 +1682,7 @@ _DrawImage:
 ;  186	  ti_Close(database);
 .LINE 186
 
-	LD	C,(IX+-1)
+	LD	C,(IX+-16)
 	LD	B,0
 	PUSH	BC
 	CALL	_ti_Close
@@ -1714,7 +1714,7 @@ _DrawImage:
 	POP	BC
 ;  193	
 ;  194	  //converts the char numbers into uint numbers
-;  195	  widthSquares= ((uint24_t)imgWH[0]-48)*100+((uint24_t)imgWH[1]-48)*10+(uint24_t)imgWH[2]-48;
+;  195	  widthSquares= ((uint24_t)imgWH[0]-'0')*100+((uint24_t)imgWH[1]-'0')*10+(uint24_t)imgWH[2]-'0';
 .LINE 195
 
 	LD	A,(IX+-31)
@@ -1746,7 +1746,7 @@ _DrawImage:
 	LD	IY,HL
 	LEA	BC,IY+-48
 	LD	(IX+-22),BC
-;  196	  heightSquares=((uint24_t)imgWH[3]-48)*100+((uint24_t)imgWH[4]-48)*10+(uint24_t)imgWH[5]-48;
+;  196	  heightSquares=((uint24_t)imgWH[3]-'0')*100+((uint24_t)imgWH[4]-'0')*10+(uint24_t)imgWH[5]-'0';
 .LINE 196
 
 	LEA	HL,IX+-28
@@ -1778,7 +1778,7 @@ _DrawImage:
 	ADD	HL,BC
 	LD	IY,HL
 	LEA	IY,IY+-48
-	LD	(IX+-6),IY
+	LD	(IX+-9),IY
 ;  197	  maxWSquares = (maxWidth/80);
 .LINE 197
 
@@ -1796,7 +1796,7 @@ _DrawImage:
 ;  199	  dbg_sprintf(dbgout,"maxWS: %d\nwidthS: %d\nmaxHS: %d\nheightS: %d\n",maxWSquares,widthSquares,maxHSquares,heightSquares);
 .LINE 199
 
-	LD	BC,(IX+-6)
+	LD	BC,(IX+-9)
 	PUSH	BC
 	LD	BC,(IX+-19)
 	PUSH	BC
@@ -1811,13 +1811,13 @@ _DrawImage:
 	PUSH	BC
 	PUSH	HL
 	LD	HL,IY
-	LD	BC,-848
+	LD	BC,-856
 	CALL	__istix
 	POP	HL
 	POP	BC
 	CALL	_sprintf
 	PUSH	BC
-	LD	BC,-848
+	LD	BC,-856
 	PUSH	HL
 	CALL	__ildix
 	LD	IY,HL
@@ -1849,13 +1849,13 @@ _DrawImage:
 	PUSH	BC
 	PUSH	HL
 	LD	HL,IY
-	LD	BC,-848
+	LD	BC,-856
 	CALL	__istix
 	POP	HL
 	POP	BC
 	CALL	_sprintf
 	PUSH	BC
-	LD	BC,-848
+	LD	BC,-856
 	PUSH	HL
 	CALL	__ildix
 	LD	IY,HL
@@ -1871,13 +1871,13 @@ _DrawImage:
 	CALL	__ultof
 	LD	HL,BC
 	PUSH	BC
-	LD	BC,-840	; spill
+	LD	BC,-848	; spill
 	CALL	__istix
 	POP	BC
 	LD	H,A
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-841	; spill
+	LD	IY,-849	; spill
 	LD	BC,IX	; spill
 	ADD	IY,BC
 	LD	(IY),H
@@ -1890,11 +1890,11 @@ _DrawImage:
 	LD	HL,BC
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-832	; spill
+	LD	IY,-840	; spill
 	LD	BC,IX	; spill
 	ADD	IY,BC
 	LD	(IY),H
-	LD	IY,-841	; unspill
+	LD	IY,-849	; unspill
 	LD	BC,IX	; unspill
 	ADD	IY,BC
 	LD	H,(IY)
@@ -1903,44 +1903,44 @@ _DrawImage:
 	LD	A,H
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-832	; unspill
+	LD	IY,-840	; unspill
 	LD	BC,IX	; unspill
 	ADD	IY,BC
 	LD	H,(IY)
 	POP	BC
 	POP	IY
 	PUSH	BC
-	LD	BC,-828	; spill
+	LD	BC,-836	; spill
 	CALL	__istix
-	LD	BC,-840	; unspill
+	LD	BC,-848	; unspill
 	CALL	__ildix
 	POP	BC
 	LD	BC,HL
 	PUSH	BC
-	LD	BC,-828	; unspill
+	LD	BC,-836	; unspill
 	CALL	__ildix
 	POP	BC
 	CALL	__fdiv
-	LD	(IX+-16),BC
-	LD	(IX+-13),A
+	LD	(IX+-4),BC
+	LD	(IX+-1),A
 ;  205	    if(heightSquares*scale>maxHSquares){
 .LINE 205
 
-	LD	BC,(IX+-6)
+	LD	BC,(IX+-9)
 	XOR	A,A
 	CALL	__ultof
-	LD	HL,(IX+-16)
-	LD	E,(IX+-13)
+	LD	HL,(IX+-4)
+	LD	E,(IX+-1)
 	CALL	__fmul
 	LD	HL,BC
 	PUSH	BC
-	LD	BC,-844	; spill
+	LD	BC,-852	; spill
 	CALL	__istix
 	POP	BC
 	LD	H,A
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-845	; spill
+	LD	IY,-853	; spill
 	LD	BC,IX	; spill
 	ADD	IY,BC
 	LD	(IY),H
@@ -1953,11 +1953,11 @@ _DrawImage:
 	LD	HL,BC
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-832	; spill
+	LD	IY,-840	; spill
 	LD	BC,IX	; spill
 	ADD	IY,BC
 	LD	(IY),H
-	LD	IY,-845	; unspill
+	LD	IY,-853	; unspill
 	LD	BC,IX	; unspill
 	ADD	IY,BC
 	LD	H,(IY)
@@ -1966,21 +1966,21 @@ _DrawImage:
 	LD	A,H
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-832	; unspill
+	LD	IY,-840	; unspill
 	LD	BC,IX	; unspill
 	ADD	IY,BC
 	LD	H,(IY)
 	POP	BC
 	POP	IY
 	PUSH	BC
-	LD	BC,-828	; spill
+	LD	BC,-836	; spill
 	CALL	__istix
-	LD	BC,-844	; unspill
+	LD	BC,-852	; unspill
 	CALL	__ildix
 	POP	BC
 	LD	BC,HL
 	PUSH	BC
-	LD	BC,-828	; unspill
+	LD	BC,-836	; unspill
 	CALL	__ildix
 	POP	BC
 	CALL	__fcmp
@@ -1995,13 +1995,13 @@ _DrawImage:
 	PUSH	BC
 	PUSH	HL
 	LD	HL,IY
-	LD	BC,-848
+	LD	BC,-856
 	CALL	__istix
 	POP	HL
 	POP	BC
 	CALL	_sprintf
 	PUSH	BC
-	LD	BC,-848
+	LD	BC,-856
 	PUSH	HL
 	CALL	__ildix
 	LD	IY,HL
@@ -2018,30 +2018,30 @@ _DrawImage:
 	CALL	__ultof
 	LD	HL,BC
 	PUSH	BC
-	LD	BC,-836	; spill
+	LD	BC,-844	; spill
 	CALL	__istix
 	POP	BC
 	LD	H,A
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-837	; spill
+	LD	IY,-845	; spill
 	LD	BC,IX	; spill
 	ADD	IY,BC
 	LD	(IY),H
 	POP	BC
 	POP	IY
-	LD	BC,(IX+-6)
+	LD	BC,(IX+-9)
 	XOR	A,A
 	CALL	__ultof
 	LD	E,A
 	LD	HL,BC
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-832	; spill
+	LD	IY,-840	; spill
 	LD	BC,IX	; spill
 	ADD	IY,BC
 	LD	(IY),H
-	LD	IY,-837	; unspill
+	LD	IY,-845	; unspill
 	LD	BC,IX	; unspill
 	ADD	IY,BC
 	LD	H,(IY)
@@ -2050,33 +2050,33 @@ _DrawImage:
 	LD	A,H
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-832	; unspill
+	LD	IY,-840	; unspill
 	LD	BC,IX	; unspill
 	ADD	IY,BC
 	LD	H,(IY)
 	POP	BC
 	POP	IY
 	PUSH	BC
-	LD	BC,-828	; spill
+	LD	BC,-836	; spill
 	CALL	__istix
-	LD	BC,-836	; unspill
+	LD	BC,-844	; unspill
 	CALL	__ildix
 	POP	BC
 	LD	BC,HL
 	PUSH	BC
-	LD	BC,-828	; unspill
+	LD	BC,-836	; unspill
 	CALL	__ildix
 	POP	BC
 	CALL	__fdiv
-	LD	(IX+-16),BC
-	LD	(IX+-13),A
+	LD	(IX+-4),BC
+	LD	(IX+-1),A
 ;  209	    }
 ;  210	  }else  if(heightSquares>maxHSquares){
 .LINE 210
 
 	JR	L_41
 L_40:
-	LD	BC,(IX+-6)
+	LD	BC,(IX+-9)
 	LD	HL,(IX+-19)
 	OR	A,A
 	SBC	HL,BC
@@ -2091,13 +2091,13 @@ L_40:
 	PUSH	BC
 	PUSH	HL
 	LD	HL,IY
-	LD	BC,-848
+	LD	BC,-856
 	CALL	__istix
 	POP	HL
 	POP	BC
 	CALL	_sprintf
 	PUSH	BC
-	LD	BC,-848
+	LD	BC,-856
 	PUSH	HL
 	CALL	__ildix
 	LD	IY,HL
@@ -2114,30 +2114,30 @@ L_40:
 	CALL	__ultof
 	LD	HL,BC
 	PUSH	BC
-	LD	BC,-831	; spill
+	LD	BC,-839	; spill
 	CALL	__istix
 	POP	BC
 	LD	H,A
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-833	; spill
+	LD	IY,-841	; spill
 	LD	BC,IX	; spill
 	ADD	IY,BC
 	LD	(IY),H
 	POP	BC
 	POP	IY
-	LD	BC,(IX+-6)
+	LD	BC,(IX+-9)
 	XOR	A,A
 	CALL	__ultof
 	LD	E,A
 	LD	HL,BC
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-832	; spill
+	LD	IY,-840	; spill
 	LD	BC,IX	; spill
 	ADD	IY,BC
 	LD	(IY),H
-	LD	IY,-833	; unspill
+	LD	IY,-841	; unspill
 	LD	BC,IX	; unspill
 	ADD	IY,BC
 	LD	H,(IY)
@@ -2146,26 +2146,26 @@ L_40:
 	LD	A,H
 	PUSH	IY
 	PUSH	BC
-	LD	IY,-832	; unspill
+	LD	IY,-840	; unspill
 	LD	BC,IX	; unspill
 	ADD	IY,BC
 	LD	H,(IY)
 	POP	BC
 	POP	IY
 	PUSH	BC
-	LD	BC,-828	; spill
+	LD	BC,-836	; spill
 	CALL	__istix
-	LD	BC,-831	; unspill
+	LD	BC,-839	; unspill
 	CALL	__ildix
 	POP	BC
 	LD	BC,HL
 	PUSH	BC
-	LD	BC,-828	; unspill
+	LD	BC,-836	; unspill
 	CALL	__ildix
 	POP	BC
 	CALL	__fdiv
-	LD	(IX+-16),BC
-	LD	(IX+-13),A
+	LD	(IX+-4),BC
+	LD	(IX+-1),A
 ;  214	  }
 L_41:
 .LINE 214
@@ -2175,23 +2175,37 @@ L_41:
 
 	LD	HL,10485760
 	LD	E,66
-	LD	BC,(IX+-16)
-	LD	A,(IX+-13)
+	LD	BC,(IX+-4)
+	LD	A,(IX+-1)
 	CALL	__fmul
 	LD	DE,BC
 	LD	C,A
 	LD	B,0
 	PUSH	BC
 	PUSH	DE
-	LD	C,(IX+-13)
+	LD	C,(IX+-1)
 	PUSH	BC
-	LD	BC,(IX+-16)
+	LD	BC,(IX+-4)
 	PUSH	BC
 	LD	BC,L__30
 	PUSH	BC
 	LD	BC,16449536
 	PUSH	BC
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_sprintf
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
@@ -2205,8 +2219,8 @@ L_41:
 
 	LD	HL,10485760
 	LD	E,66
-	LD	BC,(IX+-16)
-	LD	A,(IX+-13)
+	LD	BC,(IX+-4)
+	LD	A,(IX+-1)
 	CALL	__fmul
 	LD	DE,BC
 	LD	H,A
@@ -2221,7 +2235,21 @@ L_41:
 	CALL	__ftol
 	LD	B,0
 	PUSH	BC
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_gfx_AllocSprite
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
@@ -2269,8 +2297,22 @@ L_46:
 	PEA	IX+-36
 	LD	BC,L__34
 	PUSH	BC
-	PEA	IX+-57
+	PEA	IX+-48
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_sprintf
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
@@ -2279,11 +2321,25 @@ L_46:
 
 	LD	BC,L__35
 	PUSH	BC
-	PEA	IX+-57
+	PEA	IX+-48
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_ti_Open
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
 	POP	BC
 	POP	BC
-	LD	(IX+-3),A
+	POP	BC
+	LD	(IX+-6),A
 ;  230	    if (!palSlot){
 .LINE 230
 
@@ -2294,7 +2350,7 @@ L_46:
 
 	LD	BC,120
 	PUSH	BC
-	PEA	IX+-57
+	PEA	IX+-48
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
@@ -2332,24 +2388,52 @@ L_51:
 ;  239	    ti_Seek(24,SEEK_SET,palSlot);
 .LINE 239
 
-	LD	C,(IX+-3)
+	LD	C,(IX+-6)
 	LD	B,0
 	PUSH	BC
 	LD	BC,0
 	PUSH	BC
 	LD	BC,24
 	PUSH	BC
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_ti_Seek
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
 ;  240	    *palPtr = ti_GetDataPtr(palSlot);
 .LINE 240
 
-	LD	C,(IX+-3)
+	LD	C,(IX+-6)
 	LD	B,0
 	PUSH	BC
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_ti_GetDataPtr
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 	LD	BC,-825
 	CALL	__istix
@@ -2363,17 +2447,45 @@ L_51:
 	LD	BC,-825
 	CALL	__ildix
 	PUSH	HL
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_gfx_SetPalette
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
 ;  242	    ti_Close(palSlot);
 .LINE 242
 
-	LD	C,(IX+-3)
+	LD	C,(IX+-6)
 	LD	B,0
 	PUSH	BC
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_ti_Close
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 ;  243	
 ;  244	    //Displays all the images
@@ -2381,28 +2493,42 @@ L_51:
 .LINE 245
 
 	LD	BC,0
-	LD	(IX+-9),BC
+	LD	(IX+-12),BC
 	JR	L_64
 L_62:
 ;  246	      for(ySquare=0;ySquare<(heightSquares+1);ySquare++){
 .LINE 246
 
 	LD	BC,0
-	LD	(IX+-12),BC
+	LD	(IX+-15),BC
 	JR	L_61
 L_59:
 ;  247	        sprintf(searchName, "%.2s%03u%03u\0",imgID, xSquare, ySquare);//combines the separate parts into one name to search for
 .LINE 247
 
-	LD	BC,(IX+-12)
+	LD	BC,(IX+-15)
 	PUSH	BC
-	LD	BC,(IX+-9)
+	LD	BC,(IX+-12)
 	PUSH	BC
 	PEA	IX+-36
 	LD	BC,L__39
 	PUSH	BC
-	PEA	IX+-48
+	PEA	IX+-57
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_sprintf
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
@@ -2417,11 +2543,25 @@ L_59:
 
 	LD	BC,L__40
 	PUSH	BC
-	PEA	IX+-48
+	PEA	IX+-57
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_ti_Open
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
 	POP	BC
 	POP	BC
-	LD	(IX+-2),A
+	POP	BC
+	LD	(IX+-5),A
 ;  253	        if (!squareSlot){
 .LINE 253
 
@@ -2432,7 +2572,7 @@ L_59:
 
 	LD	BC,120
 	PUSH	BC
-	PEA	IX+-48
+	PEA	IX+-57
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
@@ -2466,14 +2606,28 @@ L_58:
 ;  261	        ti_Seek(16,SEEK_CUR,squareSlot);
 .LINE 261
 
-	LD	C,(IX+-2)
+	LD	C,(IX+-5)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
 	PUSH	BC
 	LD	BC,16
 	PUSH	BC
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_ti_Seek
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
@@ -2481,10 +2635,24 @@ L_58:
 ;  263	        srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
 .LINE 263
 
-	LD	C,(IX+-2)
+	LD	C,(IX+-5)
 	LD	B,0
 	PUSH	BC
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_ti_GetDataPtr
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 	LD	(IX+-39),HL
 ;  264	        //resizes it to outputImg size
@@ -2495,29 +2663,159 @@ L_58:
 	PUSH	BC
 	LD	BC,(IX+-39)
 	PUSH	BC
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_gfx_ScaleSprite
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 	POP	BC
 ;  266	
 ;  267	        //displays the output image
-;  268	        gfx_ScaledSprite_NoClip(outputImg,xSquare*SQUARE_WIDTH_AND_HEIGHT,ySquare*SQUARE_WIDTH_AND_HEIGHT,1,1);
+;  268	        gfx_ScaledSprite_NoClip(outputImg,xSquare*(SQUARE_WIDTH_AND_HEIGHT*scale),ySquare*(SQUARE_WIDTH_AND_HEIGHT*scale),1,1);
 .LINE 268
 
-	LD	BC,1
+	LD	HL,10485760
+	LD	E,66
+	LD	BC,(IX+-4)
+	LD	A,(IX+-1)
+	CALL	__fmul
 	PUSH	BC
+	PUSH	HL
+	LD	HL,BC
+	LD	BC,-831	; spill
+	CALL	__istix
+	POP	HL
+	POP	BC
+	PUSH	IY
 	PUSH	BC
-	LD	B,(IX+-12)
-	LD	C,80
-	MLT	BC
+	LD	IY,-833	; spill
+	LD	BC,IX	; spill
+	ADD	IY,BC
+	LD	(IY),A
+	POP	BC
+	POP	IY
+	LD	DE,1
+	PUSH	DE
+	PUSH	DE
+	LD	BC,(IX+-15)
+	XOR	A,A
+	CALL	__ultof
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-832	; spill
+	LD	BC,IX	; spill
+	ADD	IY,BC
+	LD	(IY),A
+	LD	IY,-833	; unspill
+	LD	BC,IX	; unspill
+	ADD	IY,BC
+	LD	A,(IY)
+	POP	BC
+	POP	IY
+	LD	E,A
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-832	; unspill
+	LD	BC,IX	; unspill
+	ADD	IY,BC
+	LD	A,(IY)
+	POP	BC
+	POP	IY
+	PUSH	BC
+	PUSH	HL
+	LD	HL,BC
+	LD	BC,-828	; spill
+	CALL	__istix
+	POP	HL
+	POP	BC
+	LD	BC,-831	; unspill
+	PUSH	HL
+	CALL	__ildix
+	LD	BC,HL
+	POP	HL
+	LD	HL,BC
+	LD	BC,-828	; unspill
+	PUSH	HL
+	CALL	__ildix
+	LD	BC,HL
+	POP	HL
+	CALL	__fmul
+	CALL	__ftol
 	LD	B,0
 	PUSH	BC
-	LD	HL,(IX+-9)
-	LD	A,80
-	CALL	__imul_b
+	LD	BC,(IX+-12)
+	XOR	A,A
+	CALL	__ultof
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-832	; spill
+	LD	BC,IX	; spill
+	ADD	IY,BC
+	LD	(IY),A
+	LD	IY,-833	; unspill
+	LD	BC,IX	; unspill
+	ADD	IY,BC
+	LD	A,(IY)
+	POP	BC
+	POP	IY
+	LD	E,A
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-832	; unspill
+	LD	BC,IX	; unspill
+	ADD	IY,BC
+	LD	A,(IY)
+	POP	BC
+	POP	IY
+	PUSH	BC
 	PUSH	HL
+	LD	HL,BC
+	LD	BC,-828	; spill
+	CALL	__istix
+	POP	HL
+	POP	BC
+	LD	BC,-831	; unspill
+	PUSH	HL
+	CALL	__ildix
+	LD	BC,HL
+	POP	HL
+	LD	HL,BC
+	LD	BC,-828	; unspill
+	PUSH	HL
+	CALL	__ildix
+	LD	BC,HL
+	POP	HL
+	CALL	__fmul
+	CALL	__ftol
+	PUSH	BC
 	LD	BC,(IX+-25)
 	PUSH	BC
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
+	POP	BC
 	CALL	_gfx_ScaledSprite_NoClip
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
@@ -2528,34 +2826,48 @@ L_58:
 ;  271	        ti_Close(squareSlot);
 .LINE 271
 
-	LD	C,(IX+-2)
+	LD	C,(IX+-5)
 	LD	B,0
 	PUSH	BC
-	CALL	_ti_Close
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-856
+	CALL	__istix
+	POP	HL
 	POP	BC
-	LD	BC,(IX+-12)
+	CALL	_ti_Close
+	PUSH	BC
+	LD	BC,-856
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
+	POP	BC
+	LD	BC,(IX+-15)
 	INC	BC
-	LD	(IX+-12),BC
+	LD	(IX+-15),BC
 ;  272	      }
 L_61:
 .LINE 272
 
-	LD	BC,(IX+-6)
+	LD	BC,(IX+-9)
 	INC	BC
-	LD	HL,(IX+-12)
+	LD	HL,(IX+-15)
 	OR	A,A
 	SBC	HL,BC
 	JR	C,L_59
-	LD	BC,(IX+-9)
+	LD	BC,(IX+-12)
 	INC	BC
-	LD	(IX+-9),BC
+	LD	(IX+-12),BC
 ;  273	    }
 L_64:
 .LINE 273
 
 	LD	BC,(IX+-22)
 	INC	BC
-	LD	HL,(IX+-9)
+	LD	HL,(IX+-12)
 	OR	A,A
 	SBC	HL,BC
 	JR	C,L_62
@@ -2596,8 +2908,8 @@ L_66:
 ;_gfx_FillScreen                     IMPORT  -----   function
 ;_ti_Open                            IMPORT  -----   function
 ;palPtr                              IX-825    768   variable
-;palName                              IX-57      9   variable
-;searchName                           IX-48      9   variable
+;searchName                           IX-57      9   variable
+;palName                              IX-48      9   variable
 ;srcImg                               IX-39      3   variable
 ;imgID                                IX-36      2   variable
 ;maxWSquares                          IX-34      3   variable
@@ -2605,19 +2917,19 @@ L_66:
 ;outputImg                            IX-25      3   variable
 ;widthSquares                         IX-22      3   variable
 ;maxHSquares                          IX-19      3   variable
-;scale                                IX-16      4   variable
-;ySquare                              IX-12      3   variable
-;xSquare                               IX-9      3   variable
-;heightSquares                         IX-6      3   variable
-;palSlot                               IX-3      1   variable
-;squareSlot                            IX-2      1   variable
-;database                              IX-1      1   variable
+;database                             IX-16      1   variable
+;ySquare                              IX-15      3   variable
+;xSquare                              IX-12      3   variable
+;heightSquares                         IX-9      3   variable
+;palSlot                               IX-6      1   variable
+;squareSlot                            IX-5      1   variable
+;scale                                 IX-4      4   variable
 ;maxHeight                            IX+12      3   parameter
 ;maxWidth                              IX+9      3   parameter
 ;picName                               IX+6      3   parameter
 
 
-; Stack Frame Size: 863 (bytes)
+; Stack Frame Size: 871 (bytes)
 ;       Spill Code: 0 (instruction)
 
 
