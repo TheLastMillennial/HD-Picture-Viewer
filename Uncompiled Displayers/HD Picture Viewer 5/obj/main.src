@@ -1403,13 +1403,13 @@ _DrawImage:
 
 .ENDEF
 
-.DEFINE "scale"
+.DEFINE "database"
 
 .CLASS 65
 
-.VALUE -4
+.VALUE -1
 
-.TYPE 6
+.TYPE 12
 
 .ENDEF
 
@@ -1417,7 +1417,7 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -5
+.VALUE -2
 
 .TYPE 12
 
@@ -1427,19 +1427,9 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -6
+.VALUE -3
 
 .TYPE 12
-
-.ENDEF
-
-.DEFINE "heightSquares"
-
-.CLASS 65
-
-.VALUE -9
-
-.TYPE 14
 
 .ENDEF
 
@@ -1447,7 +1437,7 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -12
+.VALUE -6
 
 .TYPE 14
 
@@ -1457,29 +1447,31 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -15
+.VALUE -9
 
 .TYPE 14
 
 .ENDEF
 
-.DEFINE "database"
+.DEFINE "heightSquares"
 
 .CLASS 65
 
-.VALUE -16
+.VALUE -12
 
-.TYPE 12
+.TYPE 14
 
 .ENDEF
 
-.DEFINE "maxHSquares"
+.DEFINE "imgWH"
 
 .CLASS 65
 
-.VALUE -19
+.VALUE -18
 
-.TYPE 14
+.DIM 6
+
+.TYPE 98
 
 .ENDEF
 
@@ -1487,7 +1479,7 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -22
+.VALUE -21
 
 .TYPE 14
 
@@ -1497,7 +1489,7 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -25
+.VALUE -24
 
 .TAG "NONAME11"
 
@@ -1505,23 +1497,31 @@ _DrawImage:
 
 .ENDEF
 
-.DEFINE "imgWH"
+.DEFINE "scaleNum"
 
 .CLASS 65
 
-.VALUE -31
+.VALUE -27
 
-.DIM 6
-
-.TYPE 98
+.TYPE 14
 
 .ENDEF
 
-.DEFINE "maxWSquares"
+.DEFINE "scaleDen"
 
 .CLASS 65
 
-.VALUE -34
+.VALUE -30
+
+.TYPE 14
+
+.ENDEF
+
+.DEFINE "maxHSquares"
+
+.CLASS 65
+
+.VALUE -33
 
 .TYPE 14
 
@@ -1531,7 +1531,7 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -36
+.VALUE -35
 
 .DIM 2
 
@@ -1539,11 +1539,21 @@ _DrawImage:
 
 .ENDEF
 
+.DEFINE "maxWSquares"
+
+.CLASS 65
+
+.VALUE -38
+
+.TYPE 14
+
+.ENDEF
+
 .DEFINE "srcImg"
 
 .CLASS 65
 
-.VALUE -39
+.VALUE -41
 
 .TAG "NONAME11"
 
@@ -1551,11 +1561,11 @@ _DrawImage:
 
 .ENDEF
 
-.DEFINE "palName"
+.DEFINE "searchName"
 
 .CLASS 65
 
-.VALUE -48
+.VALUE -50
 
 .DIM 9
 
@@ -1563,11 +1573,11 @@ _DrawImage:
 
 .ENDEF
 
-.DEFINE "searchName"
+.DEFINE "palName"
 
 .CLASS 65
 
-.VALUE -57
+.VALUE -59
 
 .DIM 9
 
@@ -1579,7 +1589,7 @@ _DrawImage:
 
 .CLASS 65
 
-.VALUE -825
+.VALUE -827
 
 .DIM 256
 
@@ -1590,7 +1600,7 @@ _DrawImage:
 	PUSH	IX
 	LD	IX,0
 	ADD	IX,SP
-	LD	HL,-856
+	LD	HL,-827
 	ADD	HL,SP
 	LD	SP,HL
 ;  171	  ti_var_t database = ti_Open("HDPICDB","r"),squareSlot,palSlot;
@@ -1603,18 +1613,12 @@ _DrawImage:
 	CALL	_ti_Open
 	POP	BC
 	POP	BC
-	LD	(IX+-16),A
+	LD	(IX+-1),A
 ;  172	  char imgWH[6], imgID[2], searchName[9], palName[9];
 ;  173	  uint24_t i=0,widthSquares=0,heightSquares=0, maxWSquares=0,maxHSquares=0,widthPx=0,heightPx=0,xSquare=0, newWpx=0, newHpx=0,ySquare=0,xOffsetSquare=0,yOffsetSquare=0;
 ;  174	  uint16_t *palPtr[256];
 ;  175	  gfx_sprite_t *outputImg,*srcImg;
-;  176	  float scale=1;
-.LINE 176
-
-	LD	BC,8388608
-	LD	A,63
-	LD	(IX+-4),BC
-	LD	(IX+-1),A
+;  176	  uint24_t scale=1, scaleNum=1, scaleDen =1;
 ;  177	  gfx_FillScreen(0);
 .LINE 177
 
@@ -1627,7 +1631,7 @@ _DrawImage:
 ;  180	  ti_Seek(16+(16*picName),SEEK_CUR,database);
 .LINE 180
 
-	LD	C,(IX+-16)
+	LD	C,(IX+-1)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
@@ -1648,14 +1652,14 @@ _DrawImage:
 ;  182	  ti_Read(imgID,2,1,database);
 .LINE 182
 
-	LD	C,(IX+-16)
+	LD	C,(IX+-1)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
 	PUSH	BC
 	LD	BC,2
 	PUSH	BC
-	PEA	IX+-36
+	PEA	IX+-35
 	CALL	_ti_Read
 	POP	BC
 	POP	BC
@@ -1665,14 +1669,14 @@ _DrawImage:
 ;  184	  ti_Read(imgWH,6,1,database);
 .LINE 184
 
-	LD	C,(IX+-16)
+	LD	C,(IX+-1)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
 	PUSH	BC
 	LD	BC,6
 	PUSH	BC
-	PEA	IX+-31
+	PEA	IX+-18
 	CALL	_ti_Read
 	POP	BC
 	POP	BC
@@ -1682,7 +1686,7 @@ _DrawImage:
 ;  186	  ti_Close(database);
 .LINE 186
 
-	LD	C,(IX+-16)
+	LD	C,(IX+-1)
 	LD	B,0
 	PUSH	BC
 	CALL	_ti_Close
@@ -1703,7 +1707,7 @@ _DrawImage:
 ;  192	  dbg_sprintf(dbgout,"imgWH: %s \n", imgWH);
 .LINE 192
 
-	PEA	IX+-31
+	PEA	IX+-18
 	LD	BC,L__22
 	PUSH	BC
 	LD	BC,16449536
@@ -1717,15 +1721,15 @@ _DrawImage:
 ;  195	  widthSquares= ((uint24_t)imgWH[0]-'0')*100+((uint24_t)imgWH[1]-'0')*10+(uint24_t)imgWH[2]-'0';
 .LINE 195
 
-	LD	A,(IX+-31)
+	LD	A,(IX+-18)
 	SEXT	HL
-	LD	L,(IX+-31)
+	LD	L,(IX+-18)
 	LD	IY,HL
 	LEA	HL,IY+-48
 	LD	A,100
 	CALL	__imul_b
 	LD	BC,HL
-	LEA	HL,IX+-31
+	LEA	HL,IX+-18
 	INC	HL
 	LD	A,(HL)
 	LD	D,A
@@ -1737,7 +1741,7 @@ _DrawImage:
 	CALL	__imul_b
 	ADD	HL,BC
 	LD	BC,HL
-	LEA	HL,IX+-29
+	LEA	HL,IX+-16
 	LD	A,(HL)
 	LD	D,A
 	SEXT	HL
@@ -1745,11 +1749,11 @@ _DrawImage:
 	ADD	HL,BC
 	LD	IY,HL
 	LEA	BC,IY+-48
-	LD	(IX+-22),BC
+	LD	(IX+-21),BC
 ;  196	  heightSquares=((uint24_t)imgWH[3]-'0')*100+((uint24_t)imgWH[4]-'0')*10+(uint24_t)imgWH[5]-'0';
 .LINE 196
 
-	LEA	HL,IX+-28
+	LEA	HL,IX+-15
 	LD	A,(HL)
 	LD	B,A
 	SEXT	HL
@@ -1759,7 +1763,7 @@ _DrawImage:
 	LD	A,100
 	CALL	__imul_b
 	LD	BC,HL
-	LEA	HL,IX+-27
+	LEA	HL,IX+-14
 	LD	A,(HL)
 	LD	D,A
 	SEXT	HL
@@ -1770,7 +1774,7 @@ _DrawImage:
 	CALL	__imul_b
 	ADD	HL,BC
 	LD	BC,HL
-	LEA	HL,IX+-26
+	LEA	HL,IX+-13
 	LD	A,(HL)
 	LD	D,A
 	SEXT	HL
@@ -1778,51 +1782,37 @@ _DrawImage:
 	ADD	HL,BC
 	LD	IY,HL
 	LEA	IY,IY+-48
-	LD	(IX+-9),IY
+	LD	(IX+-12),IY
 ;  197	  maxWSquares = (maxWidth/80);
 .LINE 197
 
 	LD	BC,80
 	LD	HL,(IX+9)
 	CALL	__idivu
-	LD	(IX+-34),HL
+	LD	(IX+-38),HL
 ;  198	  maxHSquares = (maxHeight/80);
 .LINE 198
 
 	LD	BC,80
 	LD	HL,(IX+12)
 	CALL	__idivu
-	LD	(IX+-19),HL
+	LD	(IX+-33),HL
 ;  199	  dbg_sprintf(dbgout,"maxWS: %d\nwidthS: %d\nmaxHS: %d\nheightS: %d\n",maxWSquares,widthSquares,maxHSquares,heightSquares);
 .LINE 199
 
-	LD	BC,(IX+-9)
+	LD	BC,(IX+-12)
 	PUSH	BC
-	LD	BC,(IX+-19)
+	LD	BC,(IX+-33)
 	PUSH	BC
-	LD	BC,(IX+-22)
+	LD	BC,(IX+-21)
 	PUSH	BC
-	LD	BC,(IX+-34)
+	LD	BC,(IX+-38)
 	PUSH	BC
 	LD	BC,L__23
 	PUSH	BC
 	LD	BC,16449536
 	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_sprintf
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
-	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
@@ -1830,437 +1820,198 @@ _DrawImage:
 	POP	BC
 	POP	BC
 ;  200	
-;  201	  //resizes image if it's too big and wont fit in user defined constraints
-;  202	  if(widthSquares>maxWSquares){
+;  201	  //NEW
+;  202	  if (widthSquares * maxHSquares < heightSquares * maxWSquares) {
 .LINE 202
 
-	LD	BC,(IX+-22)
-	LD	HL,(IX+-34)
+	LD	HL,(IX+-21)
+	LD	BC,(IX+-33)
+	CALL	__imulu
+	LD	DE,HL
+	LD	HL,(IX+-12)
+	LD	BC,(IX+-38)
+	CALL	__imulu
+	LD	BC,HL
+	LD	HL,DE
 	OR	A,A
 	SBC	HL,BC
-	JR	NC,L_40
-;  203	    dbg_sprintf(dbgout,"\nPath 1 ");
+	JR	NC,L_38
+;  203	    scaleNum = maxWSquares;
 .LINE 203
 
+	LD	BC,(IX+-38)
+	LD	(IX+-27),BC
+;  204	    scaleDen = widthSquares;
+.LINE 204
+
+	LD	BC,(IX+-21)
+	LD	(IX+-30),BC
+;  205	  } else {
+.LINE 205
+
+	JR	L_39
+L_38:
+;  206	    scaleNum = maxHSquares;
+.LINE 206
+
+	LD	BC,(IX+-33)
+	LD	(IX+-27),BC
+;  207	    scaleDen = heightSquares;
+.LINE 207
+
+	LD	BC,(IX+-12)
+	LD	(IX+-30),BC
+;  208	  }
+L_39:
+.LINE 208
+
+;  209	
+;  210	  /*
+;  211	  [jacobly] so now whenever we want to compute
+;  212	  `x * scale`
+;  213	  we instead want to compute
+;  214	  `x * (scaleNum / scaleDen)`
+;  215	  which can now be reordered to use strictly integer math as
+;  216	  `(x * scaleNum) / scaleDen`
+;  217	
+;  218	
+;  219	  [jacobly] if you don't know:
+;  220	  floorDiv(x, y) := x / y;
+;  221	  roundDiv(x, y) := (x + (y / 2)) / y;
+;  222	  ceilDiv(x, y) := (x + y - 1) / y;
+;  223	  [MateoC] huh I didn't know about roundDiv
+;  224	  */
+;  225	
+;  226	  /*OLD resizes image if it's too big and wont fit in user defined constraints
+;  227	  if(widthSquares>maxWSquares){
+;  228	  dbg_sprintf(dbgout,"\nPath 1 ");
+;  229	  scale = (double)maxWSquares/(double)widthSquares;
+;  230	  if(heightSquares*scale>maxHSquares){
+;  231	  dbg_sprintf(dbgout,"\nPath 2 ");
+;  232	
+;  233	  scale = (double)maxHSquares/(double)heightSquares;
+;  234	}
+;  235	}else  if(heightSquares>maxHSquares){
+;  236	dbg_sprintf(dbgout,"\nPath 3 ");
+;  237	
+;  238	scale = (double)maxHSquares/(double)heightSquares;
+;  239	}
+;  240	*/
+;  241	dbg_sprintf(dbgout,"\nScaleNum: %d \nscaleDen",scaleNum,scaleDen);
+.LINE 241
+
+	LD	BC,(IX+-30)
+	PUSH	BC
+	LD	BC,(IX+-27)
+	PUSH	BC
 	LD	BC,L__25
 	PUSH	BC
 	LD	BC,16449536
 	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_sprintf
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
 	POP	BC
 	POP	BC
-;  204	    scale = (double)maxWSquares/(double)widthSquares;
-.LINE 204
+	POP	BC
+;  242	
+;  243	//allocates memory for outputImg according to scale
+;  244	outputImg = gfx_MallocSprite((SQUARE_WIDTH_AND_HEIGHT*scaleNum)/scaleDen,(SQUARE_WIDTH_AND_HEIGHT*scaleNum)/scaleDen);
+.LINE 244
 
-	LD	BC,(IX+-34)
-	XOR	A,A
-	CALL	__ultof
-	LD	HL,BC
-	PUSH	BC
-	LD	BC,-848	; spill
-	CALL	__istix
-	POP	BC
-	LD	H,A
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-849	; spill
-	LD	BC,IX	; spill
-	ADD	IY,BC
-	LD	(IY),H
-	POP	BC
-	POP	IY
-	LD	BC,(IX+-22)
-	XOR	A,A
-	CALL	__ultof
-	LD	E,A
-	LD	HL,BC
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-840	; spill
-	LD	BC,IX	; spill
-	ADD	IY,BC
-	LD	(IY),H
-	LD	IY,-849	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	H,(IY)
-	POP	BC
-	POP	IY
-	LD	A,H
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-840	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	H,(IY)
-	POP	BC
-	POP	IY
-	PUSH	BC
-	LD	BC,-836	; spill
-	CALL	__istix
-	LD	BC,-848	; unspill
-	CALL	__ildix
-	POP	BC
-	LD	BC,HL
-	PUSH	BC
-	LD	BC,-836	; unspill
-	CALL	__ildix
-	POP	BC
-	CALL	__fdiv
-	LD	(IX+-4),BC
-	LD	(IX+-1),A
-;  205	    if(heightSquares*scale>maxHSquares){
-.LINE 205
-
-	LD	BC,(IX+-9)
-	XOR	A,A
-	CALL	__ultof
-	LD	HL,(IX+-4)
-	LD	E,(IX+-1)
-	CALL	__fmul
-	LD	HL,BC
-	PUSH	BC
-	LD	BC,-852	; spill
-	CALL	__istix
-	POP	BC
-	LD	H,A
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-853	; spill
-	LD	BC,IX	; spill
-	ADD	IY,BC
-	LD	(IY),H
-	POP	BC
-	POP	IY
-	LD	BC,(IX+-19)
-	XOR	A,A
-	CALL	__ultof
-	LD	E,A
-	LD	HL,BC
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-840	; spill
-	LD	BC,IX	; spill
-	ADD	IY,BC
-	LD	(IY),H
-	LD	IY,-853	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	H,(IY)
-	POP	BC
-	POP	IY
-	LD	A,H
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-840	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	H,(IY)
-	POP	BC
-	POP	IY
-	PUSH	BC
-	LD	BC,-836	; spill
-	CALL	__istix
-	LD	BC,-852	; unspill
-	CALL	__ildix
-	POP	BC
-	LD	BC,HL
-	PUSH	BC
-	LD	BC,-836	; unspill
-	CALL	__ildix
-	POP	BC
-	CALL	__fcmp
-	JP	P,L_41
-;  206	      dbg_sprintf(dbgout,"\nPath 2 ");
-.LINE 206
-
-	LD	BC,L__27
-	PUSH	BC
-	LD	BC,16449536
-	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
-	CALL	_sprintf
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
-	POP	BC
-	POP	BC
-	POP	BC
-;  207	
-;  208	      scale = (double)maxHSquares/(double)heightSquares;
-.LINE 208
-
-	LD	BC,(IX+-19)
-	XOR	A,A
-	CALL	__ultof
-	LD	HL,BC
-	PUSH	BC
-	LD	BC,-844	; spill
-	CALL	__istix
-	POP	BC
-	LD	H,A
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-845	; spill
-	LD	BC,IX	; spill
-	ADD	IY,BC
-	LD	(IY),H
-	POP	BC
-	POP	IY
-	LD	BC,(IX+-9)
-	XOR	A,A
-	CALL	__ultof
-	LD	E,A
-	LD	HL,BC
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-840	; spill
-	LD	BC,IX	; spill
-	ADD	IY,BC
-	LD	(IY),H
-	LD	IY,-845	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	H,(IY)
-	POP	BC
-	POP	IY
-	LD	A,H
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-840	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	H,(IY)
-	POP	BC
-	POP	IY
-	PUSH	BC
-	LD	BC,-836	; spill
-	CALL	__istix
-	LD	BC,-844	; unspill
-	CALL	__ildix
-	POP	BC
-	LD	BC,HL
-	PUSH	BC
-	LD	BC,-836	; unspill
-	CALL	__ildix
-	POP	BC
-	CALL	__fdiv
-	LD	(IX+-4),BC
-	LD	(IX+-1),A
-;  209	    }
-;  210	  }else  if(heightSquares>maxHSquares){
-.LINE 210
-
-	JR	L_41
-L_40:
-	LD	BC,(IX+-9)
-	LD	HL,(IX+-19)
-	OR	A,A
-	SBC	HL,BC
-	JR	NC,L_41
-;  211	    dbg_sprintf(dbgout,"\nPath 3 ");
-.LINE 211
-
-	LD	BC,L__29
-	PUSH	BC
-	LD	BC,16449536
-	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
-	CALL	_sprintf
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
-	POP	BC
-	POP	BC
-	POP	BC
-;  212	
-;  213	    scale = (double)maxHSquares/(double)heightSquares;
-.LINE 213
-
-	LD	BC,(IX+-19)
-	XOR	A,A
-	CALL	__ultof
-	LD	HL,BC
-	PUSH	BC
-	LD	BC,-839	; spill
-	CALL	__istix
-	POP	BC
-	LD	H,A
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-841	; spill
-	LD	BC,IX	; spill
-	ADD	IY,BC
-	LD	(IY),H
-	POP	BC
-	POP	IY
-	LD	BC,(IX+-9)
-	XOR	A,A
-	CALL	__ultof
-	LD	E,A
-	LD	HL,BC
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-840	; spill
-	LD	BC,IX	; spill
-	ADD	IY,BC
-	LD	(IY),H
-	LD	IY,-841	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	H,(IY)
-	POP	BC
-	POP	IY
-	LD	A,H
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-840	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	H,(IY)
-	POP	BC
-	POP	IY
-	PUSH	BC
-	LD	BC,-836	; spill
-	CALL	__istix
-	LD	BC,-839	; unspill
-	CALL	__ildix
-	POP	BC
-	LD	BC,HL
-	PUSH	BC
-	LD	BC,-836	; unspill
-	CALL	__ildix
-	POP	BC
-	CALL	__fdiv
-	LD	(IX+-4),BC
-	LD	(IX+-1),A
-;  214	  }
-L_41:
-.LINE 214
-
-;  215	  dbg_sprintf(dbgout,"\nScale int: %d \nChanged WH %f",scale,((double)SQUARE_WIDTH_AND_HEIGHT*scale));
-.LINE 215
-
-	LD	HL,10485760
-	LD	E,66
-	LD	BC,(IX+-4)
-	LD	A,(IX+-1)
-	CALL	__fmul
-	LD	DE,BC
-	LD	C,A
-	LD	B,0
-	PUSH	BC
-	PUSH	DE
-	LD	C,(IX+-1)
-	PUSH	BC
-	LD	BC,(IX+-4)
-	PUSH	BC
-	LD	BC,L__30
-	PUSH	BC
-	LD	BC,16449536
-	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
-	CALL	_sprintf
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
-	POP	BC
-	POP	BC
-	POP	BC
-	POP	BC
-	POP	BC
-	POP	BC
-	POP	BC
-;  216	
-;  217	    //allocates memory for outputImg according to scale
-;  218	    outputImg = gfx_MallocSprite((double)SQUARE_WIDTH_AND_HEIGHT*scale,(double)SQUARE_WIDTH_AND_HEIGHT*scale);
-.LINE 218
-
-	LD	HL,10485760
-	LD	E,66
-	LD	BC,(IX+-4)
-	LD	A,(IX+-1)
-	CALL	__fmul
-	LD	DE,BC
-	LD	H,A
+	LD	HL,(IX+-27)
+	LD	A,80
+	CALL	__imul_b
+	LD	BC,(IX+-30)
+	CALL	__idivu
+	LD	DE,HL
 	LD	BC,_malloc
 	PUSH	BC
-	LD	BC,DE
-	CALL	__ftol
+	LD	HL,DE
+	LD	C,L
 	LD	B,0
 	PUSH	BC
-	LD	A,H
-	LD	BC,DE
-	CALL	__ftol
-	LD	B,0
+	LD	HL,DE
+	LD	C,L
 	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_gfx_AllocSprite
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
 	POP	BC
 	POP	BC
-	POP	BC
-	LD	(IX+-25),HL
-;  219	    if (!outputImg){
-.LINE 219
+	LD	(IX+-24),HL
+;  245	if (!outputImg){
+.LINE 245
 
 	CALL	__icmpzero
-	JR	NZ,L_46
-;  220	      PrintCenteredX("Failed to allocate memory!",130);
-.LINE 220
+	JR	NZ,L_44
+;  246	  PrintCenteredX("Failed to allocate memory!",130);
+.LINE 246
+
+	LD	BC,130
+	PUSH	BC
+	LD	BC,L__27
+	PUSH	BC
+	CALL	_PrintCenteredX
+	POP	BC
+	POP	BC
+;  247	  while(!os_GetCSC());
+L_41:
+.LINE 247
+
+	CALL	_os_GetCSC
+	OR	A,A
+	JR	Z,L_41
+;  248	  ti_CloseAll();
+.LINE 248
+
+	CALL	_ti_CloseAll
+;  249	  return;
+.LINE 249
+
+	JR	L_64
+;  250	}
+L_44:
+.LINE 250
+
+;  251	
+;  252	
+;  253	//sets correct palettes
+;  254	sprintf(palName, "HP%.2s0000\0",imgID);
+.LINE 254
+
+	PEA	IX+-35
+	LD	BC,L__29
+	PUSH	BC
+	PEA	IX+-59
+	CALL	_sprintf
+	POP	BC
+	POP	BC
+	POP	BC
+;  255	palSlot = ti_Open(palName,"r");
+.LINE 255
+
+	LD	BC,L__30
+	PUSH	BC
+	PEA	IX+-59
+	CALL	_ti_Open
+	POP	BC
+	POP	BC
+	LD	(IX+-3),A
+;  256	if (!palSlot){
+.LINE 256
+
+	OR	A,A
+	JR	NZ,L_49
+;  257	  PrintCenteredX(palName,120);
+.LINE 257
+
+	LD	BC,120
+	PUSH	BC
+	PEA	IX+-59
+	CALL	_PrintCenteredX
+	POP	BC
+	POP	BC
+;  258	  PrintCenteredX("Palette does not exist!",130);
+.LINE 258
 
 	LD	BC,130
 	PUSH	BC
@@ -2269,618 +2020,272 @@ L_41:
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  221	      while(!os_GetCSC());
-L_43:
-.LINE 221
-
-	CALL	_os_GetCSC
-	OR	A,A
-	JR	Z,L_43
-;  222	      ti_CloseAll();
-.LINE 222
-
-	CALL	_ti_CloseAll
-;  223	      return;
-.LINE 223
-
-	JR	L_66
-;  224	    }
+;  259	  while(!os_GetCSC());
 L_46:
-.LINE 224
-
-;  225	
-;  226	
-;  227	    //sets correct palettes
-;  228	    sprintf(palName, "HP%.2s0000\0",imgID);
-.LINE 228
-
-	PEA	IX+-36
-	LD	BC,L__34
-	PUSH	BC
-	PEA	IX+-48
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
-	CALL	_sprintf
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
-	POP	BC
-	POP	BC
-	POP	BC
-	POP	BC
-;  229	    palSlot = ti_Open(palName,"r");
-.LINE 229
-
-	LD	BC,L__35
-	PUSH	BC
-	PEA	IX+-48
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
-	CALL	_ti_Open
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
-	POP	BC
-	POP	BC
-	POP	BC
-	LD	(IX+-6),A
-;  230	    if (!palSlot){
-.LINE 230
-
-	OR	A,A
-	JR	NZ,L_51
-;  231	      PrintCenteredX(palName,120);
-.LINE 231
-
-	LD	BC,120
-	PUSH	BC
-	PEA	IX+-48
-	CALL	_PrintCenteredX
-	POP	BC
-	POP	BC
-;  232	      PrintCenteredX("Palette does not exist!",130);
-.LINE 232
-
-	LD	BC,130
-	PUSH	BC
-	LD	BC,L__37
-	PUSH	BC
-	CALL	_PrintCenteredX
-	POP	BC
-	POP	BC
-;  233	      while(!os_GetCSC());
-L_48:
-.LINE 233
+.LINE 259
 
 	CALL	_os_GetCSC
 	OR	A,A
-	JR	Z,L_48
-;  234	      ti_CloseAll();
-.LINE 234
+	JR	Z,L_46
+;  260	  ti_CloseAll();
+.LINE 260
 
 	CALL	_ti_CloseAll
-;  235	      return;
-.LINE 235
+;  261	  return;
+.LINE 261
 
-	JR	L_66
-;  236	    }
-L_51:
-.LINE 236
+	JR	L_64
+;  262	}
+L_49:
+.LINE 262
 
-;  237	
-;  238	    //gfx_SetDrawBuffer();
-;  239	    ti_Seek(24,SEEK_SET,palSlot);
-.LINE 239
+;  263	
+;  264	//gfx_SetDrawBuffer();
+;  265	ti_Seek(24,SEEK_SET,palSlot);
+.LINE 265
 
-	LD	C,(IX+-6)
+	LD	C,(IX+-3)
 	LD	B,0
 	PUSH	BC
 	LD	BC,0
 	PUSH	BC
 	LD	BC,24
 	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_ti_Seek
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
 	POP	BC
 	POP	BC
-	POP	BC
-;  240	    *palPtr = ti_GetDataPtr(palSlot);
-.LINE 240
+;  266	*palPtr = ti_GetDataPtr(palSlot);
+.LINE 266
 
-	LD	C,(IX+-6)
+	LD	C,(IX+-3)
 	LD	B,0
 	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_ti_GetDataPtr
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
-	POP	BC
-	LD	BC,-825
+	LD	BC,-827
 	CALL	__istix
-;  241	    gfx_SetPalette(*palPtr,512,0);
-.LINE 241
+;  267	gfx_SetPalette(*palPtr,512,0);
+.LINE 267
 
 	LD	BC,0
 	PUSH	BC
 	LD	BC,512
 	PUSH	BC
-	LD	BC,-825
+	LD	BC,-827
 	CALL	__ildix
 	PUSH	HL
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_gfx_SetPalette
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
 	POP	BC
 	POP	BC
-	POP	BC
-;  242	    ti_Close(palSlot);
-.LINE 242
+;  268	ti_Close(palSlot);
+.LINE 268
 
-	LD	C,(IX+-6)
+	LD	C,(IX+-3)
 	LD	B,0
 	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_ti_Close
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
-	POP	BC
-;  243	
-;  244	    //Displays all the images
-;  245	    for(xSquare=0;xSquare<(widthSquares+1);xSquare++){
-.LINE 245
+;  269	
+;  270	//Displays all the images
+;  271	for(xSquare=0;xSquare<(widthSquares);xSquare++){
+.LINE 271
 
 	LD	BC,0
-	LD	(IX+-12),BC
-	JR	L_64
-L_62:
-;  246	      for(ySquare=0;ySquare<(heightSquares+1);ySquare++){
-.LINE 246
+	LD	(IX+-6),BC
+	JR	L_62
+L_60:
+;  272	  for(ySquare=0;ySquare<(heightSquares);ySquare++){
+.LINE 272
 
 	LD	BC,0
-	LD	(IX+-15),BC
-	JR	L_61
-L_59:
-;  247	        sprintf(searchName, "%.2s%03u%03u\0",imgID, xSquare, ySquare);//combines the separate parts into one name to search for
-.LINE 247
+	LD	(IX+-9),BC
+	JR	L_59
+L_57:
+;  273	    sprintf(searchName, "%.2s%03u%03u\0",imgID, xSquare, ySquare);//combines the separate parts into one name to search for
+.LINE 273
 
-	LD	BC,(IX+-15)
+	LD	BC,(IX+-9)
 	PUSH	BC
-	LD	BC,(IX+-12)
+	LD	BC,(IX+-6)
 	PUSH	BC
-	PEA	IX+-36
-	LD	BC,L__39
+	PEA	IX+-35
+	LD	BC,L__34
 	PUSH	BC
-	PEA	IX+-57
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
+	PEA	IX+-50
 	CALL	_sprintf
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
-	POP	BC
-;  248	
-;  249	        /*This opens the variable with the name that was just assembled.
-;  250	        * It then gets the pointer to that and stores it in a graphics variable
-;  251	        */
-;  252	        squareSlot = ti_Open(searchName,"r");
-.LINE 252
+;  274	
+;  275	    /*This opens the variable with the name that was just assembled.
+;  276	    * It then gets the pointer to that and stores it in a graphics variable
+;  277	    */
+;  278	    squareSlot = ti_Open(searchName,"r");
+.LINE 278
 
-	LD	BC,L__40
+	LD	BC,L__35
 	PUSH	BC
-	PEA	IX+-57
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
+	PEA	IX+-50
 	CALL	_ti_Open
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
 	POP	BC
-	POP	BC
-	LD	(IX+-5),A
-;  253	        if (!squareSlot){
-.LINE 253
+	LD	(IX+-2),A
+;  279	    if (!squareSlot){
+.LINE 279
 
 	OR	A,A
-	JR	NZ,L_58
-;  254	          PrintCenteredX(searchName,120);
-.LINE 254
+	JR	NZ,L_56
+;  280	      PrintCenteredX(searchName,120);
+.LINE 280
 
 	LD	BC,120
 	PUSH	BC
-	PEA	IX+-57
+	PEA	IX+-50
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  255	          PrintCentered("Square doesn't exist!");
-.LINE 255
+;  281	      PrintCentered("Square doesn't exist!");
+.LINE 281
 
-	LD	BC,L__42
+	LD	BC,L__37
 	PUSH	BC
 	CALL	_PrintCentered
 	POP	BC
-;  256	          while(!os_GetCSC());
-L_55:
-.LINE 256
+;  282	      while(!os_GetCSC());
+L_53:
+.LINE 282
 
 	CALL	_os_GetCSC
 	OR	A,A
-	JR	Z,L_55
-;  257	          ti_CloseAll();
-.LINE 257
+	JR	Z,L_53
+;  283	      ti_CloseAll();
+.LINE 283
 
 	CALL	_ti_CloseAll
-;  258	          return;
-.LINE 258
+;  284	      return;
+.LINE 284
 
-	JR	L_66
-;  259	        }
-L_58:
-.LINE 259
+	JR	L_64
+;  285	    }
+L_56:
+.LINE 285
 
-;  260	        //seeks past header
-;  261	        ti_Seek(16,SEEK_CUR,squareSlot);
-.LINE 261
+;  286	    //seeks past header
+;  287	    ti_Seek(16,SEEK_CUR,squareSlot);
+.LINE 287
 
-	LD	C,(IX+-5)
+	LD	C,(IX+-2)
 	LD	B,0
 	PUSH	BC
 	LD	BC,1
 	PUSH	BC
 	LD	BC,16
 	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_ti_Seek
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
 	POP	BC
 	POP	BC
-	POP	BC
-;  262	        //store the original image into srcImg
-;  263	        srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
-.LINE 263
+;  288	    //store the original image into srcImg
+;  289	    srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
+.LINE 289
 
-	LD	C,(IX+-5)
+	LD	C,(IX+-2)
 	LD	B,0
 	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_ti_GetDataPtr
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
-	POP	BC
-	LD	(IX+-39),HL
-;  264	        //resizes it to outputImg size
-;  265	        gfx_ScaleSprite(srcImg,outputImg);
-.LINE 265
+	LD	(IX+-41),HL
+;  290	    //resizes it to outputImg size
+;  291	    gfx_ScaleSprite(srcImg,outputImg);
+.LINE 291
 
-	LD	BC,(IX+-25)
+	LD	BC,(IX+-24)
 	PUSH	BC
-	LD	BC,(IX+-39)
+	LD	BC,(IX+-41)
 	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_gfx_ScaleSprite
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
 	POP	BC
-	POP	BC
-;  266	
-;  267	        //displays the output image
-;  268	        gfx_ScaledSprite_NoClip(outputImg,xSquare*(SQUARE_WIDTH_AND_HEIGHT*scale),ySquare*(SQUARE_WIDTH_AND_HEIGHT*scale),1,1);
-.LINE 268
+;  292	
+;  293	    //displays the output image
+;  294	    gfx_ScaledSprite_NoClip(outputImg,xSquare*((SQUARE_WIDTH_AND_HEIGHT*scaleNum)/scaleDen),ySquare*((SQUARE_WIDTH_AND_HEIGHT*scaleNum)/scaleDen),1,1); //todo: get (SQUARE_WIDTH_AND_HEIGHT*scaleNum)/scaleDen) outside the loop
+.LINE 294
 
-	LD	HL,10485760
-	LD	E,66
-	LD	BC,(IX+-4)
-	LD	A,(IX+-1)
-	CALL	__fmul
+	LD	HL,(IX+-27)
+	LD	A,80
+	CALL	__imul_b
+	LD	BC,(IX+-30)
+	CALL	__idivu
+	LD	DE,HL
+	LD	BC,1
 	PUSH	BC
-	PUSH	HL
-	LD	HL,BC
-	LD	BC,-831	; spill
-	CALL	__istix
-	POP	HL
-	POP	BC
-	PUSH	IY
 	PUSH	BC
-	LD	IY,-833	; spill
-	LD	BC,IX	; spill
-	ADD	IY,BC
-	LD	(IY),A
-	POP	BC
-	POP	IY
-	LD	DE,1
-	PUSH	DE
-	PUSH	DE
-	LD	BC,(IX+-15)
-	XOR	A,A
-	CALL	__ultof
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-832	; spill
-	LD	BC,IX	; spill
-	ADD	IY,BC
-	LD	(IY),A
-	LD	IY,-833	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	A,(IY)
-	POP	BC
-	POP	IY
-	LD	E,A
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-832	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	A,(IY)
-	POP	BC
-	POP	IY
-	PUSH	BC
-	PUSH	HL
-	LD	HL,BC
-	LD	BC,-828	; spill
-	CALL	__istix
-	POP	HL
-	POP	BC
-	LD	BC,-831	; unspill
-	PUSH	HL
-	CALL	__ildix
-	LD	BC,HL
-	POP	HL
-	LD	HL,BC
-	LD	BC,-828	; unspill
-	PUSH	HL
-	CALL	__ildix
-	LD	BC,HL
-	POP	HL
-	CALL	__fmul
-	CALL	__ftol
+	LD	HL,DE
+	LD	B,(IX+-9)
+	LD	C,L
+	MLT	BC
 	LD	B,0
 	PUSH	BC
-	LD	BC,(IX+-12)
-	XOR	A,A
-	CALL	__ultof
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-832	; spill
-	LD	BC,IX	; spill
-	ADD	IY,BC
-	LD	(IY),A
-	LD	IY,-833	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	A,(IY)
-	POP	BC
-	POP	IY
-	LD	E,A
-	PUSH	IY
-	PUSH	BC
-	LD	IY,-832	; unspill
-	LD	BC,IX	; unspill
-	ADD	IY,BC
-	LD	A,(IY)
-	POP	BC
-	POP	IY
-	PUSH	BC
+	LD	BC,DE
+	LD	HL,(IX+-6)
+	CALL	__imulu
 	PUSH	HL
-	LD	HL,BC
-	LD	BC,-828	; spill
-	CALL	__istix
-	POP	HL
-	POP	BC
-	LD	BC,-831	; unspill
-	PUSH	HL
-	CALL	__ildix
-	LD	BC,HL
-	POP	HL
-	LD	HL,BC
-	LD	BC,-828	; unspill
-	PUSH	HL
-	CALL	__ildix
-	LD	BC,HL
-	POP	HL
-	CALL	__fmul
-	CALL	__ftol
+	LD	BC,(IX+-24)
 	PUSH	BC
-	LD	BC,(IX+-25)
-	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_gfx_ScaledSprite_NoClip
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
-	POP	BC
-;  269	
-;  270	        //cleans up
-;  271	        ti_Close(squareSlot);
-.LINE 271
+;  295	
+;  296	    //cleans up
+;  297	    ti_Close(squareSlot);
+.LINE 297
 
-	LD	C,(IX+-5)
+	LD	C,(IX+-2)
 	LD	B,0
 	PUSH	BC
-	PUSH	BC
-	PUSH	HL
-	LD	HL,IY
-	LD	BC,-856
-	CALL	__istix
-	POP	HL
-	POP	BC
 	CALL	_ti_Close
-	PUSH	BC
-	LD	BC,-856
-	PUSH	HL
-	CALL	__ildix
-	LD	IY,HL
-	POP	HL
 	POP	BC
-	POP	BC
-	LD	BC,(IX+-15)
-	INC	BC
-	LD	(IX+-15),BC
-;  272	      }
-L_61:
-.LINE 272
-
 	LD	BC,(IX+-9)
 	INC	BC
-	LD	HL,(IX+-15)
-	OR	A,A
-	SBC	HL,BC
-	JR	C,L_59
+	LD	(IX+-9),BC
+;  298	  }
+L_59:
+.LINE 298
+
 	LD	BC,(IX+-12)
-	INC	BC
-	LD	(IX+-12),BC
-;  273	    }
-L_64:
-.LINE 273
-
-	LD	BC,(IX+-22)
-	INC	BC
-	LD	HL,(IX+-12)
+	LD	HL,(IX+-9)
 	OR	A,A
 	SBC	HL,BC
-	JR	C,L_62
-;  274	    free(outputImg);
-.LINE 274
+	JR	C,L_57
+	LD	BC,(IX+-6)
+	INC	BC
+	LD	(IX+-6),BC
+;  299	}
+L_62:
+.LINE 299
 
-	LD	BC,(IX+-25)
+	LD	BC,(IX+-21)
+	LD	HL,(IX+-6)
+	OR	A,A
+	SBC	HL,BC
+	JR	C,L_60
+;  300	free(outputImg);
+.LINE 300
+
+	LD	BC,(IX+-24)
 	PUSH	BC
 	CALL	_free
 	POP	BC
-;  275	  }
-L_66:
-.LINE 275
+;  301	}
+L_64:
+.LINE 301
 
 	LD	SP,IX
 	POP	IX
@@ -2907,33 +2312,34 @@ L_66:
 ;_ti_Seek                            IMPORT  -----   function
 ;_gfx_FillScreen                     IMPORT  -----   function
 ;_ti_Open                            IMPORT  -----   function
-;palPtr                              IX-825    768   variable
-;searchName                           IX-57      9   variable
-;palName                              IX-48      9   variable
-;srcImg                               IX-39      3   variable
-;imgID                                IX-36      2   variable
-;maxWSquares                          IX-34      3   variable
-;imgWH                                IX-31      6   variable
-;outputImg                            IX-25      3   variable
-;widthSquares                         IX-22      3   variable
-;maxHSquares                          IX-19      3   variable
-;database                             IX-16      1   variable
-;ySquare                              IX-15      3   variable
-;xSquare                              IX-12      3   variable
-;heightSquares                         IX-9      3   variable
-;palSlot                               IX-6      1   variable
-;squareSlot                            IX-5      1   variable
-;scale                                 IX-4      4   variable
+;palPtr                              IX-827    768   variable
+;palName                              IX-59      9   variable
+;searchName                           IX-50      9   variable
+;srcImg                               IX-41      3   variable
+;maxWSquares                          IX-38      3   variable
+;imgID                                IX-35      2   variable
+;maxHSquares                          IX-33      3   variable
+;scaleDen                             IX-30      3   variable
+;scaleNum                             IX-27      3   variable
+;outputImg                            IX-24      3   variable
+;widthSquares                         IX-21      3   variable
+;imgWH                                IX-18      6   variable
+;heightSquares                        IX-12      3   variable
+;ySquare                               IX-9      3   variable
+;xSquare                               IX-6      3   variable
+;palSlot                               IX-3      1   variable
+;squareSlot                            IX-2      1   variable
+;database                              IX-1      1   variable
 ;maxHeight                            IX+12      3   parameter
 ;maxWidth                              IX+9      3   parameter
 ;picName                               IX+6      3   parameter
 
 
-; Stack Frame Size: 871 (bytes)
+; Stack Frame Size: 842 (bytes)
 ;       Spill Code: 0 (instruction)
 
 
-.ENDFUNC "DrawImage",275,"_DrawImage"
+.ENDFUNC "DrawImage",301,"_DrawImage"
 	SEGMENT STRSECT
 L__20:
 	DB	"r"
@@ -2955,48 +2361,36 @@ L__23:
 	DB	10,0
 L__25:
 	DB	10
-	DB	"Path 1 "
+	DB	"ScaleNum: %d "
+	DB	10
+	DB	"scaleDen"
 	DB	0
 L__27:
-	DB	10
-	DB	"Path 2 "
-	DB	0
-L__29:
-	DB	10
-	DB	"Path 3 "
-	DB	0
-L__30:
-	DB	10
-	DB	"Scale int: %d "
-	DB	10
-	DB	"Changed WH %f"
-	DB	0
-L__32:
 	DB	"Failed to allocate memory!"
 	DB	0
-L__34:
+L__29:
 	DB	"HP%.2s0000"
+	DB	0,0
+L__30:
+	DB	"r"
+	DB	0
+L__32:
+	DB	"Palette does not exist!"
+	DB	0
+L__34:
+	DB	"%.2s%03u%03u"
 	DB	0,0
 L__35:
 	DB	"r"
 	DB	0
 L__37:
-	DB	"Palette does not exist!"
-	DB	0
-L__39:
-	DB	"%.2s%03u%03u"
-	DB	0,0
-L__40:
-	DB	"r"
-	DB	0
-L__42:
 	DB	"Square doesn't exist!"
 	DB	0
 	SEGMENT CODE
-;  276	
-;  277	
-;  278	  /* This UI keeps the user selection in the middle of the screen. */
-;  279	  void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
+;  302	
+;  303	
+;  304	/* This UI keeps the user selection in the middle of the screen. */
+;  305	void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
 _printNames:
 .DEFINE "_printNames"
 
@@ -3008,9 +2402,9 @@ _printNames:
 
 .ENDEF
 
-.BEGFUNC "printNames",279,"_printNames"
+.BEGFUNC "printNames",305,"_printNames"
 
-.LINE 279
+.LINE 305
 
 .DEFINE "startName"
 
@@ -3087,16 +2481,16 @@ _printNames:
 	ADD	IX,SP
 	LEA	HL,IX+-12
 	LD	SP,HL
-;  280	    uint24_t i, Yoffset=0, y=0, curName=0;
-.LINE 280
+;  306	  uint24_t i, Yoffset=0, y=0, curName=0;
+.LINE 306
 
 	LD	BC,0
 	LD	(IX+-12),BC
 	LD	(IX+-6),BC
-;  281	
-;  282	    //clears old text and sets up for new text
-;  283	    gfx_SetTextScale(2,2);
-.LINE 283
+;  307	
+;  308	  //clears old text and sets up for new text
+;  309	  gfx_SetTextScale(2,2);
+.LINE 309
 
 	LD	BC,2
 	PUSH	BC
@@ -3104,15 +2498,15 @@ _printNames:
 	CALL	_gfx_SetTextScale
 	POP	BC
 	POP	BC
-;  284	    gfx_SetColor(0);
-.LINE 284
+;  310	  gfx_SetColor(0);
+.LINE 310
 
 	LD	BC,0
 	PUSH	BC
 	CALL	_gfx_SetColor
 	POP	BC
-;  285	    gfx_FillRectangle_NoClip(0,0,140,240);
-.LINE 285
+;  311	  gfx_FillRectangle_NoClip(0,0,140,240);
+.LINE 311
 
 	LD	BC,240
 	PUSH	BC
@@ -3126,17 +2520,17 @@ _printNames:
 	POP	BC
 	POP	BC
 	POP	BC
-;  286	    gfx_SetColor(255);
-.LINE 286
+;  312	  gfx_SetColor(255);
+.LINE 312
 
 	LD	BC,255
 	PUSH	BC
 	CALL	_gfx_SetColor
 	POP	BC
-;  287	
-;  288	    //re-draws UI lines
-;  289	    gfx_HorizLine_NoClip(0,120,6);
-.LINE 289
+;  313	
+;  314	  //re-draws UI lines
+;  315	  gfx_HorizLine_NoClip(0,120,6);
+.LINE 315
 
 	LD	BC,6
 	PUSH	BC
@@ -3148,8 +2542,8 @@ _printNames:
 	POP	BC
 	POP	BC
 	POP	BC
-;  290	    gfx_HorizLine_NoClip(136,120,5);
-.LINE 290
+;  316	  gfx_HorizLine_NoClip(136,120,5);
+.LINE 316
 
 	LD	BC,5
 	PUSH	BC
@@ -3161,8 +2555,8 @@ _printNames:
 	POP	BC
 	POP	BC
 	POP	BC
-;  291	    gfx_HorizLine_NoClip(6,110,130);
-.LINE 291
+;  317	  gfx_HorizLine_NoClip(6,110,130);
+.LINE 317
 
 	LD	BC,130
 	PUSH	BC
@@ -3174,8 +2568,8 @@ _printNames:
 	POP	BC
 	POP	BC
 	POP	BC
-;  292	    gfx_HorizLine_NoClip(6,130,130);
-.LINE 292
+;  318	  gfx_HorizLine_NoClip(6,130,130);
+.LINE 318
 
 	LD	BC,130
 	PUSH	BC
@@ -3186,8 +2580,8 @@ _printNames:
 	POP	BC
 	POP	BC
 	POP	BC
-;  293	    gfx_VertLine_NoClip(6,110,20);
-.LINE 293
+;  319	  gfx_VertLine_NoClip(6,110,20);
+.LINE 319
 
 	LD	BC,20
 	PUSH	BC
@@ -3199,8 +2593,8 @@ _printNames:
 	POP	BC
 	POP	BC
 	POP	BC
-;  294	    gfx_VertLine_NoClip(136,110,21);
-.LINE 294
+;  320	  gfx_VertLine_NoClip(136,110,21);
+.LINE 320
 
 	LD	BC,21
 	PUSH	BC
@@ -3212,19 +2606,19 @@ _printNames:
 	POP	BC
 	POP	BC
 	POP	BC
-;  295	
-;  296	    /*if the selected start name is under 4, that means we need to start drawing
-;  297	    * farther down the screen for the text to go in the right spot */
-;  298	    if(startName<4){
-.LINE 298
+;  321	
+;  322	  /*if the selected start name is under 4, that means we need to start drawing
+;  323	  * farther down the screen for the text to go in the right spot */
+;  324	  if(startName<4){
+.LINE 324
 
 	LD	BC,4
 	LD	HL,(IX+6)
 	OR	A,A
 	SBC	HL,BC
-	JR	NC,L_68
-;  299	      Yoffset = 75 - startName * Y_SPACING;
-.LINE 299
+	JR	NC,L_66
+;  325	    Yoffset = 75 - startName * Y_SPACING;
+.LINE 325
 
 	LD	HL,(IX+6)
 	LD	A,25
@@ -3234,45 +2628,45 @@ _printNames:
 	OR	A,A
 	SBC	HL,BC
 	LD	(IX+-12),HL
-;  300	      startName = 0;
-.LINE 300
+;  326	    startName = 0;
+.LINE 326
 
 	LD	BC,0
 	LD	(IX+6),BC
-;  301	    }else{
-.LINE 301
+;  327	  }else{
+.LINE 327
 
-	JR	L_69
-L_68:
-;  302	      startName-=4;
-.LINE 302
+	JR	L_67
+L_66:
+;  328	    startName-=4;
+.LINE 328
 
 	LD	IY,(IX+6)
 	LEA	IY,IY+-4
 	LD	(IX+6),IY
-;  303	    }
-L_69:
-.LINE 303
+;  329	  }
+L_67:
+.LINE 329
 
-;  304	    curName=startName;
-.LINE 304
+;  330	  curName=startName;
+.LINE 330
 
 	LD	BC,(IX+6)
 	LD	(IX+-9),BC
-;  305	
-;  306	
-;  307	    /* draw the text on the screen. Starts displaying the name at element start
-;  308	    * then iterates until out of pics or about to draw off the screen */
-;  309	    for(i=0;i<numOfPics && y<180;i++){
-.LINE 309
+;  331	
+;  332	
+;  333	  /* draw the text on the screen. Starts displaying the name at element start
+;  334	  * then iterates until out of pics or about to draw off the screen */
+;  335	  for(i=0;i<numOfPics && y<180;i++){
+.LINE 335
 
 	LD	BC,0
 	LD	(IX+-3),BC
-	JR	L_75
-L_73:
-;  310	      //calculates where the text should be drawn
-;  311	      y = i * Y_SPACING + Y_MARGIN + Yoffset;
-.LINE 311
+	JR	L_73
+L_71:
+;  336	    //calculates where the text should be drawn
+;  337	    y = i * Y_SPACING + Y_MARGIN + Yoffset;
+.LINE 337
 
 	LD	HL,(IX+-3)
 	LD	A,25
@@ -3282,10 +2676,10 @@ L_73:
 	LD	BC,(IX+-12)
 	ADD	HL,BC
 	LD	(IX+-6),HL
-;  312	
-;  313	      //Prints out the correct name
-;  314	      gfx_PrintStringXY(&picNames[curName++*BYTES_PER_IMAGE_NAME],X_MARGIN,y);
-.LINE 314
+;  338	
+;  339	    //Prints out the correct name
+;  340	    gfx_PrintStringXY(&picNames[curName++*BYTES_PER_IMAGE_NAME],X_MARGIN,y);
+.LINE 340
 
 	LD	BC,(IX+-9)
 	LD	DE,(IX+-9)
@@ -3307,33 +2701,33 @@ L_73:
 	LD	BC,(IX+-3)
 	INC	BC
 	LD	(IX+-3),BC
-;  315	      //while(!os_GetCSC());
-;  316	
-;  317	    }
-L_75:
-.LINE 317
+;  341	    //while(!os_GetCSC());
+;  342	
+;  343	  }
+L_73:
+.LINE 343
 
 	LD	BC,(IX+12)
 	LD	HL,(IX+-3)
 	OR	A,A
 	SBC	HL,BC
-	JR	NC,L_76
+	JR	NC,L_74
 	LD	BC,180
 	LD	HL,(IX+-6)
 	OR	A,A
 	SBC	HL,BC
-	JR	C,L_73
-L_76:
-;  318	    //slows down scrolling speed
-;  319	    delay(150);
-.LINE 319
+	JR	C,L_71
+L_74:
+;  344	  //slows down scrolling speed
+;  345	  delay(150);
+.LINE 345
 
 	LD	BC,150
 	PUSH	BC
 	CALL	_delay
 	POP	BC
-;  320	  }
-.LINE 320
+;  346	}
+.LINE 346
 
 	LD	SP,IX
 	POP	IX
@@ -3362,12 +2756,12 @@ L_76:
 ;       Spill Code: 0 (instruction)
 
 
-.ENDFUNC "printNames",320,"_printNames"
-;  321	
-;  322	
-;  323	
-;  324	  /* Rebuilds the database of images on the calculator*/
-;  325	  uint24_t rebuildDB(uint8_t p){
+.ENDFUNC "printNames",346,"_printNames"
+;  347	
+;  348	
+;  349	
+;  350	/* Rebuilds the database of images on the calculator*/
+;  351	uint24_t rebuildDB(uint8_t p){
 _rebuildDB:
 .DEFINE "_rebuildDB"
 
@@ -3379,9 +2773,9 @@ _rebuildDB:
 
 .ENDEF
 
-.BEGFUNC "rebuildDB",325,"_rebuildDB"
+.BEGFUNC "rebuildDB",351,"_rebuildDB"
 
-.LINE 325
+.LINE 351
 
 .DEFINE "p"
 
@@ -3472,36 +2866,36 @@ _rebuildDB:
 	ADD	IX,SP
 	LEA	HL,IX+-67
 	LD	SP,HL
-;  326	    char *var_name, *imgInfo[16], nameBuffer[10];
-;  327	    uint8_t *search_pos = NULL;
-.LINE 327
+;  352	  char *var_name, *imgInfo[16], nameBuffer[10];
+;  353	  uint8_t *search_pos = NULL;
+.LINE 353
 
 	LD	BC,0
 	LD	(IX+-11),BC
-;  328	    uint24_t imagesFound=0;
-.LINE 328
+;  354	  uint24_t imagesFound=0;
+.LINE 354
 
 	LD	(IX+-4),BC
-;  329	    char myData[8]="HDPALV1",names[8];
-.LINE 329
+;  355	  char myData[8]="HDPALV1",names[8];
+.LINE 355
 
 	LEA	DE,IX+-19
-	LD	HL,_0temp78
+	LD	HL,_0temp76
 	LD	BC,8
 	LDIR	
-;  330	    ti_var_t database = ti_Open("HDPICDB","w"), palette;
-.LINE 330
+;  356	  ti_var_t database = ti_Open("HDPICDB","w"), palette;
+.LINE 356
 
-	LD	BC,L__51
+	LD	BC,L__46
 	PUSH	BC
-	LD	BC,L__52
+	LD	BC,L__47
 	PUSH	BC
 	CALL	_ti_Open
 	POP	BC
 	POP	BC
 	LD	(IX+-1),A
-;  331	    ti_Write("HDDATV10",8,1,database);//Rewrites the header because w overwrites everything
-.LINE 331
+;  357	  ti_Write("HDDATV10",8,1,database);//Rewrites the header because w overwrites everything
+.LINE 357
 
 	LD	C,(IX+-1)
 	LD	B,0
@@ -3510,34 +2904,34 @@ _rebuildDB:
 	PUSH	BC
 	LD	BC,8
 	PUSH	BC
-	LD	BC,L__53
+	LD	BC,L__48
 	PUSH	BC
 	CALL	_ti_Write
 	POP	BC
 	POP	BC
 	POP	BC
 	POP	BC
-;  332	
-;  333	    //resets splash screen for new loading SetLoadingBarProgress
-;  334	    SplashScreen();
-.LINE 334
+;  358	
+;  359	  //resets splash screen for new loading SetLoadingBarProgress
+;  360	  SplashScreen();
+.LINE 360
 
 	CALL	_SplashScreen
-;  335	
-;  336	    /*
-;  337	    * Searches for palettes. This is a lot easier than searching for every single
-;  338	    * image square because there's is guarunteed to only be one palette per image.
-;  339	    * The palette containts all the useful information such as the image size and
-;  340	    * the two letter ID for each appvar. This makes it easy to find every square via a loop.
-;  341	    */
-;  342	    while((var_name = ti_DetectVar(&search_pos, "HDPALV10", TI_APPVAR_TYPE)) != NULL) {
-.LINE 342
+;  361	
+;  362	  /*
+;  363	  * Searches for palettes. This is a lot easier than searching for every single
+;  364	  * image square because there's is guarunteed to only be one palette per image.
+;  365	  * The palette containts all the useful information such as the image size and
+;  366	  * the two letter ID for each appvar. This makes it easy to find every square via a loop.
+;  367	  */
+;  368	  while((var_name = ti_DetectVar(&search_pos, "HDPALV10", TI_APPVAR_TYPE)) != NULL) {
+.LINE 368
 
-	JR	L_79
-L_80:
-;  343	      //sets progress of how many images were found
-;  344	      SetLoadingBarProgress(++imagesFound,MAX_IMAGES);
-.LINE 344
+	JR	L_77
+L_78:
+;  369	    //sets progress of how many images were found
+;  370	    SetLoadingBarProgress(++imagesFound,MAX_IMAGES);
+.LINE 370
 
 	LD	BC,(IX+-4)
 	INC	BC
@@ -3550,11 +2944,11 @@ L_80:
 	CALL	_SetLoadingBarProgress
 	POP	BC
 	POP	BC
-;  345	      //finds the name, letter ID, and size of entire image this palette belongs to.
-;  346	      palette = ti_Open(var_name,"r");
-.LINE 346
+;  371	    //finds the name, letter ID, and size of entire image this palette belongs to.
+;  372	    palette = ti_Open(var_name,"r");
+.LINE 372
 
-	LD	BC,L__54
+	LD	BC,L__49
 	PUSH	BC
 	LD	BC,(IX+-8)
 	PUSH	BC
@@ -3562,9 +2956,9 @@ L_80:
 	POP	BC
 	POP	BC
 	LD	(IX+-5),A
-;  347	      //seeks past useless info
-;  348	      ti_Seek(8,SEEK_CUR,palette);
-.LINE 348
+;  373	    //seeks past useless info
+;  374	    ti_Seek(8,SEEK_CUR,palette);
+.LINE 374
 
 	LD	C,(IX+-5)
 	LD	B,0
@@ -3577,8 +2971,8 @@ L_80:
 	POP	BC
 	POP	BC
 	POP	BC
-;  349	      ti_Seek(16,SEEK_CUR,database);
-.LINE 349
+;  375	    ti_Seek(16,SEEK_CUR,database);
+.LINE 375
 
 	LD	C,(IX+-1)
 	LD	B,0
@@ -3591,9 +2985,9 @@ L_80:
 	POP	BC
 	POP	BC
 	POP	BC
-;  350	      //reads the important info (16 bytes)
-;  351	      ti_Read(&imgInfo,16,1,palette);
-.LINE 351
+;  376	    //reads the important info (16 bytes)
+;  377	    ti_Read(&imgInfo,16,1,palette);
+.LINE 377
 
 	LD	C,(IX+-5)
 	LD	B,0
@@ -3608,9 +3002,9 @@ L_80:
 	POP	BC
 	POP	BC
 	POP	BC
-;  352	      //Writes the info to the database
-;  353	      ti_Write(imgInfo,16,1,database);
-.LINE 353
+;  378	    //Writes the info to the database
+;  379	    ti_Write(imgInfo,16,1,database);
+.LINE 379
 
 	LD	C,(IX+-1)
 	LD	B,0
@@ -3625,22 +3019,22 @@ L_80:
 	POP	BC
 	POP	BC
 	POP	BC
-;  354	      //closes palette for next iteration
-;  355	      ti_Close(palette);
-.LINE 355
+;  380	    //closes palette for next iteration
+;  381	    ti_Close(palette);
+.LINE 381
 
 	LD	C,(IX+-5)
 	LD	B,0
 	PUSH	BC
 	CALL	_ti_Close
 	POP	BC
-;  356	    }
-L_79:
-.LINE 356
+;  382	  }
+L_77:
+.LINE 382
 
 	LD	BC,21
 	PUSH	BC
-	LD	BC,L__55
+	LD	BC,L__50
 	PUSH	BC
 	PEA	IX+-11
 	CALL	_ti_DetectVar
@@ -3649,22 +3043,22 @@ L_79:
 	POP	BC
 	LD	(IX+-8),HL
 	CALL	__icmpzero
-	JR	NZ,L_80
-;  357	    //closes the database
-;  358	    ti_Close(database);
-.LINE 358
+	JR	NZ,L_78
+;  383	  //closes the database
+;  384	  ti_Close(database);
+.LINE 384
 
 	LD	C,(IX+-1)
 	LD	B,0
 	PUSH	BC
 	CALL	_ti_Close
 	POP	BC
-;  359	    gfx_End();
-.LINE 359
+;  385	  gfx_End();
+.LINE 385
 
 	CALL	_gfx_End
-;  360	    ti_SetArchiveStatus(true,database);
-.LINE 360
+;  386	  ti_SetArchiveStatus(true,database);
+.LINE 386
 
 	LD	C,(IX+-1)
 	LD	B,0
@@ -3674,16 +3068,16 @@ L_79:
 	CALL	_ti_SetArchiveStatus
 	POP	BC
 	POP	BC
-;  361	    gfx_Begin();
-.LINE 361
+;  387	  gfx_Begin();
+.LINE 387
 
 	CALL	_gfx_Begin
-;  362	    SplashScreen();
-.LINE 362
+;  388	  SplashScreen();
+.LINE 388
 
 	CALL	_SplashScreen
-;  363	    gfx_SetTextXY(100,195);
-.LINE 363
+;  389	  gfx_SetTextXY(100,195);
+.LINE 389
 
 	LD	BC,195
 	PUSH	BC
@@ -3692,8 +3086,8 @@ L_79:
 	CALL	_gfx_SetTextXY
 	POP	BC
 	POP	BC
-;  364	    gfx_PrintUInt(imagesFound,3);
-.LINE 364
+;  390	  gfx_PrintUInt(imagesFound,3);
+.LINE 390
 
 	LD	BC,3
 	PUSH	BC
@@ -3702,22 +3096,22 @@ L_79:
 	CALL	_gfx_PrintUInt
 	POP	BC
 	POP	BC
-;  365	    if (imagesFound==0){
-.LINE 365
+;  391	  if (imagesFound==0){
+.LINE 391
 
 	LD	HL,(IX+-4)
 	CALL	__icmpzero
-	JR	NZ,L_83
-;  366	      noImagesFound();
-.LINE 366
+	JR	NZ,L_81
+;  392	    noImagesFound();
+.LINE 392
 
 	CALL	_noImagesFound
-;  367	    }
-L_83:
-.LINE 367
+;  393	  }
+L_81:
+.LINE 393
 
-;  368	    SetLoadingBarProgress(++p,TASKS_TO_FINISH);
-.LINE 368
+;  394	  SetLoadingBarProgress(++p,TASKS_TO_FINISH);
+.LINE 394
 
 	INC	(IX+6)
 	LD	BC,2
@@ -3728,15 +3122,15 @@ L_83:
 	CALL	_SetLoadingBarProgress
 	POP	BC
 	POP	BC
-;  369	
-;  370	
-;  371	
-;  372	    return imagesFound;
-.LINE 372
+;  395	
+;  396	
+;  397	
+;  398	  return imagesFound;
+.LINE 398
 
 	LD	HL,(IX+-4)
-;  373	  }
-.LINE 373
+;  399	}
+.LINE 399
 
 	LD	SP,IX
 	POP	IX
@@ -3759,7 +3153,7 @@ L_83:
 ;_SplashScreen                       IMPORT  -----   function
 ;_ti_Write                           IMPORT  -----   function
 ;_ti_Open                            IMPORT  -----   function
-;_0temp78                            STATIC      8   variable
+;_0temp76                            STATIC      8   variable
 ;imgInfo                              IX-67     48   variable
 ;myData                               IX-19      8   variable
 ;search_pos                           IX-11      3   variable
@@ -3774,25 +3168,25 @@ L_83:
 ;       Spill Code: 0 (instruction)
 
 
-.ENDFUNC "rebuildDB",373,"_rebuildDB"
+.ENDFUNC "rebuildDB",399,"_rebuildDB"
 	SEGMENT STRSECT
-L__51:
+L__46:
 	DB	"w"
 	DB	0
-L__52:
+L__47:
 	DB	"HDPICDB"
 	DB	0
-L__53:
+L__48:
 	DB	"HDDATV10"
 	DB	0
-L__54:
+L__49:
 	DB	"r"
 	DB	0
-L__55:
+L__50:
 	DB	"HDPALV10"
 	DB	0
 	SEGMENT TEXT
-_0temp78:
+_0temp76:
 	DB	72
 	DB	68
 	DB	80
@@ -3802,8 +3196,8 @@ _0temp78:
 	DB	49
 	DB	0
 	SEGMENT CODE
-;  374	
-;  375	  void noImagesFound(){
+;  400	
+;  401	void noImagesFound(){
 _noImagesFound:
 .DEFINE "_noImagesFound"
 
@@ -3815,78 +3209,78 @@ _noImagesFound:
 
 .ENDEF
 
-.BEGFUNC "noImagesFound",375,"_noImagesFound"
+.BEGFUNC "noImagesFound",401,"_noImagesFound"
 
 	PUSH	IX
 	LD	IX,0
 	ADD	IX,SP
-;  376	    gfx_SetTextFGColor(192);
-.LINE 376
+;  402	  gfx_SetTextFGColor(192);
+.LINE 402
 
 	LD	BC,192
 	PUSH	BC
 	CALL	_gfx_SetTextFGColor
 	POP	BC
-;  377	    PrintCenteredX("No Pictures Detected!",1);
-.LINE 377
+;  403	  PrintCenteredX("No Pictures Detected!",1);
+.LINE 403
 
 	LD	BC,1
 	PUSH	BC
-	LD	BC,L__59
+	LD	BC,L__54
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  378	    gfx_SetTextFGColor(0);
-.LINE 378
+;  404	  gfx_SetTextFGColor(0);
+.LINE 404
 
 	LD	BC,0
 	PUSH	BC
 	CALL	_gfx_SetTextFGColor
 	POP	BC
-;  379	    PrintCenteredX("Convert some images and send them to your",11);
-.LINE 379
+;  405	  PrintCenteredX("Convert some images and send them to your",11);
+.LINE 405
 
 	LD	BC,11
 	PUSH	BC
-	LD	BC,L__60
+	LD	BC,L__55
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  380	    PrintCenteredX("calculator using the HDpic converter!",21);
-.LINE 380
+;  406	  PrintCenteredX("calculator using the HDpic converter!",21);
+.LINE 406
 
 	LD	BC,21
 	PUSH	BC
-	LD	BC,L__61
+	LD	BC,L__56
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  381	    PrintCenteredX("Tutorial:  https://youtu.be/s1-g8oSueQg",31);
-.LINE 381
+;  407	  PrintCenteredX("Tutorial:  https://youtu.be/s1-g8oSueQg",31);
+.LINE 407
 
 	LD	BC,31
 	PUSH	BC
-	LD	BC,L__62
+	LD	BC,L__57
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  382	    PrintCenteredX("Press any key to quit",41);
-.LINE 382
+;  408	  PrintCenteredX("Press any key to quit",41);
+.LINE 408
 
 	LD	BC,41
 	PUSH	BC
-	LD	BC,L__63
+	LD	BC,L__58
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  383	    return;
-;  384	  }
-.LINE 384
+;  409	  return;
+;  410	}
+.LINE 410
 
 	LD	SP,IX
 	POP	IX
@@ -3903,27 +3297,27 @@ _noImagesFound:
 ;       Spill Code: 0 (instruction)
 
 
-.ENDFUNC "noImagesFound",384,"_noImagesFound"
+.ENDFUNC "noImagesFound",410,"_noImagesFound"
 	SEGMENT STRSECT
-L__59:
+L__54:
 	DB	"No Pictures Detected!"
 	DB	0
-L__60:
+L__55:
 	DB	"Convert some images and send them to your"
 	DB	0
-L__61:
+L__56:
 	DB	"calculator using the HDpic converter!"
 	DB	0
-L__62:
+L__57:
 	DB	"Tutorial:  https://youtu.be/s1-g8oSueQg"
 	DB	0
-L__63:
+L__58:
 	DB	"Press any key to quit"
 	DB	0
 	SEGMENT CODE
-;  385	
-;  386	  //checks if the database is already created. If not, it creates it.
-;  387	  uint8_t databaseReady(){
+;  411	
+;  412	//checks if the database is already created. If not, it creates it.
+;  413	uint8_t databaseReady(){
 _databaseReady:
 .DEFINE "_databaseReady"
 
@@ -3935,9 +3329,9 @@ _databaseReady:
 
 .ENDEF
 
-.BEGFUNC "databaseReady",387,"_databaseReady"
+.BEGFUNC "databaseReady",413,"_databaseReady"
 
-.LINE 387
+.LINE 413
 
 .DEFINE "ready"
 
@@ -4018,41 +3412,41 @@ _databaseReady:
 	ADD	IX,SP
 	LEA	HL,IX+-27
 	LD	SP,HL
-;  388	    char *var_name;
-;  389	    uint8_t *search_pos = NULL, exists=0, ready = 0;
-.LINE 389
+;  414	  char *var_name;
+;  415	  uint8_t *search_pos = NULL, exists=0, ready = 0;
+.LINE 415
 
 	LD	BC,0
 	LD	(IX+-6),BC
 	LD	(IX+-3),0
-;  390	    ti_var_t myAppVar;
-;  391	    char myData[9]="HDDATV10"; //remember have one more space than text you're saving for null termiation
-.LINE 391
+;  416	  ti_var_t myAppVar;
+;  417	  char myData[9]="HDDATV10"; //remember have one more space than text you're saving for null termiation
+.LINE 417
 
 	LEA	DE,IX+-18
-	LD	HL,_1temp86
+	LD	HL,_1temp84
 	LD	BC,9
 	LDIR	
-;  392	    char compare[9]="HDDATV10";
-.LINE 392
+;  418	  char compare[9]="HDDATV10";
+.LINE 418
 
 	LEA	DE,IX+-27
-	LD	HL,_2temp87
+	LD	HL,_2temp85
 	LD	BC,9
 	LDIR	
-;  393	    //tries to find database using known header
-;  394	    while((var_name = ti_DetectVar(&search_pos, myData, TI_APPVAR_TYPE)) != NULL) {
-.LINE 394
+;  419	  //tries to find database using known header
+;  420	  while((var_name = ti_DetectVar(&search_pos, myData, TI_APPVAR_TYPE)) != NULL) {
+.LINE 420
 
-	JR	L_88
-L_89:
-;  395	      exists=1;
-.LINE 395
+	JR	L_86
+L_87:
+;  421	    exists=1;
+.LINE 421
 
 	LD	(IX+-3),1
-;  396	    }
-L_88:
-.LINE 396
+;  422	  }
+L_86:
+.LINE 422
 
 	LD	BC,21
 	PUSH	BC
@@ -4064,44 +3458,44 @@ L_88:
 	POP	BC
 	LD	(IX+-9),HL
 	CALL	__icmpzero
-	JR	NZ,L_89
-;  397	    //if file already exists, simply return
-;  398	    if (exists == 1)
-.LINE 398
+	JR	NZ,L_87
+;  423	  //if file already exists, simply return
+;  424	  if (exists == 1)
+.LINE 424
 
 	LD	A,(IX+-3)
 	CP	A,1
-	JR	NZ,L_101
-;  399	    ready = 2;
-.LINE 399
+	JR	NZ,L_99
+;  425	  ready = 2;
+.LINE 425
 
 	LD	(IX+-1),2
-;  400	    else{
-.LINE 400
+;  426	  else{
+.LINE 426
 
-	JR	L_103
-L_101:
-;  401	      //if file doesn't already exist, create it.
-;  402	      //creates the database appvar and writes the header. Checks if wrote successfuly
-;  403	      myAppVar=ti_Open("HDPICDB", "w");
-.LINE 403
+	JR	L_101
+L_99:
+;  427	    //if file doesn't already exist, create it.
+;  428	    //creates the database appvar and writes the header. Checks if wrote successfuly
+;  429	    myAppVar=ti_Open("HDPICDB", "w");
+.LINE 429
 
-	LD	BC,L__67
+	LD	BC,L__62
 	PUSH	BC
-	LD	BC,L__68
+	LD	BC,L__63
 	PUSH	BC
 	CALL	_ti_Open
 	POP	BC
 	POP	BC
 	LD	(IX+-2),A
-;  404	      if(!myAppVar)
-.LINE 404
+;  430	    if(!myAppVar)
+.LINE 430
 
-;  405	      ready = 3;
-.LINE 405
+;  431	    ready = 3;
+.LINE 431
 
-;  406	      if(ti_Write(&myData,8,1,myAppVar)!=1)
-.LINE 406
+;  432	    if(ti_Write(&myData,8,1,myAppVar)!=1)
+.LINE 432
 
 	LD	C,(IX+-2)
 	LD	B,0
@@ -4116,22 +3510,22 @@ L_101:
 	POP	BC
 	POP	BC
 	POP	BC
-;  407	      ready = 4;
-.LINE 407
+;  433	    ready = 4;
+.LINE 433
 
-;  408	      if (ti_Rewind(myAppVar) == EOF)
-.LINE 408
+;  434	    if (ti_Rewind(myAppVar) == EOF)
+.LINE 434
 
 	LD	C,(IX+-2)
 	LD	B,0
 	PUSH	BC
 	CALL	_ti_Rewind
 	POP	BC
-;  409	      ready = 5;
-.LINE 409
+;  435	    ready = 5;
+.LINE 435
 
-;  410	      if (ti_Read(&myData,8, 1, myAppVar) != 1)
-.LINE 410
+;  436	    if (ti_Read(&myData,8, 1, myAppVar) != 1)
+.LINE 436
 
 	LD	C,(IX+-2)
 	LD	B,0
@@ -4146,11 +3540,11 @@ L_101:
 	POP	BC
 	POP	BC
 	POP	BC
-;  411	      ready = 6;
-.LINE 411
+;  437	    ready = 6;
+.LINE 437
 
-;  412	      if (strcmp(myData,compare)!=0)
-.LINE 412
+;  438	    if (strcmp(myData,compare)!=0)
+.LINE 438
 
 	PEA	IX+-27
 	PEA	IX+-18
@@ -4158,111 +3552,111 @@ L_101:
 	POP	BC
 	POP	BC
 	CALL	__icmpzero
-	JR	Z,L_98
-;  413	      ready = 7;
-.LINE 413
+	JR	Z,L_96
+;  439	    ready = 7;
+.LINE 439
 
 	LD	(IX+-1),7
-;  414	      else{
-.LINE 414
+;  440	    else{
+.LINE 440
 
-	JR	L_103
-L_98:
-;  415	        ready = 1;
-.LINE 415
+	JR	L_101
+L_96:
+;  441	      ready = 1;
+.LINE 441
 
 	LD	(IX+-1),1
-;  416	      }
-;  417	    }
-L_103:
-.LINE 417
+;  442	    }
+;  443	  }
+L_101:
+.LINE 443
 
-;  418	    ti_CloseAll();
-.LINE 418
+;  444	  ti_CloseAll();
+.LINE 444
 
 	CALL	_ti_CloseAll
-;  419	
-;  420	    //checks what happened
-;  421	    if(ready==1){
-.LINE 421
+;  445	
+;  446	  //checks what happened
+;  447	  if(ready==1){
+.LINE 447
 
 	LD	A,(IX+-1)
 	CP	A,1
-	JR	NZ,L_107
-;  422	      gfx_SetTextFGColor(195);
-.LINE 422
+	JR	NZ,L_105
+;  448	    gfx_SetTextFGColor(195);
+.LINE 448
 
 	LD	BC,195
 	PUSH	BC
 	CALL	_gfx_SetTextFGColor
 	POP	BC
-;  423	      PrintCenteredX("created",180);
-.LINE 423
+;  449	    PrintCenteredX("created",180);
+.LINE 449
 
 	LD	BC,180
 	PUSH	BC
-	LD	BC,L__75
+	LD	BC,L__70
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  424	      return 1;
-.LINE 424
+;  450	    return 1;
+.LINE 450
 
 	LD	A,1
-	JR	L_108
-;  425	    }else if(ready==2){
-L_107:
-.LINE 425
+	JR	L_106
+;  451	  }else if(ready==2){
+L_105:
+.LINE 451
 
 	LD	A,(IX+-1)
 	CP	A,2
-	JR	NZ,L_105
-;  426	      gfx_SetTextFGColor(004);
-.LINE 426
+	JR	NZ,L_103
+;  452	    gfx_SetTextFGColor(004);
+.LINE 452
 
 	LD	BC,4
 	PUSH	BC
 	CALL	_gfx_SetTextFGColor
 	POP	BC
-;  427	      PrintCenteredX("exists",180);
-.LINE 427
+;  453	    PrintCenteredX("exists",180);
+.LINE 453
 
 	LD	BC,180
 	PUSH	BC
-	LD	BC,L__77
+	LD	BC,L__72
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  428	      return 2;
-.LINE 428
+;  454	    return 2;
+.LINE 454
 
 	LD	A,2
-	JR	L_108
-;  429	    }else{
-L_105:
-.LINE 429
+	JR	L_106
+;  455	  }else{
+L_103:
+.LINE 455
 
-;  430	      gfx_SetTextFGColor(224);
-.LINE 430
+;  456	    gfx_SetTextFGColor(224);
+.LINE 456
 
 	LD	BC,224
 	PUSH	BC
 	CALL	_gfx_SetTextFGColor
 	POP	BC
-;  431	      PrintCenteredX("failure",180);
-.LINE 431
+;  457	    PrintCenteredX("failure",180);
+.LINE 457
 
 	LD	BC,180
 	PUSH	BC
-	LD	BC,L__78
+	LD	BC,L__73
 	PUSH	BC
 	CALL	_PrintCenteredX
 	POP	BC
 	POP	BC
-;  432	      gfx_SetTextXY(120,190);
-.LINE 432
+;  458	    gfx_SetTextXY(120,190);
+.LINE 458
 
 	LD	BC,190
 	PUSH	BC
@@ -4271,8 +3665,8 @@ L_105:
 	CALL	_gfx_SetTextXY
 	POP	BC
 	POP	BC
-;  433	      gfx_PrintUInt(ready,1);
-.LINE 433
+;  459	    gfx_PrintUInt(ready,1);
+.LINE 459
 
 	LD	BC,1
 	PUSH	BC
@@ -4283,16 +3677,16 @@ L_105:
 	CALL	_gfx_PrintUInt
 	POP	BC
 	POP	BC
-;  434	      return 0;
-.LINE 434
+;  460	    return 0;
+.LINE 460
 
 	XOR	A,A
-;  435	    }
-;  436	
-;  437	
-;  438	  }
-L_108:
-.LINE 438
+;  461	  }
+;  462	
+;  463	
+;  464	}
+L_106:
+.LINE 464
 
 	LD	SP,IX
 	POP	IX
@@ -4312,8 +3706,8 @@ L_108:
 ;_ti_Write                           IMPORT  -----   function
 ;_ti_Open                            IMPORT  -----   function
 ;_ti_DetectVar                       IMPORT  -----   function
-;_2temp87                            STATIC      9   variable
-;_1temp86                            STATIC      9   variable
+;_2temp85                            STATIC      9   variable
+;_1temp84                            STATIC      9   variable
 ;compare                              IX-27      9   variable
 ;myData                               IX-18      9   variable
 ;var_name                              IX-9      3   variable
@@ -4327,25 +3721,25 @@ L_108:
 ;       Spill Code: 0 (instruction)
 
 
-.ENDFUNC "databaseReady",438,"_databaseReady"
+.ENDFUNC "databaseReady",464,"_databaseReady"
 	SEGMENT STRSECT
-L__67:
+L__62:
 	DB	"w"
 	DB	0
-L__68:
+L__63:
 	DB	"HDPICDB"
 	DB	0
-L__75:
+L__70:
 	DB	"created"
 	DB	0
-L__77:
+L__72:
 	DB	"exists"
 	DB	0
-L__78:
+L__73:
 	DB	"failure"
 	DB	0
 	SEGMENT TEXT
-_1temp86:
+_1temp84:
 	DB	72
 	DB	68
 	DB	68
@@ -4355,7 +3749,7 @@ _1temp86:
 	DB	49
 	DB	48
 	DB	0
-_2temp87:
+_2temp85:
 	DB	72
 	DB	68
 	DB	68
@@ -4366,9 +3760,9 @@ _2temp87:
 	DB	48
 	DB	0
 	SEGMENT CODE
-;  439	
-;  440	  //makes a loading bar and fills it in depending on progress made (p) / tasks left (t)
-;  441	  void SetLoadingBarProgress(uint8_t p, uint8_t t){
+;  465	
+;  466	//makes a loading bar and fills it in depending on progress made (p) / tasks left (t)
+;  467	void SetLoadingBarProgress(uint8_t p, uint8_t t){
 _SetLoadingBarProgress:
 .DEFINE "_SetLoadingBarProgress"
 
@@ -4380,9 +3774,9 @@ _SetLoadingBarProgress:
 
 .ENDEF
 
-.BEGFUNC "SetLoadingBarProgress",441,"_SetLoadingBarProgress"
+.BEGFUNC "SetLoadingBarProgress",467,"_SetLoadingBarProgress"
 
-.LINE 441
+.LINE 467
 
 .DEFINE "p"
 
@@ -4409,8 +3803,8 @@ _SetLoadingBarProgress:
 	ADD	IX,SP
 	PUSH	BC
 	DEC	SP
-;  442	    p=((double)p/(double)t)*200.0;
-.LINE 442
+;  468	  p=((double)p/(double)t)*200.0;
+.LINE 468
 
 	UEXT	HL
 	LD	L,(IX+6)
@@ -4434,28 +3828,28 @@ _SetLoadingBarProgress:
 	CALL	__fmul
 	CALL	__ftol
 	LD	(IX+6),C
-;  443	    //ensures loading bar doesn't go past max point
-;  444	    if (p>200)
-.LINE 444
+;  469	  //ensures loading bar doesn't go past max point
+;  470	  if (p>200)
+.LINE 470
 
 	LD	A,200
 	CP	A,(IX+6)
-	JR	NC,L_110
-;  445	    p=200;
-.LINE 445
+	JR	NC,L_108
+;  471	  p=200;
+.LINE 471
 
 	LD	(IX+6),200
-L_110:
-;  446	
-;  447	    gfx_SetColor(128);
-.LINE 447
+L_108:
+;  472	
+;  473	  gfx_SetColor(128);
+.LINE 473
 
 	LD	BC,128
 	PUSH	BC
 	CALL	_gfx_SetColor
 	POP	BC
-;  448	    gfx_FillRectangle_NoClip(60,153,(uint8_t)p,7);
-.LINE 448
+;  474	  gfx_FillRectangle_NoClip(60,153,(uint8_t)p,7);
+.LINE 474
 
 	LD	BC,7
 	PUSH	BC
@@ -4472,9 +3866,9 @@ L_110:
 	POP	BC
 	POP	BC
 	POP	BC
-;  449	
-;  450	  }
-.LINE 450
+;  475	
+;  476	}
+.LINE 476
 
 	LD	SP,IX
 	POP	IX
@@ -4493,10 +3887,10 @@ L_110:
 ;       Spill Code: 0 (instruction)
 
 
-.ENDFUNC "SetLoadingBarProgress",450,"_SetLoadingBarProgress"
-;  451	
-;  452	  //creates a simple splash screen when program starts
-;  453	  void SplashScreen(){
+.ENDFUNC "SetLoadingBarProgress",476,"_SetLoadingBarProgress"
+;  477	
+;  478	//creates a simple splash screen when program starts
+;  479	void SplashScreen(){
 _SplashScreen:
 .DEFINE "_SplashScreen"
 
@@ -4508,21 +3902,21 @@ _SplashScreen:
 
 .ENDEF
 
-.BEGFUNC "SplashScreen",453,"_SplashScreen"
+.BEGFUNC "SplashScreen",479,"_SplashScreen"
 
 	PUSH	IX
 	LD	IX,0
 	ADD	IX,SP
-;  454	    //sets color to grey
-;  455	    gfx_SetColor(181);
-.LINE 455
+;  480	  //sets color to grey
+;  481	  gfx_SetColor(181);
+.LINE 481
 
 	LD	BC,181
 	PUSH	BC
 	CALL	_gfx_SetColor
 	POP	BC
-;  456	    gfx_FillRectangle_NoClip(60,80,LCD_WIDTH-120,LCD_HEIGHT-160);
-.LINE 456
+;  482	  gfx_FillRectangle_NoClip(60,80,LCD_WIDTH-120,LCD_HEIGHT-160);
+.LINE 482
 
 	LD	BC,80
 	PUSH	BC
@@ -4537,16 +3931,16 @@ _SplashScreen:
 	POP	BC
 	POP	BC
 	POP	BC
-;  457	    /* Print title screen */
-;  458	    PrintCentered("HD Picture Viewer");
-.LINE 458
+;  483	  /* Print title screen */
+;  484	  PrintCentered("HD Picture Viewer");
+.LINE 484
 
-	LD	BC,L__82
+	LD	BC,L__77
 	PUSH	BC
 	CALL	_PrintCentered
 	POP	BC
-;  459	  }
-.LINE 459
+;  485	}
+.LINE 485
 
 	LD	SP,IX
 	POP	IX
@@ -4564,16 +3958,16 @@ _SplashScreen:
 ;       Spill Code: 0 (instruction)
 
 
-.ENDFUNC "SplashScreen",459,"_SplashScreen"
+.ENDFUNC "SplashScreen",485,"_SplashScreen"
 	SEGMENT STRSECT
-L__82:
+L__77:
 	DB	"HD Picture Viewer"
 	DB	0
 	SEGMENT CODE
-;  460	
-;  461	  /* Prints a screen centered string */
-;  462	  void PrintCentered(const char *str)
-;  463	  {
+;  486	
+;  487	/* Prints a screen centered string */
+;  488	void PrintCentered(const char *str)
+;  489	{
 _PrintCentered:
 .DEFINE "_PrintCentered"
 
@@ -4585,9 +3979,9 @@ _PrintCentered:
 
 .ENDEF
 
-.BEGFUNC "PrintCentered",463,"_PrintCentered"
+.BEGFUNC "PrintCentered",489,"_PrintCentered"
 
-.LINE 463
+.LINE 489
 
 .DEFINE "str"
 
@@ -4602,8 +3996,8 @@ _PrintCentered:
 	PUSH	IX
 	LD	IX,0
 	ADD	IX,SP
-;  464	    gfx_PrintStringXY(str,(LCD_WIDTH - gfx_GetStringWidth(str)) / 2, (LCD_HEIGHT - 8) / 2);
-.LINE 464
+;  490	  gfx_PrintStringXY(str,(LCD_WIDTH - gfx_GetStringWidth(str)) / 2, (LCD_HEIGHT - 8) / 2);
+.LINE 490
 
 	LD	BC,116
 	PUSH	BC
@@ -4624,8 +4018,8 @@ _PrintCentered:
 	POP	BC
 	POP	BC
 	POP	BC
-;  465	  }
-.LINE 465
+;  491	}
+.LINE 491
 
 	LD	SP,IX
 	POP	IX
@@ -4643,10 +4037,10 @@ _PrintCentered:
 ;       Spill Code: 0 (instruction)
 
 
-.ENDFUNC "PrintCentered",465,"_PrintCentered"
-;  466	  /* Prints a X centered string */
-;  467	  void PrintCenteredX(const char *str, uint8_t y)
-;  468	  {
+.ENDFUNC "PrintCentered",491,"_PrintCentered"
+;  492	/* Prints a X centered string */
+;  493	void PrintCenteredX(const char *str, uint8_t y)
+;  494	{
 _PrintCenteredX:
 .DEFINE "_PrintCenteredX"
 
@@ -4658,9 +4052,9 @@ _PrintCenteredX:
 
 .ENDEF
 
-.BEGFUNC "PrintCenteredX",468,"_PrintCenteredX"
+.BEGFUNC "PrintCenteredX",494,"_PrintCenteredX"
 
-.LINE 468
+.LINE 494
 
 .DEFINE "str"
 
@@ -4685,8 +4079,8 @@ _PrintCenteredX:
 	PUSH	IX
 	LD	IX,0
 	ADD	IX,SP
-;  469	    gfx_PrintStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2, y);
-.LINE 469
+;  495	  gfx_PrintStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2, y);
+.LINE 495
 
 	LD	A,(IX+9)
 	UEXT	HL
@@ -4709,8 +4103,8 @@ _PrintCenteredX:
 	POP	BC
 	POP	BC
 	POP	BC
-;  470	  }
-.LINE 470
+;  496	}
+.LINE 496
 
 	LD	SP,IX
 	POP	IX
@@ -4729,10 +4123,10 @@ _PrintCenteredX:
 ;       Spill Code: 0 (instruction)
 
 
-.ENDFUNC "PrintCenteredX",470,"_PrintCenteredX"
-;  471	  /* Prints a Y centered string */
-;  472	  void PrintCenteredY(const char *str, uint8_t x)
-;  473	  {
+.ENDFUNC "PrintCenteredX",496,"_PrintCenteredX"
+;  497	/* Prints a Y centered string */
+;  498	void PrintCenteredY(const char *str, uint8_t x)
+;  499	{
 _PrintCenteredY:
 .DEFINE "_PrintCenteredY"
 
@@ -4744,9 +4138,9 @@ _PrintCenteredY:
 
 .ENDEF
 
-.BEGFUNC "PrintCenteredY",473,"_PrintCenteredY"
+.BEGFUNC "PrintCenteredY",499,"_PrintCenteredY"
 
-.LINE 473
+.LINE 499
 
 .DEFINE "str"
 
@@ -4771,8 +4165,8 @@ _PrintCenteredY:
 	PUSH	IX
 	LD	IX,0
 	ADD	IX,SP
-;  474	    gfx_PrintStringXY(str, x, (LCD_HEIGHT - 8) / 2);
-.LINE 474
+;  500	  gfx_PrintStringXY(str, x, (LCD_HEIGHT - 8) / 2);
+.LINE 500
 
 	LD	BC,116
 	PUSH	BC
@@ -4786,8 +4180,8 @@ _PrintCenteredY:
 	POP	BC
 	POP	BC
 	POP	BC
-;  475	  }
-.LINE 475
+;  501	}
+.LINE 501
 
 	LD	SP,IX
 	POP	IX
@@ -4805,11 +4199,11 @@ _PrintCenteredY:
 ;       Spill Code: 0 (instruction)
 
 
-.ENDFUNC "PrintCenteredY",475,"_PrintCenteredY"
-;  476	
-;  477	
-;  478	  /* Draw text on the homescreen at the given X/Y location */
-;  479	  void printText(int8_t xpos, int8_t ypos, const char *text) {
+.ENDFUNC "PrintCenteredY",501,"_PrintCenteredY"
+;  502	
+;  503	
+;  504	/* Draw text on the homescreen at the given X/Y location */
+;  505	void printText(int8_t xpos, int8_t ypos, const char *text) {
 _printText:
 .DEFINE "_printText"
 
@@ -4821,9 +4215,9 @@ _printText:
 
 .ENDEF
 
-.BEGFUNC "printText",479,"_printText"
+.BEGFUNC "printText",505,"_printText"
 
-.LINE 479
+.LINE 505
 
 .DEFINE "xpos"
 
@@ -4858,8 +4252,8 @@ _printText:
 	PUSH	IX
 	LD	IX,0
 	ADD	IX,SP
-;  480	    os_SetCursorPos(ypos, xpos);
-.LINE 480
+;  506	  os_SetCursorPos(ypos, xpos);
+.LINE 506
 
 	LD	C,(IX+6)
 	LD	B,0
@@ -4869,15 +4263,15 @@ _printText:
 	CALL	_os_SetCursorPos
 	POP	BC
 	POP	BC
-;  481	    os_PutStrFull(text);
-.LINE 481
+;  507	  os_PutStrFull(text);
+.LINE 507
 
 	LD	BC,(IX+12)
 	PUSH	BC
 	CALL	_os_PutStrFull
 	POP	BC
-;  482	  }
-.LINE 482
+;  508	}
+.LINE 508
 
 	LD	SP,IX
 	POP	IX
@@ -4897,7 +4291,7 @@ _printText:
 ;       Spill Code: 0 (instruction)
 
 
-.ENDFUNC "printText",482,"_printText"
+.ENDFUNC "printText",508,"_printText"
 	XREF _strcmp:ROM
 	XREF _sprintf:ROM
 	XREF _ti_GetDataPtr:ROM
@@ -4940,7 +4334,6 @@ _printText:
 	XREF __imulu:ROM
 	XREF __fmul:ROM
 	XREF __fdiv:ROM
-	XREF __fcmp:ROM
 	XREF __ftol:ROM
 	XREF __ultof:ROM
 	XREF __ildix:ROM
