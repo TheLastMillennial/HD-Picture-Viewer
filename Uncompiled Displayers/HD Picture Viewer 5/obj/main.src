@@ -1590,7 +1590,7 @@ _DrawImage:
 	PUSH	IX
 	LD	IX,0
 	ADD	IX,SP
-	LD	HL,-836
+	LD	HL,-848
 	ADD	HL,SP
 	LD	SP,HL
 ;  171	  ti_var_t database = ti_Open("HDPICDB","r"),squareSlot,palSlot;
@@ -1608,7 +1608,7 @@ _DrawImage:
 ;  173	  uint24_t i=0,widthSquares=0,heightSquares=0, maxWSquares=0,maxHSquares=0,widthPx=0,heightPx=0,xSquare=0, newWpx=0, newHpx=0,ySquare=0,xOffsetSquare=0,yOffsetSquare=0;
 ;  174	  uint16_t *palPtr[256];
 ;  175	  gfx_sprite_t *outputImg,*srcImg;
-;  176	  double scale=1;
+;  176	  float scale=1;
 .LINE 176
 
 	LD	BC,8388608
@@ -1811,13 +1811,13 @@ _DrawImage:
 	PUSH	BC
 	PUSH	HL
 	LD	HL,IY
-	LD	BC,-836
+	LD	BC,-848
 	CALL	__istix
 	POP	HL
 	POP	BC
 	CALL	_sprintf
 	PUSH	BC
-	LD	BC,-836
+	LD	BC,-848
 	PUSH	HL
 	CALL	__ildix
 	LD	IY,HL
@@ -1830,7 +1830,7 @@ _DrawImage:
 	POP	BC
 	POP	BC
 ;  200	
-;  201	  //resizes image if it's too big
+;  201	  //resizes image if it's too big and wont fit in user defined constraints
 ;  202	  if(widthSquares>maxWSquares){
 .LINE 202
 
@@ -1849,13 +1849,13 @@ _DrawImage:
 	PUSH	BC
 	PUSH	HL
 	LD	HL,IY
-	LD	BC,-836
+	LD	BC,-848
 	CALL	__istix
 	POP	HL
 	POP	BC
 	CALL	_sprintf
 	PUSH	BC
-	LD	BC,-836
+	LD	BC,-848
 	PUSH	HL
 	CALL	__ildix
 	LD	IY,HL
@@ -1863,15 +1863,64 @@ _DrawImage:
 	POP	BC
 	POP	BC
 	POP	BC
-;  204	    scale = maxWSquares/widthSquares;
+;  204	    scale = (double)maxWSquares/(double)widthSquares;
 .LINE 204
 
-	LD	HL,(IX+-34)
-	LD	BC,(IX+-22)
-	CALL	__idivu
-	LD	BC,HL
+	LD	BC,(IX+-34)
 	XOR	A,A
 	CALL	__ultof
+	LD	HL,BC
+	PUSH	BC
+	LD	BC,-840	; spill
+	CALL	__istix
+	POP	BC
+	LD	H,A
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-841	; spill
+	LD	BC,IX	; spill
+	ADD	IY,BC
+	LD	(IY),H
+	POP	BC
+	POP	IY
+	LD	BC,(IX+-22)
+	XOR	A,A
+	CALL	__ultof
+	LD	E,A
+	LD	HL,BC
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-832	; spill
+	LD	BC,IX	; spill
+	ADD	IY,BC
+	LD	(IY),H
+	LD	IY,-841	; unspill
+	LD	BC,IX	; unspill
+	ADD	IY,BC
+	LD	H,(IY)
+	POP	BC
+	POP	IY
+	LD	A,H
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-832	; unspill
+	LD	BC,IX	; unspill
+	ADD	IY,BC
+	LD	H,(IY)
+	POP	BC
+	POP	IY
+	PUSH	BC
+	LD	BC,-828	; spill
+	CALL	__istix
+	LD	BC,-840	; unspill
+	CALL	__ildix
+	POP	BC
+	LD	BC,HL
+	PUSH	BC
+	LD	BC,-828	; unspill
+	CALL	__ildix
+	POP	BC
+	CALL	__fdiv
 	LD	(IX+-16),BC
 	LD	(IX+-13),A
 ;  205	    if(heightSquares*scale>maxHSquares){
@@ -1883,6 +1932,186 @@ _DrawImage:
 	LD	HL,(IX+-16)
 	LD	E,(IX+-13)
 	CALL	__fmul
+	LD	HL,BC
+	PUSH	BC
+	LD	BC,-844	; spill
+	CALL	__istix
+	POP	BC
+	LD	H,A
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-845	; spill
+	LD	BC,IX	; spill
+	ADD	IY,BC
+	LD	(IY),H
+	POP	BC
+	POP	IY
+	LD	BC,(IX+-19)
+	XOR	A,A
+	CALL	__ultof
+	LD	E,A
+	LD	HL,BC
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-832	; spill
+	LD	BC,IX	; spill
+	ADD	IY,BC
+	LD	(IY),H
+	LD	IY,-845	; unspill
+	LD	BC,IX	; unspill
+	ADD	IY,BC
+	LD	H,(IY)
+	POP	BC
+	POP	IY
+	LD	A,H
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-832	; unspill
+	LD	BC,IX	; unspill
+	ADD	IY,BC
+	LD	H,(IY)
+	POP	BC
+	POP	IY
+	PUSH	BC
+	LD	BC,-828	; spill
+	CALL	__istix
+	LD	BC,-844	; unspill
+	CALL	__ildix
+	POP	BC
+	LD	BC,HL
+	PUSH	BC
+	LD	BC,-828	; unspill
+	CALL	__ildix
+	POP	BC
+	CALL	__fcmp
+	JP	P,L_41
+;  206	      dbg_sprintf(dbgout,"\nPath 2 ");
+.LINE 206
+
+	LD	BC,L__27
+	PUSH	BC
+	LD	BC,16449536
+	PUSH	BC
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-848
+	CALL	__istix
+	POP	HL
+	POP	BC
+	CALL	_sprintf
+	PUSH	BC
+	LD	BC,-848
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
+	POP	BC
+	POP	BC
+;  207	
+;  208	      scale = (double)maxHSquares/(double)heightSquares;
+.LINE 208
+
+	LD	BC,(IX+-19)
+	XOR	A,A
+	CALL	__ultof
+	LD	HL,BC
+	PUSH	BC
+	LD	BC,-836	; spill
+	CALL	__istix
+	POP	BC
+	LD	H,A
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-837	; spill
+	LD	BC,IX	; spill
+	ADD	IY,BC
+	LD	(IY),H
+	POP	BC
+	POP	IY
+	LD	BC,(IX+-6)
+	XOR	A,A
+	CALL	__ultof
+	LD	E,A
+	LD	HL,BC
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-832	; spill
+	LD	BC,IX	; spill
+	ADD	IY,BC
+	LD	(IY),H
+	LD	IY,-837	; unspill
+	LD	BC,IX	; unspill
+	ADD	IY,BC
+	LD	H,(IY)
+	POP	BC
+	POP	IY
+	LD	A,H
+	PUSH	IY
+	PUSH	BC
+	LD	IY,-832	; unspill
+	LD	BC,IX	; unspill
+	ADD	IY,BC
+	LD	H,(IY)
+	POP	BC
+	POP	IY
+	PUSH	BC
+	LD	BC,-828	; spill
+	CALL	__istix
+	LD	BC,-836	; unspill
+	CALL	__ildix
+	POP	BC
+	LD	BC,HL
+	PUSH	BC
+	LD	BC,-828	; unspill
+	CALL	__ildix
+	POP	BC
+	CALL	__fdiv
+	LD	(IX+-16),BC
+	LD	(IX+-13),A
+;  209	    }
+;  210	  }else  if(heightSquares>maxHSquares){
+.LINE 210
+
+	JR	L_41
+L_40:
+	LD	BC,(IX+-6)
+	LD	HL,(IX+-19)
+	OR	A,A
+	SBC	HL,BC
+	JR	NC,L_41
+;  211	    dbg_sprintf(dbgout,"\nPath 3 ");
+.LINE 211
+
+	LD	BC,L__29
+	PUSH	BC
+	LD	BC,16449536
+	PUSH	BC
+	PUSH	BC
+	PUSH	HL
+	LD	HL,IY
+	LD	BC,-848
+	CALL	__istix
+	POP	HL
+	POP	BC
+	CALL	_sprintf
+	PUSH	BC
+	LD	BC,-848
+	PUSH	HL
+	CALL	__ildix
+	LD	IY,HL
+	POP	HL
+	POP	BC
+	POP	BC
+	POP	BC
+;  212	
+;  213	    scale = (double)maxHSquares/(double)heightSquares;
+.LINE 213
+
+	LD	BC,(IX+-19)
+	XOR	A,A
+	CALL	__ultof
 	LD	HL,BC
 	PUSH	BC
 	LD	BC,-831	; spill
@@ -1897,7 +2126,7 @@ _DrawImage:
 	LD	(IY),H
 	POP	BC
 	POP	IY
-	LD	BC,(IX+-19)
+	LD	BC,(IX+-6)
 	XOR	A,A
 	CALL	__ultof
 	LD	E,A
@@ -1934,61 +2163,7 @@ _DrawImage:
 	LD	BC,-828	; unspill
 	CALL	__ildix
 	POP	BC
-	CALL	__fcmp
-	JP	P,L_41
-;  206	      dbg_sprintf(dbgout,"\nPath 2 ");
-.LINE 206
-
-	LD	BC,L__27
-	PUSH	BC
-	LD	BC,16449536
-	PUSH	BC
-	CALL	_sprintf
-	POP	BC
-	POP	BC
-;  207	
-;  208	      scale = maxHSquares/heightSquares;
-.LINE 208
-
-	LD	HL,(IX+-19)
-	LD	BC,(IX+-6)
-	CALL	__idivu
-	LD	BC,HL
-	XOR	A,A
-	CALL	__ultof
-	LD	(IX+-16),BC
-	LD	(IX+-13),A
-;  209	    }
-;  210	  }else  if(heightSquares>maxHSquares){
-.LINE 210
-
-	JR	L_41
-L_40:
-	LD	BC,(IX+-6)
-	LD	HL,(IX+-19)
-	OR	A,A
-	SBC	HL,BC
-	JR	NC,L_41
-;  211	    dbg_sprintf(dbgout,"\nPath 3 ");
-.LINE 211
-
-	LD	BC,L__29
-	PUSH	BC
-	LD	BC,16449536
-	PUSH	BC
-	CALL	_sprintf
-	POP	BC
-	POP	BC
-;  212	
-;  213	    scale = maxHSquares/heightSquares;
-.LINE 213
-
-	LD	HL,(IX+-19)
-	LD	BC,(IX+-6)
-	CALL	__idivu
-	LD	BC,HL
-	XOR	A,A
-	CALL	__ultof
+	CALL	__fdiv
 	LD	(IX+-16),BC
 	LD	(IX+-13),A
 ;  214	  }
@@ -2442,7 +2617,7 @@ L_66:
 ;picName                               IX+6      3   parameter
 
 
-; Stack Frame Size: 851 (bytes)
+; Stack Frame Size: 863 (bytes)
 ;       Spill Code: 0 (instruction)
 
 

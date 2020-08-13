@@ -173,7 +173,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   uint24_t i=0,widthSquares=0,heightSquares=0, maxWSquares=0,maxHSquares=0,widthPx=0,heightPx=0,xSquare=0, newWpx=0, newHpx=0,ySquare=0,xOffsetSquare=0,yOffsetSquare=0;
   uint16_t *palPtr[256];
   gfx_sprite_t *outputImg,*srcImg;
-  double scale=1;
+  float scale=1;
   gfx_FillScreen(0);
 
   //seeks past header (8bytes), imgName, and unselected images
@@ -198,19 +198,19 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   maxHSquares = (maxHeight/80);
   dbg_sprintf(dbgout,"maxWS: %d\nwidthS: %d\nmaxHS: %d\nheightS: %d\n",maxWSquares,widthSquares,maxHSquares,heightSquares);
 
-  //resizes image if it's too big
+  //resizes image if it's too big and wont fit in user defined constraints
   if(widthSquares>maxWSquares){
     dbg_sprintf(dbgout,"\nPath 1 ");
-    scale = maxWSquares/widthSquares;
+    scale = (double)maxWSquares/(double)widthSquares;
     if(heightSquares*scale>maxHSquares){
       dbg_sprintf(dbgout,"\nPath 2 ");
 
-      scale = maxHSquares/heightSquares;
+      scale = (double)maxHSquares/(double)heightSquares;
     }
   }else  if(heightSquares>maxHSquares){
     dbg_sprintf(dbgout,"\nPath 3 ");
 
-    scale = maxHSquares/heightSquares;
+    scale = (double)maxHSquares/(double)heightSquares;
   }
   dbg_sprintf(dbgout,"\nScale int: %d \nChanged WH %f",scale,((double)SQUARE_WIDTH_AND_HEIGHT*scale));
 
