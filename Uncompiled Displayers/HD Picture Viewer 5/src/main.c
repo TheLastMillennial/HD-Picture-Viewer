@@ -173,7 +173,7 @@ void DisplayHomeScreen(uint24_t pics){
 void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   ti_var_t database = ti_Open("HDPICDB","r"),squareSlot,palSlot;
   char imgWH[6], imgID[2], searchName[9], palName[9];
-  uint24_t i=0,widthSquares=0,heightSquares=0, maxWSquares=0,maxHSquares=0,widthPx=0,heightPx=0,xSquare=0, newWpx=0, newHpx=0,ySquare=0,xOffsetSquare=0,yOffsetSquare=0;
+  uint24_t widthSquares=0,heightSquares=0, maxWSquares=0,maxHSquares=0,xSquare=0, ySquare=0,xOffsetSquare=0,yOffsetSquare=0;
   uint16_t *palPtr[256];
   gfx_sprite_t *outputImg,*srcImg, *errorImg;
   uint24_t scale=1, scaleNum=1, scaleDen =1, newWidthHeight;
@@ -194,21 +194,27 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   //gfx_PrintStringXY(imgWH,170,10);
   dbg_sprintf(dbgout,"imgWH: %s \n", imgWH);
 
-  //converts the char numbers into uint numbers
-  widthSquares= ((uint24_t)imgWH[0]-'0')*100+((uint24_t)imgWH[1]-'0')*10+(uint24_t)imgWH[2]-'0';
-  heightSquares=((uint24_t)imgWH[3]-'0')*100+((uint24_t)imgWH[4]-'0')*10+(uint24_t)imgWH[5]-'0';
+  /*converts the char numbers into uint numbers
+  (uint24_t)imgWH[?]-'0')*100 covers the 100's place
+  (uint24_t)imgWH[?]-'0')*10 covers the 10's place
+  (uint24_t)imgWH[?]-'0' covers the 1's place
+  +1 accounts for 0 being the starting number
+  */
+  widthSquares= (((uint24_t)imgWH[0]-'0')*100+((uint24_t)imgWH[1]-'0')*10+(uint24_t)imgWH[2]-'0')+1;
+  heightSquares=(((uint24_t)imgWH[3]-'0')*100+((uint24_t)imgWH[4]-'0')*10+(uint24_t)imgWH[5]-'0')+1;
   maxWSquares = (maxWidth/80); //todo: [jacobly] I'm saying you should use numTilesAcross * 80 rather than maxWidth / 80
   maxHSquares = (maxHeight/80);
   dbg_sprintf(dbgout,"maxWS: %d\nwidthS: %d\nmaxHS: %d\nheightS: %d\n",maxWSquares,widthSquares,maxHSquares,heightSquares);
 
   //NEW
+  //checks if it should scale an image horizontally or vertically. The -1 accounts for 0 being the first number
   if (widthSquares * maxHSquares < heightSquares * maxWSquares) {
-    scaleNum = maxWSquares;
-    scaleDen = widthSquares;
+    scaleNum = maxWSquares-1;
+    scaleDen = widthSquares-1;
     dbg_sprintf(dbgout,"\nPath 1 ");
   } else {
-    scaleNum = maxHSquares;
-    scaleDen = heightSquares;
+    scaleNum = maxHSquares-1;
+    scaleDen = heightSquares-1;
     dbg_sprintf(dbgout,"\nPath 2 ");
   }
   newWidthHeight = SQUARE_WIDTH_AND_HEIGHT*scaleNum;
@@ -258,11 +264,13 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   gfx_SetPalette(*palPtr,512,0);
   ti_Close(palSlot);
 
-dbg_sprintf(dbgout,"-------------------------");
+dbg_sprintf(dbgout,"\n-------------------------");
+
   //Displays all the images
-  for(xSquare=(widthSquares);xSquare>0;xSquare--){
-    for(ySquare=0;ySquare<(heightSquares+1);ySquare++){
-      sprintf(searchName, "%.2s%03u%03u\0",imgID, xSquare, ySquare);//combines the separate parts into one name to search for
+  for(xSquare=(widthSquares-1);xSquare>=0;xSquare--){
+    for(ySquare=0;ySquare<(heightSquares);ySquare++){
+      //combines the separate parts into one name to search for
+      sprintf(searchName, "%.2s%03u%03u\0",imgID, xSquare, ySquare);
 
       /*This opens the variable with the name that was just assembled.
       * It then gets the pointer to that and stores it in a graphics variable
@@ -272,6 +280,7 @@ dbg_sprintf(dbgout,"-------------------------");
       if (!squareSlot){
         PrintCentered("Square doesn't exist!");
         PrintCenteredX(searchName,130);
+        dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
         while(!os_GetCSC());
         continue;
       }
@@ -283,8 +292,8 @@ dbg_sprintf(dbgout,"-------------------------");
       //resizes it to outputImg size
       gfx_ScaleSprite(srcImg,outputImg);
       //displays the output image
-      dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
-      gfx_ScaledSprite_NoClip(outputImg,(xSquare-1)*(newWidthHeight/scaleDen),ySquare*(newWidthHeight/scaleDen),1,1);
+      dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
+      gfx_ScaledSprite_NoClip(outputImg,(xSquare)*(newWidthHeight/scaleDen),ySquare*(newWidthHeight/scaleDen),1,1);
       //cleans up
       ti_Close(squareSlot);
     }

@@ -831,7 +831,7 @@ _DrawImage:
 	ld	hl, L_.str
 	ld	de, L_.str.1
 	lea	bc, ix + -8
-	ld	(ix + -32), bc
+	ld	(ix + -50), bc
 	push	de
 	push	hl
 	call	_ti_Open
@@ -864,7 +864,7 @@ _DrawImage:
 	push	hl
 	inc	hl
 	push	hl
-	ld	hl, (ix + -32)
+	ld	hl, (ix + -50)
 	push	hl
 	call	_ti_Read
 	pop	hl
@@ -917,12 +917,18 @@ _DrawImage:
 	push	hl
 	pop	bc
 	ld	c, a
-	ld	de, -5328
+	ld	de, -5280
 	add	iy, de
 	ld	de, (ix + -29)
 	add	iy, de
 	add	iy, bc
-	ld	(ix + -29), iy
+	lea	hl, iy + 0
+	ld	de, -48
+	add	hl, de
+	ld	(ix + -35), hl
+	inc	de
+	add	iy, de
+	ld	(ix + -32), iy
 	ld	a, (ix + -3)
 	ld	l, a
 	rlc	l
@@ -939,7 +945,7 @@ _DrawImage:
 	ld	l, a
 	ld	bc, 10
 	call	__imulu
-	ld	(ix + -35), hl
+	ld	(ix + -29), hl
 	ld	a, (ix + -1)
 	ld	l, a
 	rlc	l
@@ -950,12 +956,14 @@ _DrawImage:
 	ld	(ix + -47), iy
 	ld	de, -5280
 	add	iy, de
-	ld	de, (ix + -35)
+	ld	de, (ix + -29)
 	add	iy, de
-	ld	(ix + -50), bc
+	ld	(ix + -56), bc
 	add	iy, bc
-	ld	de, -48
-	add	iy, de
+	lea	hl, iy + 0
+	ld	de, -47
+	add	hl, de
+	ld	(ix + -38), hl
 	ld	hl, (ix + 9)
 	ld	bc, 80
 	call	__idivu
@@ -965,12 +973,12 @@ _DrawImage:
 	call	__idivu
 	push	hl
 	pop	bc
-	ld	hl, (ix + -29)
+	ld	hl, (ix + -32)
 	ld	(ix + -44), bc
 	call	__imulu
 	ld	(ix + -41), hl
-	lea	hl, iy + 0
-	ld	(ix + -38), de
+	ld	hl, (ix + -38)
+	ld	(ix + -32), de
 	push	de
 	pop	bc
 	call	__imulu
@@ -979,40 +987,45 @@ _DrawImage:
 	ld	hl, (ix + -41)
 	or	a, a
 	sbc	hl, bc
-	jq	c, BB5_2
+	jq	c, BB5_1
 	ld	a, 0
 	jq	BB5_3
-BB5_2:
+BB5_1:
 	ld	a, 1
 BB5_3:
+	ld	de, -48
+	add	iy, de
 	bit	0, a
-	ld	hl, (ix + -38)
+	ld	hl, (ix + -32)
 	jq	nz, BB5_5
 	ld	hl, (ix + -44)
 BB5_5:
 	bit	0, a
-	ld	de, (ix + -29)
+	ld	de, (ix + -35)
 	jq	nz, BB5_7
 	lea	de, iy + 0
 BB5_7:
 	ld	bc, 80
 	call	__imulu
+	ld	bc, -80
+	add	hl, bc
 	push	de
 	pop	bc
 	call	__idivu
 	ld	de, _malloc
 	push	de
 	push	hl
-	ld	(ix + -38), hl
+	ld	(ix + -41), hl
 	push	hl
 	call	_gfx_AllocSprite
 	pop	de
 	pop	de
 	pop	de
+	ld	(ix + -53), hl
 	add	hl, bc
 	or	a, a
 	sbc	hl, bc
-	jq	nz, BB5_11
+	jq	nz, BB5_10
 	ld	hl, L_.str.2
 	ld	de, -126
 	push	de
@@ -1024,13 +1037,12 @@ BB5_9:
 	call	_os_GetCSC
 	or	a, a
 	jq	z, BB5_9
-	jq	BB5_10
-BB5_11:
-	ld	(ix + -44), hl
+	jq	BB5_22
+BB5_10:
 	ld	hl, L_.str.3
 	lea	bc, ix + -26
-	ld	(ix + -41), bc
-	ld	de, (ix + -32)
+	ld	(ix + -32), bc
+	ld	de, (ix + -50)
 	push	de
 	push	hl
 	push	bc
@@ -1040,17 +1052,17 @@ BB5_11:
 	pop	hl
 	ld	hl, L_.str.1
 	push	hl
-	ld	hl, (ix + -41)
+	ld	hl, (ix + -32)
 	push	hl
 	call	_ti_Open
 	ld	e, a
 	pop	hl
 	pop	hl
 	or	a, a
-	jq	nz, BB5_15
+	jq	nz, BB5_13
 	ld	hl, 120
 	push	hl
-	ld	hl, (ix + -41)
+	ld	hl, (ix + -32)
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
@@ -1062,19 +1074,21 @@ BB5_11:
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
-BB5_13:
+BB5_12:
 	call	_os_GetCSC
 	or	a, a
-	jq	z, BB5_13
-BB5_10:
+	jq	z, BB5_12
+BB5_22:
 	call	_ti_CloseAll
-	jq	BB5_26
-BB5_15:
+	ld	sp, ix
+	pop	ix
+	ret
+BB5_13:
 	ld	hl, 24
 	lea	bc, ix + -17
-	ld	(ix + -41), bc
+	ld	(ix + -32), bc
 	push	de
-	ld	(ix + -53), de
+	ld	(ix + -38), de
 	ld	de, 0
 	push	de
 	push	hl
@@ -1082,7 +1096,7 @@ BB5_15:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, (ix + -53)
+	ld	hl, (ix + -38)
 	push	hl
 	call	_ti_GetDataPtr
 	pop	de
@@ -1095,47 +1109,39 @@ BB5_15:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, (ix + -53)
+	ld	hl, (ix + -38)
 	push	hl
 	call	_ti_Close
-	ld	iy, (ix + -41)
+	ld	iy, (ix + -32)
 	pop	hl
 	ld	hl, (ix + -47)
-	ld	de, (ix + -35)
+	ld	de, (ix + -29)
 	add	hl, de
-	ld	de, (ix + -50)
+	ld	de, (ix + -56)
 	add	hl, de
 	ld	de, -5327
 	add	hl, de
-	ld	(ix + -47), hl
-	ld	de, (ix + -29)
-BB5_16:
+	ld	(ix + -38), hl
+	ld	de, (ix + -35)
+BB5_14:
 	push	de
 	pop	hl
-	add	hl, bc
-	or	a, a
-	sbc	hl, bc
-	jq	z, BB5_25
-	push	de
-	pop	hl
-	dec	hl
-	ld	(ix + -50), hl
-	ld	bc, (ix + -38)
+	ld	bc, (ix + -41)
 	call	__imulu
-	ld	(ix + -53), hl
+	ld	(ix + -44), hl
 	or	a, a
 	sbc	hl, hl
-BB5_18:
-	ld	(ix + -35), hl
-	ld	bc, (ix + -47)
+BB5_15:
+	ld	(ix + -29), hl
+	ld	bc, (ix + -38)
 	or	a, a
 	sbc	hl, bc
-	jq	z, BB5_24
-	ld	hl, (ix + -35)
+	jq	z, BB5_21
+	ld	hl, (ix + -29)
 	push	hl
-	ld	(ix + -29), de
+	ld	(ix + -35), de
 	push	de
-	ld	hl, (ix + -32)
+	ld	hl, (ix + -50)
 	push	hl
 	ld	hl, L_.str.5
 	push	hl
@@ -1148,63 +1154,63 @@ BB5_18:
 	pop	hl
 	ld	hl, L_.str.1
 	push	hl
-	ld	hl, (ix + -41)
+	ld	hl, (ix + -32)
 	push	hl
 	call	_ti_Open
 	ld	e, a
 	pop	hl
 	pop	hl
 	or	a, a
-	jq	nz, BB5_22
+	jq	nz, BB5_19
 	ld	hl, L_.str.6
 	push	hl
 	call	_PrintCentered
 	pop	hl
 	ld	hl, -126
 	push	hl
-	ld	hl, (ix + -41)
+	ld	hl, (ix + -32)
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
-BB5_21:
+BB5_18:
 	call	_os_GetCSC
 	or	a, a
-	jq	z, BB5_21
-	jq	BB5_23
-BB5_22:
+	jq	z, BB5_18
+	jq	BB5_20
+BB5_19:
 	push	de
 	ld	hl, 1
 	push	hl
 	ld	hl, 16
 	push	hl
-	ld	(ix + -56), de
+	ld	(ix + -47), de
 	call	_ti_Seek
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, (ix + -56)
+	ld	hl, (ix + -47)
 	push	hl
 	call	_ti_GetDataPtr
 	pop	de
-	ld	de, (ix + -44)
+	ld	de, (ix + -53)
 	push	de
 	push	hl
 	call	_gfx_ScaleSprite
 	pop	hl
 	pop	hl
-	ld	hl, (ix + -35)
+	ld	hl, (ix + -29)
 	ld	h, l
-	ld	de, (ix + -38)
+	ld	de, (ix + -41)
 	ld	l, e
 	mlt	hl
 	ld	de, 1
 	push	de
 	push	de
 	push	hl
-	ld	hl, (ix + -53)
-	push	hl
 	ld	hl, (ix + -44)
+	push	hl
+	ld	hl, (ix + -53)
 	push	hl
 	call	_gfx_ScaledSprite_NoClip
 	pop	hl
@@ -1212,28 +1218,19 @@ BB5_22:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, (ix + -56)
+	ld	hl, (ix + -47)
 	push	hl
 	call	_ti_Close
 	pop	hl
-BB5_23:
-	ld	hl, (ix + -35)
+BB5_20:
+	ld	hl, (ix + -29)
 	inc	hl
-	ld	de, (ix + -29)
-	ld	iy, (ix + -41)
-	jq	BB5_18
-BB5_24:
-	ld	de, (ix + -50)
-	jq	BB5_16
-BB5_25:
-	ld	hl, (ix + -44)
-	push	hl
-	call	_free
-	pop	hl
-BB5_26:
-	ld	sp, ix
-	pop	ix
-	ret
+	ld	de, (ix + -35)
+	ld	iy, (ix + -32)
+	jq	BB5_15
+BB5_21:
+	dec	de
+	jq	BB5_14
 	section	.text,"ax",@progbits
 
 	section	.text,"ax",@progbits
