@@ -1,16 +1,20 @@
 # ----------------------------
-# Set NAME to the program name
-# Set ICON to the png icon file name
-# Set DESCRIPTION to display within a compatible shell
-# Set COMPRESSED to "YES" to create a compressed program
-# ICON        ?= icon.png
+# Makefile Options
 # ----------------------------
 
-NAME        ?= HDPICV
-COMPRESSED  ?= NO
-
+NAME ?= HDPICV
+ICON ?= icon.png
 DESCRIPTION ?= "High Definition Picture Viewer 5 Dev              By TLM"
+COMPRESSED ?= NO
+ARCHIVED ?= YES
+
+CFLAGS ?= -Wall -Wextra -Oz
+CXXFLAGS ?= -Wall -Wextra -Oz
 
 # ----------------------------
 
-include $(CEDEV)/include/.makefile
+ifndef CEDEV
+$(error CEDEV environment path variable is not set)
+endif
+
+include $(CEDEV)/meta/makefile.mk
