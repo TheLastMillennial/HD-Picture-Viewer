@@ -1,10 +1,7 @@
-# High-Definition Picture Viewer 
+# High-Definition Picture Viewer
 *For the TI-84 Plus CE, TI-84 Plus CE -t, TI-83 Premium CE, and TI-83 Premium CE Edition Python*
 
-By TheLastMillennial
-
-## Note
-This is a rewrite of the original HD Picture Viewer program. It is now being written in C and aims to contain more features such as zooming in and out of any sized photo. Be warned this program is still in early development and makes no stability guaruntees.
+By TheLastMillennial and the help of Peter "PT_" Tillema
 
 ## How To Use
 ### Full Video Tutorial:
@@ -20,6 +17,7 @@ This is a rewrite of the original HD Picture Viewer program. It is now being wri
 - Use [clear] to exit an image and to quit the program
 
 ### Custom images
+#### Using the Converter:
 - Choose the image you want to convert
 - Make the image at most 320 pixels wide and 240 pixels tall
 - Turn the image into a .png
@@ -33,6 +31,65 @@ This is a rewrite of the original HD Picture Viewer program. It is now being wri
 - If no errors occur, click on 'Open Converted Images'
 - Send the converted .8xv files to your calculator
 
+#### Manual Conversion:
+- Choose the image you want to convert
+- Make the image at most 320 pixels wide and 240 pixels tall
+- Turn the image into a .png
+- Take that image and split into two halfs; a left half and a right half. (Each half should be at most 160 pixels wide and 240 pixels tall.)
+- Open the HDpicConverter folder
+- Copy or save the two halves you just made to this folder
+- Open the file "convpng.ini" with a text editor of your choice
+- Change the .ini file so it will convert your images
+- Run convPNG.exe
+- Send the converted .8xv files to your calculator
 
 
+## Programs 
+- [ICE Compiler](http://cemete.ch/DL1481) (only needed if you are compiling the source code)
+- [Wine](https://www.winehq.org/) (Only needed if you are on Mac or Linux)
+
+## Changelog
+
+### v4.0.273
+- Fixed bug where images weren't detected when run via Cesium
+
+### v4.0.256
+- First full release!
+- Added VAT sorting.
+- Fixed minor visual bugs.
+
+### v4.0.208
+- Resdesigned GUI completely.
+- Improved image quality drastically.
+- Included image converter application.
+- Updated ReadMe.
+- Updated example images.
+
+### v4.0.101
+- Added icon.
+- Added description.
+- Updated ReadMe.
+- Updated example images.
+
+### v4.0.100
+- First Beta release.
+
+### v3.40
+- Initial GitHub upload.
+
+## Credits
+Thank you to everyone who has helped me fix code and report bugs! 
+
+- Matt "MateoConLechuga" Waltz
+- Peter "PT_" Tillema
+- Beckadamtheinventor
+- calclover2514
+- _iPhoenix_
+- Hooloovoo
+- Epsilon5
+- Runer112
+- Jacobly
+- Iambian
+- SahilS
+- SM84CE
 
