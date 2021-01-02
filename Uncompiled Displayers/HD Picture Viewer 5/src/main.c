@@ -10,6 +10,9 @@
 #include <fileioc.h>
 #include <debug.h>
 #include <math.h>
+#include <compression.h>
+#include "gfx/errorgfx.h"
+
 
 /* globals */
 
@@ -172,8 +175,8 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   char imgWH[6], imgID[2], searchName[9], palName[9];
   uint24_t i=0,widthSquares=0,heightSquares=0, maxWSquares=0,maxHSquares=0,widthPx=0,heightPx=0,xSquare=0, newWpx=0, newHpx=0,ySquare=0,xOffsetSquare=0,yOffsetSquare=0;
   uint16_t *palPtr[256];
-  gfx_sprite_t *outputImg,*srcImg;
-  uint24_t scale=1, scaleNum=1, scaleDen =1;
+  gfx_sprite_t *outputImg,*srcImg, *errorImg;
+  uint24_t scale=1, scaleNum=1, scaleDen =1, newWidthHeight;
   gfx_FillScreen(0);
 
   //seeks past header (8bytes), imgName, and unselected images
@@ -194,7 +197,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   //converts the char numbers into uint numbers
   widthSquares= ((uint24_t)imgWH[0]-'0')*100+((uint24_t)imgWH[1]-'0')*10+(uint24_t)imgWH[2]-'0';
   heightSquares=((uint24_t)imgWH[3]-'0')*100+((uint24_t)imgWH[4]-'0')*10+(uint24_t)imgWH[5]-'0';
-  maxWSquares = (maxWidth/80);
+  maxWSquares = (maxWidth/80); //todo: [jacobly] I'm saying you should use numTilesAcross * 80 rather than maxWidth / 80
   maxHSquares = (maxHeight/80);
   dbg_sprintf(dbgout,"maxWS: %d\nwidthS: %d\nmaxHS: %d\nheightS: %d\n",maxWSquares,widthSquares,maxHSquares,heightSquares);
 
@@ -202,10 +205,13 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   if (widthSquares * maxHSquares < heightSquares * maxWSquares) {
     scaleNum = maxWSquares;
     scaleDen = widthSquares;
+    dbg_sprintf(dbgout,"\nPath 1 ");
   } else {
     scaleNum = maxHSquares;
     scaleDen = heightSquares;
+    dbg_sprintf(dbgout,"\nPath 2 ");
   }
+  newWidthHeight = SQUARE_WIDTH_AND_HEIGHT*scaleNum;
 
   /*
   [jacobly] so now whenever we want to compute
@@ -223,81 +229,67 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   [MateoC] huh I didn't know about roundDiv
   */
 
-  /*OLD resizes image if it's too big and wont fit in user defined constraints
-  if(widthSquares>maxWSquares){
-  dbg_sprintf(dbgout,"\nPath 1 ");
-  scale = (double)maxWSquares/(double)widthSquares;
-  if(heightSquares*scale>maxHSquares){
-  dbg_sprintf(dbgout,"\nPath 2 ");
+  dbg_sprintf(dbgout,"\nScaleNum: %d \nscaleDen",scaleNum,scaleDen);
 
-  scale = (double)maxHSquares/(double)heightSquares;
-}
-}else  if(heightSquares>maxHSquares){
-dbg_sprintf(dbgout,"\nPath 3 ");
-
-scale = (double)maxHSquares/(double)heightSquares;
-}
-*/
-dbg_sprintf(dbgout,"\nScaleNum: %d \nscaleDen",scaleNum,scaleDen);
-
-//allocates memory for outputImg according to scale
-outputImg = gfx_MallocSprite((SQUARE_WIDTH_AND_HEIGHT*scaleNum)/scaleDen,(SQUARE_WIDTH_AND_HEIGHT*scaleNum)/scaleDen);
-if (!outputImg){
-  PrintCenteredX("Failed to allocate memory!",130);
-  while(!os_GetCSC());
-  ti_CloseAll();
-  return;
-}
-
-
-//sets correct palettes
-sprintf(palName, "HP%.2s0000\0",imgID);
-palSlot = ti_Open(palName,"r");
-if (!palSlot){
-  PrintCenteredX(palName,120);
-  PrintCenteredX("Palette does not exist!",130);
-  while(!os_GetCSC());
-  ti_CloseAll();
-  return;
-}
-
-//gfx_SetDrawBuffer();
-ti_Seek(24,SEEK_SET,palSlot);
-*palPtr = ti_GetDataPtr(palSlot);
-gfx_SetPalette(*palPtr,512,0);
-ti_Close(palSlot);
-
-//Displays all the images
-for(xSquare=0;xSquare<(widthSquares+1);xSquare++){
-  for(ySquare=0;ySquare<(heightSquares+1);ySquare++){
-    sprintf(searchName, "%.2s%03u%03u\0",imgID, xSquare, ySquare);//combines the separate parts into one name to search for
-
-    /*This opens the variable with the name that was just assembled.
-    * It then gets the pointer to that and stores it in a graphics variable
-    */
-    squareSlot = ti_Open(searchName,"r");
-    if (!squareSlot){
-      PrintCenteredX(searchName,120);
-      PrintCentered("Square doesn't exist!");
-      while(!os_GetCSC());
-      ti_CloseAll();
-      return;
-    }
-    //seeks past header
-    ti_Seek(16,SEEK_CUR,squareSlot);
-    //store the original image into srcImg
-    srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
-    //resizes it to outputImg size
-    gfx_ScaleSprite(srcImg,outputImg);
-
-    //displays the output image
-    gfx_ScaledSprite_NoClip(outputImg,xSquare*((SQUARE_WIDTH_AND_HEIGHT*scaleNum)/scaleDen),ySquare*((SQUARE_WIDTH_AND_HEIGHT*scaleNum)/scaleDen),1,1); //todo: get (SQUARE_WIDTH_AND_HEIGHT*scaleNum)/scaleDen) outside the loop
-
-    //cleans up
-    ti_Close(squareSlot);
+  //allocates memory for outputImg according to scale
+  outputImg = gfx_MallocSprite(newWidthHeight/scaleDen,newWidthHeight/scaleDen);
+  if (!outputImg){
+    PrintCenteredX("Failed to allocate memory!",130);
+    while(!os_GetCSC());
+    ti_CloseAll();
+    return;
   }
-}
-free(outputImg);
+
+
+  //sets correct palettes
+  sprintf(palName, "HP%.2s0000\0",imgID);
+  palSlot = ti_Open(palName,"r");
+  if (!palSlot){
+    PrintCenteredX(palName,120);
+    PrintCenteredX("Palette does not exist!",130);
+    while(!os_GetCSC());
+    ti_CloseAll();
+    return;
+  }
+
+  //gfx_SetDrawBuffer();
+  ti_Seek(24,SEEK_SET,palSlot);
+  *palPtr = ti_GetDataPtr(palSlot);
+  gfx_SetPalette(*palPtr,512,0);
+  ti_Close(palSlot);
+
+dbg_sprintf(dbgout,"-------------------------");
+  //Displays all the images
+  for(xSquare=(widthSquares);xSquare>0;xSquare--){
+    for(ySquare=0;ySquare<(heightSquares+1);ySquare++){
+      sprintf(searchName, "%.2s%03u%03u\0",imgID, xSquare, ySquare);//combines the separate parts into one name to search for
+
+      /*This opens the variable with the name that was just assembled.
+      * It then gets the pointer to that and stores it in a graphics variable
+      */
+      squareSlot = ti_Open(searchName,"r");
+      //checks if the square exists
+      if (!squareSlot){
+        PrintCentered("Square doesn't exist!");
+        PrintCenteredX(searchName,130);
+        while(!os_GetCSC());
+        continue;
+      }
+      //if the square was detected, display it!
+      //seeks past header
+      ti_Seek(16,SEEK_CUR,squareSlot);
+      //store the original image into srcImg
+      srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
+      //resizes it to outputImg size
+      gfx_ScaleSprite(srcImg,outputImg);
+      //displays the output image
+      dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
+      gfx_ScaledSprite_NoClip(outputImg,(xSquare-1)*(newWidthHeight/scaleDen),ySquare*(newWidthHeight/scaleDen),1,1);
+      //cleans up
+      ti_Close(squareSlot);
+    }
+  }
+  free(outputImg);
 }
 
 

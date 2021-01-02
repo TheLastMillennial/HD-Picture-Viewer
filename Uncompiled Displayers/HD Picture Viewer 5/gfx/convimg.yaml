@@ -1,0 +1,18 @@
+palettes: 
+  - name: global_palette
+    images: automatic
+
+converts: 
+  - name: errorTriangle
+    palette: global_palette
+    compress: zx7
+    images:
+      - errorTriangle.png
+
+outputs: 
+  - type: c
+    include-file: errorgfx.h
+    palettes:
+      - global_palette
+    converts:
+      - errorTriangle
