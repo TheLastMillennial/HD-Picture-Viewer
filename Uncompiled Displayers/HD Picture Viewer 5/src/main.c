@@ -15,7 +15,6 @@
 
 
 /* globals */
-
 #define BYTES_PER_IMAGE_NAME 9 //8 for image name, 1 for null terminator
 #define MAX_IMAGES 936 //Max images is this because max combinations of appvars goes up to that
 #define TASKS_TO_FINISH 2
@@ -26,9 +25,7 @@
 #define MAX_THUMBNAIL_HEIGHT 240
 #define THUMBNAIL_ZOOM 0
 #define SQUARE_WIDTH_AND_HEIGHT 80
-
-
-
+#define MAX_UINT 16777215
 
 
 /* Function Prototyptes */
@@ -173,7 +170,10 @@ void DisplayHomeScreen(uint24_t pics){
 void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   ti_var_t database = ti_Open("HDPICDB","r"),squareSlot,palSlot;
   char imgWH[6], imgID[2], searchName[9], palName[9];
-  uint24_t widthSquares=0,heightSquares=0, maxWSquares=0,maxHSquares=0,xSquare=0, ySquare=0,xOffsetSquare=0,yOffsetSquare=0;
+  uint24_t widthSquares=0,heightSquares=0,
+    maxWSquares=0,maxHSquares=0,
+    xSquare=0, ySquare=0,
+    xOffsetSquare=0,yOffsetSquare=0;
   uint16_t *palPtr[256];
   gfx_sprite_t *outputImg,*srcImg, *errorImg;
   uint24_t scale=1, scaleNum=1, scaleDen =1, newWidthHeight;
@@ -192,7 +192,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   //then subtracting 48 to get the actuall number.
   gfx_SetTextScale(1,1);
   //gfx_PrintStringXY(imgWH,170,10);
-  dbg_sprintf(dbgout,"imgWH: %s \n", imgWH);
+  dbg_sprintf(dbgout,"\nimgWH: %s \n", imgWH);
 
   /*converts the char numbers into uint numbers
   (uint24_t)imgWH[?]-'0')*100 covers the 100's place
@@ -209,12 +209,12 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   //NEW
   //checks if it should scale an image horizontally or vertically. The -1 accounts for 0 being the first number
   if (widthSquares * maxHSquares < heightSquares * maxWSquares) {
-    scaleNum = maxWSquares-1;
-    scaleDen = widthSquares-1;
+    scaleNum = maxWSquares;
+    scaleDen = widthSquares;
     dbg_sprintf(dbgout,"\nPath 1 ");
   } else {
-    scaleNum = maxHSquares-1;
-    scaleDen = heightSquares-1;
+    scaleNum = maxHSquares;
+    scaleDen = heightSquares;
     dbg_sprintf(dbgout,"\nPath 2 ");
   }
   newWidthHeight = SQUARE_WIDTH_AND_HEIGHT*scaleNum;
@@ -235,7 +235,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   [MateoC] huh I didn't know about roundDiv
   */
 
-  dbg_sprintf(dbgout,"\nScaleNum: %d \nscaleDen",scaleNum,scaleDen);
+  dbg_sprintf(dbgout,"\nScaleNum: %d \nscaleDen: %d",scaleNum,scaleDen);
 
   //allocates memory for outputImg according to scale
   outputImg = gfx_MallocSprite(newWidthHeight/scaleDen,newWidthHeight/scaleDen);
@@ -267,11 +267,10 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
 dbg_sprintf(dbgout,"\n-------------------------");
 
   //Displays all the images
-  for(xSquare=(widthSquares-1);xSquare>=0;xSquare--){
+  for(xSquare=(widthSquares-1);xSquare<MAX_UINT;xSquare--){
     for(ySquare=0;ySquare<(heightSquares);ySquare++){
       //combines the separate parts into one name to search for
       sprintf(searchName, "%.2s%03u%03u\0",imgID, xSquare, ySquare);
-
       /*This opens the variable with the name that was just assembled.
       * It then gets the pointer to that and stores it in a graphics variable
       */
@@ -292,7 +291,7 @@ dbg_sprintf(dbgout,"\n-------------------------");
       //resizes it to outputImg size
       gfx_ScaleSprite(srcImg,outputImg);
       //displays the output image
-      dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
+      //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
       gfx_ScaledSprite_NoClip(outputImg,(xSquare)*(newWidthHeight/scaleDen),ySquare*(newWidthHeight/scaleDen),1,1);
       //cleans up
       ti_Close(squareSlot);
@@ -393,8 +392,6 @@ uint24_t rebuildDB(uint8_t p){
     noImagesFound();
   }
   SetLoadingBarProgress(++p,TASKS_TO_FINISH);
-
-
 
   return imagesFound;
 }
