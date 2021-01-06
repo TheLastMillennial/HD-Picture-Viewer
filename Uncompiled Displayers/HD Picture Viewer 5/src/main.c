@@ -168,14 +168,14 @@ void DisplayHomeScreen(uint24_t pics){
 *
 */
 void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
-  ti_var_t database = ti_Open("HDPICDB","r"),squareSlot,palSlot;
+  ti_var_t database = ti_Open("HDPICDB","r"), squareSlot, palSlot;
   char imgWH[6], imgID[2], searchName[9], palName[9];
-  uint24_t widthSquares=0,heightSquares=0,
-    maxWSquares=0,maxHSquares=0,
+  uint24_t widthSquares=0, heightSquares=0,
+    maxWSquares=0, maxHSquares=0,
     xSquare=0, ySquare=0,
-    xOffsetSquare=0,yOffsetSquare=0;
+    xOffsetSquare=0, yOffsetSquare=0;
   uint16_t *palPtr[256];
-  gfx_sprite_t *outputImg,*srcImg, *errorImg;
+  gfx_sprite_t *outputImg, *srcImg;
   uint24_t scale=1, scaleNum=1, scaleDen =1, newWidthHeight;
   gfx_FillScreen(0);
 
@@ -266,35 +266,56 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
 
 dbg_sprintf(dbgout,"\n-------------------------");
 
+
+
   //Displays all the images
   for(xSquare=(widthSquares-1);xSquare<MAX_UINT;xSquare--){
     for(ySquare=0;ySquare<(heightSquares);ySquare++){
       //combines the separate parts into one name to search for
-      sprintf(searchName, "%.2s%03u%03u\0",imgID, xSquare, ySquare);
+      sprintf(searchName, "%.2s%03u%03u\0", imgID, xSquare, ySquare);
       /*This opens the variable with the name that was just assembled.
       * It then gets the pointer to that and stores it in a graphics variable
       */
       squareSlot = ti_Open(searchName,"r");
-      //checks if the square exists
+      //checks if the square does not exist
       if (!squareSlot){
-        PrintCentered("Square doesn't exist!");
-        PrintCenteredX(searchName,130);
+        //square does not exist
+        dbg_sprintf(dbgout,"\nSquare doesn't exist!");
+        dbg_sprintf(dbgout,"\n%s",searchName);
         dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
-        while(!os_GetCSC());
+
+        gfx_sprite_t *errorImg;
+        //uncompresses the error image
+        errorImg = gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT);
+        zx7_Decompress(errorImg, errorTriangle_compressed);
+
+        //resizes it to outputImg size
+        gfx_ScaleSprite(errorImg,outputImg);
+        //displays the output image
+        //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
+        gfx_ScaledSprite_NoClip(outputImg,(xSquare)*(newWidthHeight/scaleDen),ySquare*(newWidthHeight/scaleDen),1,1);
+
+        free(errorImg);
+
+        //while(!os_GetCSC());
         continue;
       }
-      //if the square was detected, display it!
-      //seeks past header
-      ti_Seek(16,SEEK_CUR,squareSlot);
-      //store the original image into srcImg
-      srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
-      //resizes it to outputImg size
-      gfx_ScaleSprite(srcImg,outputImg);
-      //displays the output image
-      //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
-      gfx_ScaledSprite_NoClip(outputImg,(xSquare)*(newWidthHeight/scaleDen),ySquare*(newWidthHeight/scaleDen),1,1);
+      else
+      {
+        //if the square was detected, load it
+        //seeks past header
+        ti_Seek(16,SEEK_CUR,squareSlot);
+        //store the original image into srcImg
+        srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
+        //resizes it to outputImg size
+        gfx_ScaleSprite(srcImg,outputImg);
+        //displays the output image
+        //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
+        gfx_ScaledSprite_NoClip(outputImg,(xSquare)*(newWidthHeight/scaleDen),ySquare*(newWidthHeight/scaleDen),1,1);
+      }
       //cleans up
       ti_Close(squareSlot);
+
     }
   }
   free(outputImg);
