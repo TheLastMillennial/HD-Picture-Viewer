@@ -136,14 +136,14 @@ void DisplayHomeScreen(uint24_t pics){
         //doubles zoom
         maxWidth = maxWidth*2;
         maxHeight = maxHeight*2;
-        dbg_sprintf(dbgout,"\nZoom In\nmaxWidth: %d\nmaxHeight: %d \n", maxWidth, maxHeight);
+        dbg_sprintf(dbgout,"\n\nKEYPRESS: Zoom In\n maxWidth: %d\n maxHeight: %d ", maxWidth, maxHeight);
         DrawImage(startName, maxWidth, maxHeight);
       }
       //if subtract key was pressed, zoom out by double.
       if (zoomOut){
         maxWidth = maxWidth/2;
         maxHeight = maxHeight/2;
-        dbg_sprintf(dbgout,"\nZoom Out\nmaxWidth: %d\nmaxHeight: %d \n", maxWidth, maxHeight);
+        dbg_sprintf(dbgout,"\n\nKEYPRESS: Zoom Out\n maxWidth: %d\n maxHeight: %d ", maxWidth, maxHeight);
         DrawImage(startName, maxWidth, maxHeight);
 
       }
@@ -192,6 +192,7 @@ void DisplayHomeScreen(uint24_t pics){
 *
 */
 void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
+  dbg_sprintf(dbgout,"\n\n--IMAGE CHANGE--");
   ti_var_t database = ti_Open("HDPICDB","r"), squareSlot, palSlot;
   char imgWH[6], imgID[2], searchName[9], palName[9];
   uint24_t widthSquares=0, heightSquares=0,
@@ -216,7 +217,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   //then subtracting 48 to get the actuall number.
   gfx_SetTextScale(1,1);
   //gfx_PrintStringXY(imgWH,170,10);
-  dbg_sprintf(dbgout,"\nimgWH: %s \n", imgWH);
+  dbg_sprintf(dbgout,"\nimgHeader: %s \n", imgWH);
 
   /*converts the char numbers from the header appvar into uint numbers
   (uint24_t)imgWH[?]-'0')*100 covers the 100's place
@@ -228,7 +229,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   heightSquares=(((uint24_t)imgWH[3]-'0')*100+((uint24_t)imgWH[4]-'0')*10+(uint24_t)imgWH[5]-'0')+1;
   maxWSquares = (maxWidth/80); //todo: [jacobly] I'm saying you should use numTilesAcross * 80 rather than maxWidth / 80
   maxHSquares = (maxHeight/80);
-  dbg_sprintf(dbgout,"maxWS: %d\nwidthS: %d\nmaxHS: %d\nheightS: %d\n",maxWSquares,widthSquares,maxHSquares,heightSquares);
+  dbg_sprintf(dbgout," maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n",maxWSquares,widthSquares,maxHSquares,heightSquares);
 
   //checks if it should scale an image horizontally or vertically.
   if (widthSquares * maxHSquares < heightSquares * maxWSquares) {
@@ -239,6 +240,14 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
     scaleNum = maxHSquares;
     scaleDen = heightSquares;
     dbg_sprintf(dbgout,"\nPath 2 ");
+  }
+  if(scaleNum == 0 || scaleDen == 0){
+    PrintCenteredX("ERR: Cannot zoom out!",130);
+    PrintCenteredX("Try zooming in with [+]",145);
+    dbg_sprintf(dbgout,"\nERR:\n scaleNum:%d\n scaleDen:%d",scaleNum,scaleDen);
+    while(!os_GetCSC());
+    ti_CloseAll();
+    return;
   }
   newWidthHeight = SQUARE_WIDTH_AND_HEIGHT*scaleNum;
 
@@ -258,12 +267,12 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   [MateoC] huh I didn't know about roundDiv
   */
 
-  dbg_sprintf(dbgout,"\nScaleNum: %d \nscaleDen: %d",scaleNum,scaleDen);
+  dbg_sprintf(dbgout,"\n ScaleNum: %d \n scaleDen: %d",scaleNum,scaleDen);
 
   //allocates memory for outputImg according to scale
   outputImg = gfx_MallocSprite(newWidthHeight/scaleDen,newWidthHeight/scaleDen);
   if (!outputImg){
-    PrintCenteredX("Failed to allocate memory!",130);
+    PrintCenteredX("ERR: Failed to allocate memory!",130);
     while(!os_GetCSC());
     ti_CloseAll();
     return;
@@ -275,7 +284,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   palSlot = ti_Open(palName,"r");
   if (!palSlot){
     PrintCenteredX(palName,120);
-    PrintCenteredX("Palette does not exist!",130);
+    PrintCenteredX("ERR: Palette does not exist!",130);
     while(!os_GetCSC());
     ti_CloseAll();
     return;
@@ -303,9 +312,9 @@ dbg_sprintf(dbgout,"\n-------------------------");
       //checks if the square does not exist
       if (!squareSlot){
         //square does not exist
-        dbg_sprintf(dbgout,"\nSquare doesn't exist!");
-        dbg_sprintf(dbgout,"\n%s",searchName);
-        dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
+        dbg_sprintf(dbgout,"\nERR: Square doesn't exist!");
+        dbg_sprintf(dbgout,"\n %s",searchName);
+        //dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
 
         gfx_sprite_t *errorImg;
         //uncompresses the error image
