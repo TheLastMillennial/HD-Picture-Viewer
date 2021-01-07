@@ -40,7 +40,7 @@ void printNames(uint24_t start, char *picNames, uint24_t numOfPics);
 void printText(int8_t xpos, int8_t ypos, const char *text);
 uint24_t rebuildDB(uint8_t p);
 void SplashScreen();
-void SetLoadingBarProgress(uint8_t p, uint8_t t);
+void SetLoadingBarProgress(uint24_t p, uint24_t t);
 
 /* Main function, called first */
 int main(void)
@@ -84,10 +84,12 @@ int main(void)
 void DisplayHomeScreen(uint24_t pics){
   char *picNames = malloc(pics*BYTES_PER_IMAGE_NAME); //BYTES_PER_IMAGE_NAME = 9
   ti_var_t database = ti_Open("HDPICDB","r");
-  uint24_t i,startName=0;
+  uint24_t i,startName=0, maxWidth=320, maxHeight=240;
   uint8_t Ypos=10;
-  kb_key_t key = kb_Data[7];
-  bool up,down,left,right;
+
+  //kb_key_t key = kb_Data[7];
+  bool up, down,
+    zoomIn, zoomOut;
 
 
   //makes the screen black and sets text white
@@ -115,16 +117,37 @@ void DisplayHomeScreen(uint24_t pics){
   /* Keypress handler */
   gfx_SetTextXY(10,10);
   printNames(startName, picNames, pics);
-  DrawImage(startName,320,240);
+  DrawImage(startName,maxWidth,maxHeight);
   do{
     //scans the keys for keypress
     kb_Scan();
     //checks if up or down arrow key were pressed
-    key = kb_Data[7];
-    down= key & kb_Down;
-    up  = key & kb_Up;
+    //key = kb_Data[7];
+    down= kb_Data[7] & kb_Down;
+    up  = kb_Data[7] & kb_Up;
+    zoomIn = kb_Data[6] & kb_Add;
+    zoomOut= kb_Data[6] & kb_Sub;
+
     //if any key was pressed
-    if(key){
+    if(kb_AnyKey()){
+      //dbg_sprintf(dbgout,"\nKey Pressed");
+      //if plus key was pressed, zoom in by double
+      if (zoomIn){
+        //doubles zoom
+        maxWidth = maxWidth*2;
+        maxHeight = maxHeight*2;
+        dbg_sprintf(dbgout,"\nZoom In\nmaxWidth: %d\nmaxHeight: %d \n", maxWidth, maxHeight);
+        DrawImage(startName, maxWidth, maxHeight);
+      }
+      //if subtract key was pressed, zoom out by double.
+      if (zoomOut){
+        maxWidth = maxWidth/2;
+        maxHeight = maxHeight/2;
+        dbg_sprintf(dbgout,"\nZoom Out\nmaxWidth: %d\nmaxHeight: %d \n", maxWidth, maxHeight);
+        DrawImage(startName, maxWidth, maxHeight);
+
+      }
+
       /* increases the name to start on and redraws the text */
       if(down){
         //PrintCenteredX("DOWN",10);
@@ -139,7 +162,7 @@ void DisplayHomeScreen(uint24_t pics){
         if (startName>pics-3 && pics-3>0) //makes sure user can't scroll too far when there's only 3 images detected
         startName=pics-2;
         printNames(startName, picNames, pics);
-        DrawImage(startName,320,240);
+        DrawImage(startName, maxWidth, maxHeight);
       }
       //key = kb_Data[3];
 
@@ -152,8 +175,9 @@ void DisplayHomeScreen(uint24_t pics){
         if (startName>MAX_IMAGES)
         startName=0;
         printNames(startName, picNames, pics);
-        DrawImage(startName,320,240);
+        DrawImage(startName, maxWidth, maxHeight);
       }
+
     }
   }   while(kb_Data[6]!=kb_Clear);
 
@@ -172,11 +196,11 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   char imgWH[6], imgID[2], searchName[9], palName[9];
   uint24_t widthSquares=0, heightSquares=0,
     maxWSquares=0, maxHSquares=0,
-    xSquare=0, ySquare=0,
-    xOffsetSquare=0, yOffsetSquare=0;
+    xSquare=0, ySquare=0;
+    //xOffsetSquare=0, yOffsetSquare=0; future use
   uint16_t *palPtr[256];
   gfx_sprite_t *outputImg, *srcImg;
-  uint24_t scale=1, scaleNum=1, scaleDen =1, newWidthHeight;
+  uint24_t scaleNum=1, scaleDen =1, newWidthHeight;
   gfx_FillScreen(0);
 
   //seeks past header (8bytes), imgName, and unselected images
@@ -194,7 +218,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   //gfx_PrintStringXY(imgWH,170,10);
   dbg_sprintf(dbgout,"\nimgWH: %s \n", imgWH);
 
-  /*converts the char numbers into uint numbers
+  /*converts the char numbers from the header appvar into uint numbers
   (uint24_t)imgWH[?]-'0')*100 covers the 100's place
   (uint24_t)imgWH[?]-'0')*10 covers the 10's place
   (uint24_t)imgWH[?]-'0' covers the 1's place
@@ -206,8 +230,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   maxHSquares = (maxHeight/80);
   dbg_sprintf(dbgout,"maxWS: %d\nwidthS: %d\nmaxHS: %d\nheightS: %d\n",maxWSquares,widthSquares,maxHSquares,heightSquares);
 
-  //NEW
-  //checks if it should scale an image horizontally or vertically. The -1 accounts for 0 being the first number
+  //checks if it should scale an image horizontally or vertically.
   if (widthSquares * maxHSquares < heightSquares * maxWSquares) {
     scaleNum = maxWSquares;
     scaleDen = widthSquares;
@@ -248,7 +271,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
 
 
   //sets correct palettes
-  sprintf(palName, "HP%.2s0000\0",imgID);
+  sprintf(palName, "HP%.2s0000",imgID);
   palSlot = ti_Open(palName,"r");
   if (!palSlot){
     PrintCenteredX(palName,120);
@@ -272,7 +295,7 @@ dbg_sprintf(dbgout,"\n-------------------------");
   for(xSquare=(widthSquares-1);xSquare<MAX_UINT;xSquare--){
     for(ySquare=0;ySquare<(heightSquares);ySquare++){
       //combines the separate parts into one name to search for
-      sprintf(searchName, "%.2s%03u%03u\0", imgID, xSquare, ySquare);
+      sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
       /*This opens the variable with the name that was just assembled.
       * It then gets the pointer to that and stores it in a graphics variable
       */
@@ -370,10 +393,10 @@ void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
 
 /* Rebuilds the database of images on the calculator*/
 uint24_t rebuildDB(uint8_t p){
-  char *var_name, *imgInfo[16], nameBuffer[10];
-  uint8_t *search_pos = NULL;
+  char *var_name, *imgInfo[16];// nameBuffer[10];
+  void *search_pos = NULL;
   uint24_t imagesFound=0;
-  char myData[8]="HDPALV1",names[8];
+  //char myData[8]="HDPALV1" ,names[8];
   ti_var_t database = ti_Open("HDPICDB","w"), palette;
   ti_Write("HDDATV10",8,1,database);//Rewrites the header because w overwrites everything
 
@@ -431,7 +454,8 @@ void noImagesFound(){
 //checks if the database is already created. If not, it creates it.
 uint8_t databaseReady(){
   char *var_name;
-  uint8_t *search_pos = NULL, exists=0, ready = 0;
+  void *search_pos = NULL;
+  uint8_t exists=0, ready = 0;
   ti_var_t myAppVar;
   char myData[9]="HDDATV10"; //remember have one more space than text you're saving for null termiation
   char compare[9]="HDDATV10";
@@ -483,7 +507,7 @@ uint8_t databaseReady(){
 }
 
 //makes a loading bar and fills it in depending on progress made (p) / tasks left (t)
-void SetLoadingBarProgress(uint8_t p, uint8_t t){
+void SetLoadingBarProgress(uint24_t p, uint24_t t){
   p=((double)p/(double)t)*200.0;
   //ensures loading bar doesn't go past max point
   if (p>200)
