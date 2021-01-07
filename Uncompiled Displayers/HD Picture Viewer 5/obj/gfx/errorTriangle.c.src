@@ -1,8 +1,178 @@
 	section	.text,"ax",@progbits
 	assume	adl = 1
+	file	0 "C:/Users/Brian/Documents/GitHub/HD-Picture-Viewer/Uncompiled Displayers/HD Picture Viewer 5/src/gfx\errorTriangle.c" md5 0xb882b1021818490cf1b106c881dfb608
+	file	1 "C:/Users/Brian/Documents/GitHub/HD-Picture-Viewer/Uncompiled Displayers/HD Picture Viewer 5/src/gfx\errorTriangle.c" md5 0xb882b1021818490cf1b106c881dfb608
 	section	.data,"aw",@progbits
 	public	_errorTriangle_compressed
 _errorTriangle_compressed:
 	db	"P P",001o,221o,000o,000o,"P",000o,"K)",003o,232o,"O",000o,"h",000o,004o,325o,"O",000o,025o,000o,000o,230o,243o,"O",000o,240o,000o,022o,331o,"O",343o,"E",340o,013o,"#gO",015o,200o,217o,"O",217o,341o,011o,340o,017o,"#cO",340o,021o,177o,"O",207o,"g;",025o,200o,215o,"O",270o,011o,010o,330o,"O",370o,"M",370o,015o,004o,"vO",035o,347o,"Y",340o,015o,021o,"xO",376o,"/",013o,025o,021o,201o,326o,"Ox=-",021o,201o,276o,"O",035o,"a",340o,000o,"wO",236o,";",014o,340o,023o,"iO",202o,036o,"c",000o,007o,"9O",340o,"9",346o,025o,006o,"8O%e",340o,000o,"oO",236o,"7",017o,340o,027o,"]O",202o,236o,"g",000o,006o,270o,"Of5X",033o,"~3",006o,"XOd",273o,"!",230o,031o,030o,341o,"O",362o,251o,207o,312o,305o,007o,333o,"O",000o,201o,356o,"O>",023o,017o,340o,"QoO",270o,035o,036o,"`O",216o,"M",012o,340o,"Q;`O",237o,227o,240o,234o,263o,340o,"sO",270o,000o,035o,"eO",007o,203o,330o,"S",270o,"C",026o,340o,"O",023o,"8",000o,023o,"G",315o,"M",201o,">O",000o,001o
 
+	section	.debug_abbrev,"",@progbits
+	private	abbrev_start5
+abbrev_start5:
+	db	1
+	db	17
+	db	1
+	db	37
+	db	37
+	db	19
+	db	5
+	db	3
+	db	37
+	db	114
+	db	23
+	db	16
+	db	23
+	db	27
+	db	37
+	db	115
+	db	23
+	db	0
+	db	0
+	db	2
+	db	52
+	db	0
+	db	3
+	db	37
+	db	73
+	db	19
+	db	63
+	db	25
+	db	58
+	db	11
+	db	59
+	db	11
+	db	2
+	db	24
+	db	0
+	db	0
+	db	3
+	db	1
+	db	1
+	db	73
+	db	19
+	db	0
+	db	0
+	db	4
+	db	33
+	db	0
+	db	73
+	db	19
+	db	55
+	db	11
+	db	0
+	db	0
+	db	5
+	db	36
+	db	0
+	db	3
+	db	37
+	db	62
+	db	11
+	db	11
+	db	11
+	db	0
+	db	0
+	db	6
+	db	36
+	db	0
+	db	3
+	db	37
+	db	11
+	db	11
+	db	62
+	db	11
+	db	0
+	db	0
+	db	0
+	section	.debug_info,"",@progbits
+	private	cu_begin0
+cu_begin0:
+	dd	debug_info_end0-debug_info_start0
+	private	debug_info_start0
+debug_info_start0:
+	dw	5
+	db	1
+	db	3
+	dd	abbrev_start5
+	db	1
+	db	0
+	dw	12
+	db	1
+	dd	str_offsets_base0
+	dd	line_table_start0
+	db	2
+	dd	addr_table_base0
+	db	2
+	db	3
+	dd	41
+
+	db	1
+	db	1
+	db	2
+	db	161
+	db	0
+	db	3
+	dd	53
+	db	4
+	dd	57
+	db	228
+	db	0
+	db	5
+	db	4
+	db	8
+	db	1
+	db	6
+	db	5
+	db	8
+	db	7
+	db	0
+	private	debug_info_end0
+debug_info_end0:
+	section	.debug_str_offsets,"",@progbits
+	dd	28
+	dw	5
+	dw	0
+	private	str_offsets_base0
+str_offsets_base0:
+	section	.debug_str,"MS",@progbits,1
+	private	info_string0
+info_string0:
+	db	"clang version 12.0.0 (https://github.com/jacobly0/llvm-project a4fd568b012f0b193e341952bf10624f559064fd)",000o
+	private	info_string1
+info_string1:
+	db	"C:/Users/Brian/Documents/GitHub/HD-Picture-Viewer/Uncompiled Displayers/HD Picture Viewer 5/src/gfx\errorTriangle.c",000o
+	private	info_string2
+info_string2:
+	db	"C:\Users\Brian\Documents\GitHub\HD-Picture-Viewer\Uncompiled Displayers\HD Picture Viewer 5",000o
+	private	info_string3
+info_string3:
+	db	"errorTriangle_compressed",000o
+	private	info_string4
+info_string4:
+	db	"unsigned char",000o
+	private	info_string5
+info_string5:
+	db	"__ARRAY_SIZE_TYPE__",000o
+	section	.debug_str_offsets,"",@progbits
+	dd	info_string0
+	dd	info_string1
+	dd	info_string2
+	dd	info_string3
+	dd	info_string4
+	dd	info_string5
+	section	.debug_addr,"",@progbits
+	dd	debug_addr_end0-debug_addr_start0
+	private	debug_addr_start0
+debug_addr_start0:
+	dw	5
+	db	3
+	db	0
+	private	addr_table_base0
+addr_table_base0:
+	dl	_errorTriangle_compressed
+	private	debug_addr_end0
+debug_addr_end0:
 	ident	"clang version 12.0.0 (https://github.com/jacobly0/llvm-project a4fd568b012f0b193e341952bf10624f559064fd)"
+	section	.debug_line,"",@progbits
+line_table_start0:

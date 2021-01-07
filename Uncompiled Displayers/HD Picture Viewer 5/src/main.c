@@ -31,7 +31,7 @@
 /* Function Prototyptes */
 uint8_t databaseReady();
 void DisplayHomeScreen(uint24_t pics);
-void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight);
+void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t xOffset, int24_t yOffset);
 void noImagesFound();
 void PrintCentered(const char *str);
 void PrintCenteredX(const char *str, uint8_t y);
@@ -41,6 +41,8 @@ void printText(int8_t xpos, int8_t ypos, const char *text);
 uint24_t rebuildDB(uint8_t p);
 void SplashScreen();
 void SetLoadingBarProgress(uint24_t p, uint24_t t);
+bool horizOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD);
+bool vertOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD);
 
 /* Main function, called first */
 int main(void)
@@ -84,12 +86,15 @@ int main(void)
 void DisplayHomeScreen(uint24_t pics){
   char *picNames = malloc(pics*BYTES_PER_IMAGE_NAME); //BYTES_PER_IMAGE_NAME = 9
   ti_var_t database = ti_Open("HDPICDB","r");
-  uint24_t i,startName=0, maxWidth=320, maxHeight=240;
+  uint24_t i,startName=0,
+  maxWidth=320, maxHeight=240;
+  int24_t xOffset=0, yOffset=0;
   uint8_t Ypos=10;
 
   //kb_key_t key = kb_Data[7];
-  bool up, down,
-    zoomIn, zoomOut;
+  bool prev, next,
+  zoomIn, zoomOut,
+  panUp, panDown, panLeft, panRight;
 
 
   //makes the screen black and sets text white
@@ -117,39 +122,62 @@ void DisplayHomeScreen(uint24_t pics){
   /* Keypress handler */
   gfx_SetTextXY(10,10);
   printNames(startName, picNames, pics);
-  DrawImage(startName,maxWidth,maxHeight);
+  DrawImage(startName,maxWidth,maxHeight, xOffset, yOffset);
   do{
     //scans the keys for keypress
     kb_Scan();
     //checks if up or down arrow key were pressed
     //key = kb_Data[7];
-    down= kb_Data[7] & kb_Down;
-    up  = kb_Data[7] & kb_Up;
+    next= kb_Data[1] & kb_Graph;
+    prev  = kb_Data[1] & kb_Yequ;
     zoomIn = kb_Data[6] & kb_Add;
     zoomOut= kb_Data[6] & kb_Sub;
+    panUp = kb_Data[7] & kb_Up;
+    panDown = kb_Data[7] & kb_Down;
+    panLeft = kb_Data[7] & kb_Left;
+    panRight = kb_Data[7] & kb_Right;
 
     //if any key was pressed
     if(kb_AnyKey()){
       //dbg_sprintf(dbgout,"\nKey Pressed");
+
+      if (panRight){
+        xOffset++;
+        DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
+      }
+      if (panLeft){
+        xOffset--;
+        DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
+      }
+      if (panUp){
+        yOffset--;
+        DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
+      }
+      if (panDown){
+        yOffset++;
+        DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
+      }
+
+
       //if plus key was pressed, zoom in by double
       if (zoomIn){
         //doubles zoom
         maxWidth = maxWidth*2;
         maxHeight = maxHeight*2;
         dbg_sprintf(dbgout,"\n\nKEYPRESS: Zoom In\n maxWidth: %d\n maxHeight: %d ", maxWidth, maxHeight);
-        DrawImage(startName, maxWidth, maxHeight);
+        DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
       }
       //if subtract key was pressed, zoom out by double.
       if (zoomOut){
         maxWidth = maxWidth/2;
         maxHeight = maxHeight/2;
         dbg_sprintf(dbgout,"\n\nKEYPRESS: Zoom Out\n maxWidth: %d\n maxHeight: %d ", maxWidth, maxHeight);
-        DrawImage(startName, maxWidth, maxHeight);
+        DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
 
       }
 
       /* increases the name to start on and redraws the text */
-      if(down){
+      if(next){
         //PrintCenteredX("DOWN",10);
         startName++;
         //make sure user can't scroll down too far
@@ -162,12 +190,16 @@ void DisplayHomeScreen(uint24_t pics){
         if (startName>pics-3 && pics-3>0) //makes sure user can't scroll too far when there's only 3 images detected
         startName=pics-2;
         printNames(startName, picNames, pics);
-        DrawImage(startName, maxWidth, maxHeight);
+        xOffset = 0;
+        yOffset = 0;
+        maxWidth = 320;
+        maxHeight = 240;
+        DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
       }
       //key = kb_Data[3];
 
       /* decreases the name to start on and redraws the text */
-      if(up){
+      if(prev){
         //PrintCenteredX(" UP ",10);
         startName--;
         /*checks if startName underflowed from 0 to 16 million or something.
@@ -175,7 +207,11 @@ void DisplayHomeScreen(uint24_t pics){
         if (startName>MAX_IMAGES)
         startName=0;
         printNames(startName, picNames, pics);
-        DrawImage(startName, maxWidth, maxHeight);
+        xOffset = 0;
+        yOffset = 0;
+        maxWidth = 320;
+        maxHeight = 240;
+        DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
       }
 
     }
@@ -191,17 +227,16 @@ void DisplayHomeScreen(uint24_t pics){
 * Image will automatically be resized to same aspect ratio so you just set the max width and height (4,3 will fit the screen normally)
 *
 */
-void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
+void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t xOffset, int24_t yOffset){
   dbg_sprintf(dbgout,"\n\n--IMAGE CHANGE--");
   ti_var_t database = ti_Open("HDPICDB","r"), squareSlot, palSlot;
   char imgWH[6], imgID[2], searchName[9], palName[9];
   uint24_t widthSquares=0, heightSquares=0,
-    maxWSquares=0, maxHSquares=0,
-    xSquare=0, ySquare=0;
-    //xOffsetSquare=0, yOffsetSquare=0; future use
+  maxWSquares=0, maxHSquares=0,
+  xSquare=0, ySquare=0;
   uint16_t *palPtr[256];
   gfx_sprite_t *outputImg, *srcImg;
-  uint24_t scaleNum=1, scaleDen =1, newWidthHeight;
+  uint24_t scaleNum=1, scaleDen=1, newWidthHeight;
   gfx_FillScreen(0);
 
   //seeks past header (8bytes), imgName, and unselected images
@@ -267,7 +302,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   [MateoC] huh I didn't know about roundDiv
   */
 
-  dbg_sprintf(dbgout,"\n ScaleNum: %d \n scaleDen: %d",scaleNum,scaleDen);
+  dbg_sprintf(dbgout,"\n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d",scaleNum,scaleDen, xOffset, yOffset);
 
   //allocates memory for outputImg according to scale
   outputImg = gfx_MallocSprite(newWidthHeight/scaleDen,newWidthHeight/scaleDen);
@@ -296,13 +331,22 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   gfx_SetPalette(*palPtr,512,0);
   ti_Close(palSlot);
 
-dbg_sprintf(dbgout,"\n-------------------------");
+  dbg_sprintf(dbgout,"\n-------------------------");
 
 
 
   //Displays all the images
-  for(xSquare=(widthSquares-1);xSquare<MAX_UINT;xSquare--){
-    for(ySquare=0;ySquare<(heightSquares);ySquare++){
+  for(xSquare=(widthSquares-1)+xOffset;xSquare<MAX_UINT;xSquare--){
+    for(ySquare=0+yOffset;ySquare<(heightSquares);ySquare++){
+      /*ensures no vertical graphic overflow occures.
+      *Horizontal overflow is fine since the program will draw over it */
+      if(horizOverflow(xSquare, xOffset, newWidthHeight,scaleDen) || vertOverflow(ySquare+1, yOffset, newWidthHeight,scaleDen))
+      {
+        //dbg_sprintf(dbgout,"\nERR: Square would go out of screen bounds! \n %.2s%03u%03u\n x location: %d \n y location: %d",
+        //imgID, xSquare, ySquare,(xSquare)*(newWidthHeight/scaleDen),(ySquare+1)*(newWidthHeight/scaleDen));
+        continue;
+      }
+
       //combines the separate parts into one name to search for
       sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
       /*This opens the variable with the name that was just assembled.
@@ -325,7 +369,7 @@ dbg_sprintf(dbgout,"\n-------------------------");
         gfx_ScaleSprite(errorImg,outputImg);
         //displays the output image
         //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
-        gfx_ScaledSprite_NoClip(outputImg,(xSquare)*(newWidthHeight/scaleDen),ySquare*(newWidthHeight/scaleDen),1,1);
+        gfx_ScaledSprite_NoClip(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen),1,1);
 
         free(errorImg);
 
@@ -343,7 +387,7 @@ dbg_sprintf(dbgout,"\n-------------------------");
         gfx_ScaleSprite(srcImg,outputImg);
         //displays the output image
         //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
-        gfx_ScaledSprite_NoClip(outputImg,(xSquare)*(newWidthHeight/scaleDen),ySquare*(newWidthHeight/scaleDen),1,1);
+        gfx_ScaledSprite_NoClip(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen),1,1);
       }
       //cleans up
       ti_Close(squareSlot);
@@ -352,13 +396,27 @@ dbg_sprintf(dbgout,"\n-------------------------");
   }
   free(outputImg);
 }
+//checks if graphics will overflow horizontally
+bool horizOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD){
+  if((int24_t)((Sq + off)*(newWH/scaleD)>320) || (int24_t)((Sq + off)*(newWH/scaleD))<0)
+    return true;
+  else
+    return false;
+}
+//checks if graphics will overflow vertically
+bool vertOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD){
+  if((int24_t)((Sq + off)*(newWH/scaleD))>240 || (int24_t)((Sq + off)*(newWH/scaleD))<0)
+    return true;
+  else
+    return false;
 
+}
 
 /* This UI keeps the user selection in the middle of the screen. */
 void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
   uint24_t i, Yoffset=0, y=0, curName=0;
 
-  //clears old text and sets up for new text
+  //clears old text and sets prev for new text
   gfx_SetTextScale(2,2);
   gfx_SetColor(0);
   gfx_FillRectangle_NoClip(0,0,140,240);
@@ -394,7 +452,7 @@ void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
     //while(!os_GetCSC());
 
   }
-  //slows down scrolling speed
+  //slows next scrolling speed
   delay(150);
 }
 
