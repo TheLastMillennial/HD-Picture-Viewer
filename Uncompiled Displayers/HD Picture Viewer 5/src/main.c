@@ -369,7 +369,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         gfx_ScaleSprite(errorImg,outputImg);
         //displays the output image
         //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
-        gfx_ScaledSprite_NoClip(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen),1,1);
+        gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
 
         free(errorImg);
 
@@ -387,7 +387,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         gfx_ScaleSprite(srcImg,outputImg);
         //displays the output image
         //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
-        gfx_ScaledSprite_NoClip(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen),1,1);
+        gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
       }
       //cleans up
       ti_Close(squareSlot);
