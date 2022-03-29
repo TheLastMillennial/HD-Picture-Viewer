@@ -278,7 +278,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   }
   if(scaleNum == 0 || scaleDen == 0){
     PrintCenteredX("ERR: Cannot zoom out!",130);
-    PrintCenteredX("Try zooming in with [+]",145);
+    PrintCenteredX("Press [+] twice to zoom in",145);
     dbg_sprintf(dbgout,"\nERR:\n scaleNum:%d\n scaleDen:%d",scaleNum,scaleDen);
     while(!os_GetCSC());
     ti_CloseAll();
@@ -334,21 +334,29 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   dbg_sprintf(dbgout,"\n-------------------------");
 
 
-
+  PrintCentered("Rendering...");
   //Displays all the images
-  for(xSquare=(widthSquares-1)+xOffset;xSquare<MAX_UINT;xSquare--){
-    for(ySquare=0+yOffset;ySquare<(heightSquares);ySquare++){
-      /*ensures no vertical graphic overflow occures.
-      *Horizontal overflow is fine since the program will draw over it */
+  dbg_sprintf(dbgout,"\nwS: %d\nxO: %d",widthSquares,xOffset);
+  dbg_sprintf(dbgout,"\nhS: %d\nyO: %d",heightSquares,yOffset);
+
+  //Maybe need to use a relative scale.
+  for(xSquare=(widthSquares-1);xSquare<MAX_UINT;xSquare--){
+  dbg_sprintf(dbgout,"\nxS: %d",xSquare);
+  //for(xSquare=xOffset;xSquare<widthSquares;xSquare++){
+    for(ySquare=yOffset;ySquare<(heightSquares);ySquare++){
+
+
+
+      //This will eventually not draw squares that are out of frame
       if(horizOverflow(xSquare, xOffset, newWidthHeight,scaleDen) || vertOverflow(ySquare+1, yOffset, newWidthHeight,scaleDen))
       {
         //dbg_sprintf(dbgout,"\nERR: Square would go out of screen bounds! \n %.2s%03u%03u\n x location: %d \n y location: %d",
         //imgID, xSquare, ySquare,(xSquare)*(newWidthHeight/scaleDen),(ySquare+1)*(newWidthHeight/scaleDen));
         continue;
       }
-
       //combines the separate parts into one name to search for
       sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
+      //dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
       /*This opens the variable with the name that was just assembled.
       * It then gets the pointer to that and stores it in a graphics variable
       */
@@ -359,20 +367,16 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         dbg_sprintf(dbgout,"\nERR: Square doesn't exist!");
         dbg_sprintf(dbgout,"\n %s",searchName);
         //dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
-
         gfx_sprite_t *errorImg;
         //uncompresses the error image
         errorImg = gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT);
         zx7_Decompress(errorImg, errorTriangle_compressed);
-
         //resizes it to outputImg size
         gfx_ScaleSprite(errorImg,outputImg);
         //displays the output image
         //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
         gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
-
         free(errorImg);
-
         //while(!os_GetCSC());
         continue;
       }
@@ -387,6 +391,8 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         gfx_ScaleSprite(srcImg,outputImg);
         //displays the output image
         //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
+        dbg_sprintf(dbgout,"\nxLoc: %d\nyLoc: %d",(xSquare+xOffset)*(newWidthHeight/scaleDen),(ySquare-yOffset)*(newWidthHeight/scaleDen));
+
         gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
       }
       //cleans up
@@ -398,14 +404,16 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
 }
 //checks if graphics will overflow horizontally
 bool horizOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD){
-  if((int24_t)((Sq + off)*(newWH/scaleD)>320) || (int24_t)((Sq + off)*(newWH/scaleD))<0)
+  return false; //temporary
+  if((Sq-off)*(newWH/scaleD)>320)
     return true;
   else
     return false;
 }
 //checks if graphics will overflow vertically
 bool vertOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD){
-  if((int24_t)((Sq + off)*(newWH/scaleD))>240 || (int24_t)((Sq + off)*(newWH/scaleD))<0)
+  return false; //temporary
+  if((Sq-off)*(newWH/scaleD)>240)
     return true;
   else
     return false;
