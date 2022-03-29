@@ -141,11 +141,11 @@ void DisplayHomeScreen(uint24_t pics){
     if(kb_AnyKey()){
       //dbg_sprintf(dbgout,"\nKey Pressed");
 
-      if (panRight){
+      if (panLeft){
         xOffset++;
         DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
       }
-      if (panLeft){
+      if (panRight){
         xOffset--;
         DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
       }
@@ -342,8 +342,8 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   //Maybe need to use a relative scale.
   for(xSquare=(widthSquares-1);xSquare<MAX_UINT;xSquare--){
   dbg_sprintf(dbgout,"\nxS: %d",xSquare);
-  //for(xSquare=xOffset;xSquare<widthSquares;xSquare++){
-    for(ySquare=yOffset;ySquare<(heightSquares);ySquare++){
+    //for(ySquare=yOffset;ySquare<(heightSquares);ySquare++){
+    for(ySquare=(heightSquares-1);ySquare<MAX_UINT;ySquare--){
 
 
 
