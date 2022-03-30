@@ -29,20 +29,21 @@
 
 
 /* Function Prototyptes */
-uint8_t databaseReady();
+uint8_t DatabaseReady();
 void DisplayHomeScreen(uint24_t pics);
 void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t xOffset, int24_t yOffset);
-void noImagesFound();
+void DeleteImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight);
+void NoImagesFound();
 void PrintCentered(const char *str);
 void PrintCenteredX(const char *str, uint8_t y);
 void PrintCenteredY(const char *str, uint8_t x);
-void printNames(uint24_t start, char *picNames, uint24_t numOfPics);
-void printText(int8_t xpos, int8_t ypos, const char *text);
-uint24_t rebuildDB(uint8_t p);
+void PrintNames(uint24_t start, char *picNames, uint24_t numOfPics);
+void PrintText(int8_t xpos, int8_t ypos, const char *text);
+uint24_t RebuildDB(uint8_t p);
 void SplashScreen();
 void SetLoadingBarProgress(uint24_t p, uint24_t t);
-bool horizOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD);
-bool vertOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD);
+bool HorizOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD);
+bool VertOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD);
 
 /* Main function, called first */
 int main(void)
@@ -57,19 +58,24 @@ int main(void)
   SplashScreen();
   SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
   //checks if the database exists and is ready 0 failure; 1 created; 2 exists
-  ready = databaseReady();
+  ready = DatabaseReady();
   if (ready==0)
   goto err;
 
+  //returns how many images were found. 0 means no images found so quit.
+  picsDetected=RebuildDB(tasksFinished);
+  if(picsDetected>0)
+  {
+    SetLoadingBarProgress(++tasksFinished,TASKS_TO_FINISH);
+    //display the list of images
+    DisplayHomeScreen(picsDetected);
+    //quit
+    ti_CloseAll();
+    gfx_End();
+    return 0;
+  }
 
-  picsDetected=rebuildDB(tasksFinished);
-  if(picsDetected==0)
-  goto err;
-  //returns how many images were found. 0 means quit.
-
-  SetLoadingBarProgress(++tasksFinished,TASKS_TO_FINISH);
-  DisplayHomeScreen(picsDetected);
-
+  //something went wrong. Close all slots and quit.
   err:
   /* Waits for a keypress */
   while (!os_GetCSC());
@@ -92,14 +98,14 @@ void DisplayHomeScreen(uint24_t pics){
   uint8_t Ypos=10;
 
   //kb_key_t key = kb_Data[7];
-  bool prev, next,
+  bool prev, next, deletePic,
   zoomIn, zoomOut,
   panUp, panDown, panLeft, panRight;
 
 
-  //makes the screen black and sets text white
+  //makes the screen black and sets text gray
   gfx_FillScreen(0);
-  gfx_SetTextFGColor(254);
+  gfx_SetTextFGColor(181);
   gfx_SetTextBGColor(0);
   gfx_SetColor(255);
   gfx_VertLine(140,20,200);
@@ -107,34 +113,31 @@ void DisplayHomeScreen(uint24_t pics){
 
   //seeks to the first image name
   ti_Seek(8,SEEK_SET,database);
-  //PrintCenteredX("Test1",30);
   //loops through every picture that was detected and store the image name to picNames
   for(i=0;i<=pics;i++){
     ti_Read(&picNames[i * BYTES_PER_IMAGE_NAME],8,1,database);
     picNames[i * BYTES_PER_IMAGE_NAME + BYTES_PER_IMAGE_NAME - 1] = 0;
     ti_Seek(8,SEEK_CUR,database);
-    //PrintCenteredX("Test2",40);
     Ypos+=15;
-    //PrintCenteredX(&picNames[i*BYTES_PER_IMAGE_NAME],Ypos);
-
   }
 
   /* Keypress handler */
   gfx_SetTextXY(10,10);
-  printNames(startName, picNames, pics);
+  PrintNames(startName, picNames, pics);
   DrawImage(startName,maxWidth,maxHeight, xOffset, yOffset);
   do{
     //scans the keys for keypress
     kb_Scan();
     //checks if up or down arrow key were pressed
     //key = kb_Data[7];
-    next= kb_Data[1] & kb_Graph;
-    prev  = kb_Data[1] & kb_Yequ;
-    zoomIn = kb_Data[6] & kb_Add;
-    zoomOut= kb_Data[6] & kb_Sub;
-    panUp = kb_Data[7] & kb_Up;
-    panDown = kb_Data[7] & kb_Down;
-    panLeft = kb_Data[7] & kb_Left;
+    next     = kb_Data[1] & kb_Graph;
+    prev     = kb_Data[1] & kb_Yequ;
+    deletePic= kb_Data[1] & kb_Del;
+    zoomIn   = kb_Data[6] & kb_Add;
+    zoomOut  = kb_Data[6] & kb_Sub;
+    panUp    = kb_Data[7] & kb_Up;
+    panDown  = kb_Data[7] & kb_Down;
+    panLeft  = kb_Data[7] & kb_Left;
     panRight = kb_Data[7] & kb_Right;
 
     //if any key was pressed
@@ -176,9 +179,68 @@ void DisplayHomeScreen(uint24_t pics){
 
       }
 
+      //if delete key pressed, delete all appvars related to current image
+      if (deletePic){
+        //the current palette is about to be deleted. Set the default palette
+        gfx_SetDefaultPalette(gfx_8bpp);
+        //we don't want the user seeing the horrors of their image with the wrong palette
+
+        gfx_FillScreen(0);
+        gfx_SetTextFGColor(181);
+        gfx_SetTextBGColor(0);
+        PrintCenteredX("Deleting Picture...",120);
+        //close all open slots. We don't want any leaks.
+        ti_CloseAll();
+        //delete the palette and all squares
+        DeleteImage(startName, maxWidth, maxHeight);
+        PrintCenteredX("Picture deleted.",130);
+        PrintCenteredX("Press any key.",140);
+        while (!os_GetCSC());
+
+        //picture names will change. Delete what we currently have
+        free(picNames);
+        //set color for potential splash screen
+        gfx_SetTextFGColor(181);
+        gfx_SetTextBGColor(0);
+        //rebuild the database to account for the deleted image. Plug in 0 temporarily
+        int picsDetected=RebuildDB(0);
+        //check if all images were deleted. If so, just quit.
+        if(picsDetected==0){
+          //we pause because RebuildDB will show a warning screen we want the user to see
+          while (!os_GetCSC());
+          ti_CloseAll();
+          gfx_End();
+          return;
+        }
+        //ensure text is readable
+        gfx_SetTextFGColor(191);
+        gfx_SetTextBGColor(0);
+        //re-allocate memory for the picture names
+        picNames = malloc(picsDetected*BYTES_PER_IMAGE_NAME);
+
+        //re-open the database since we closed everything earlier
+        database = ti_Open("HDPICDB","r");
+        //seeks to the first image name
+        ti_Seek(8,SEEK_SET,database);
+        //loops through every picture that was detected and store the image name to picNames
+        for(i=0;i<=pics;i++){
+          ti_Read(&picNames[i * BYTES_PER_IMAGE_NAME],8,1,database);
+          picNames[i * BYTES_PER_IMAGE_NAME + BYTES_PER_IMAGE_NAME - 1] = 0;
+          ti_Seek(8,SEEK_CUR,database);
+          Ypos+=15;
+        }
+
+        //re construct the GUI
+        gfx_SetTextXY(10,10);
+        PrintNames(startName, picNames, pics);
+        //display the next non-deleted image
+        DrawImage(startName,maxWidth,maxHeight, xOffset, yOffset);
+
+        //todo: change to different image
+      }
+
       /* increases the name to start on and redraws the text */
       if(next){
-        //PrintCenteredX("DOWN",10);
         startName++;
         //make sure user can't scroll down too far
         if (startName>(pics-1))//If there's more than 4 images, then handle things normally
@@ -189,24 +251,22 @@ void DisplayHomeScreen(uint24_t pics){
         startName=pics-1;
         if (startName>pics-3 && pics-3>0) //makes sure user can't scroll too far when there's only 3 images detected
         startName=pics-2;
-        printNames(startName, picNames, pics);
+        PrintNames(startName, picNames, pics);
         xOffset = 0;
         yOffset = 0;
         maxWidth = 320;
         maxHeight = 240;
         DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
       }
-      //key = kb_Data[3];
 
       /* decreases the name to start on and redraws the text */
       if(prev){
-        //PrintCenteredX(" UP ",10);
         startName--;
         /*checks if startName underflowed from 0 to 16 million or something.
         * Whatever the number, it shouldn't be less than the max number of images possible*/
         if (startName>MAX_IMAGES)
         startName=0;
-        printNames(startName, picNames, pics);
+        PrintNames(startName, picNames, pics);
         xOffset = 0;
         yOffset = 0;
         maxWidth = 320;
@@ -218,6 +278,67 @@ void DisplayHomeScreen(uint24_t pics){
   }   while(kb_Data[6]!=kb_Clear);
 
   free(picNames);
+}
+
+
+void DeleteImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
+  //open the database to figure out what image we're about to delete
+  ti_var_t database = ti_Open("HDPICDB","r");
+  char imgWH[6], imgID[2], searchName[9], palName[9];
+  uint24_t widthSquares=0, heightSquares=0,
+  maxWSquares=0, maxHSquares=0,
+  xSquare=0, ySquare=0;
+  uint8_t delSuccess;
+
+  //seeks past header (8bytes), imgName, and unselected images
+  ti_Seek(16+(16*picName),SEEK_CUR,database);
+  //reads the image letter ID (2 bytes)
+  ti_Read(imgID,2,1,database);
+  //reads the image width/height (6 bytes)
+  ti_Read(imgWH,6,1,database);
+  //closes database
+  ti_Close(database);
+
+  ti_CloseAll();
+
+  /*converts the char numbers from the header appvar into uint numbers
+  (uint24_t)imgWH[?]-'0')*100 covers the 100's place
+  (uint24_t)imgWH[?]-'0')*10 covers the 10's place
+  (uint24_t)imgWH[?]-'0' covers the 1's place
+  +1 accounts for 0 being the starting number
+  */
+  widthSquares= (((uint24_t)imgWH[0]-'0')*100+((uint24_t)imgWH[1]-'0')*10+(uint24_t)imgWH[2]-'0')+1;
+  heightSquares=(((uint24_t)imgWH[3]-'0')*100+((uint24_t)imgWH[4]-'0')*10+(uint24_t)imgWH[5]-'0')+1;
+  maxWSquares = (maxWidth/80); //todo: [jacobly] I'm saying you should use numTilesAcross * 80 rather than maxWidth / 80
+  maxHSquares = (maxHeight/80);
+
+  //deletes palette
+  sprintf(palName, "HP%.2s0000",imgID);
+  delSuccess = ti_Delete(palName);
+  if (delSuccess == 0){
+    PrintCenteredX(palName,120);
+    dbg_sprintf(dbgout,"\nERR: Issue deleting palette");
+  }
+  //delete every square
+  for(xSquare=(widthSquares-1);xSquare<MAX_UINT;xSquare--){
+    dbg_sprintf(dbgout,"\nxS: %d",xSquare);
+    for(ySquare=(heightSquares-1);ySquare<MAX_UINT;ySquare--){
+
+      //combines the separate parts into one name to search for
+      sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
+
+      /*This opens the variable with the name that was just assembled.
+      * It then gets the pointer to that and stores it in a graphics variable
+      */
+      delSuccess = ti_Delete(searchName);
+      //checks if the square does not exist
+      if (delSuccess==0){
+        //square does not exist
+        dbg_sprintf(dbgout,"\nERR: Issue deleting square");
+        dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
+      }
+    }
+  }
 }
 
 /* Draws the image stored in database at position startName.
@@ -260,7 +381,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   (uint24_t)imgWH[?]-'0' covers the 1's place
   +1 accounts for 0 being the starting number
   */
-  widthSquares= (((uint24_t)imgWH[0]-'0')*100+((uint24_t)imgWH[1]-'0')*10+(uint24_t)imgWH[2]-'0')+1;
+  widthSquares =(((uint24_t)imgWH[0]-'0')*100+((uint24_t)imgWH[1]-'0')*10+(uint24_t)imgWH[2]-'0')+1;
   heightSquares=(((uint24_t)imgWH[3]-'0')*100+((uint24_t)imgWH[4]-'0')*10+(uint24_t)imgWH[5]-'0')+1;
   maxWSquares = (maxWidth/80); //todo: [jacobly] I'm saying you should use numTilesAcross * 80 rather than maxWidth / 80
   maxHSquares = (maxHeight/80);
@@ -318,8 +439,10 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   sprintf(palName, "HP%.2s0000",imgID);
   palSlot = ti_Open(palName,"r");
   if (!palSlot){
-    PrintCenteredX(palName,120);
-    PrintCenteredX("ERR: Palette does not exist!",130);
+    PrintCenteredX(palName,110);
+    PrintCenteredX("ERR: Palette does not exist!",120);
+    PrintCenteredX("Image may have recently been deleted.",130);
+    PrintCenteredX("Try restarting the program.",140);
     while(!os_GetCSC());
     ti_CloseAll();
     return;
@@ -348,8 +471,10 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
 
 
       //This will eventually not draw squares that are out of frame
-      if(horizOverflow(xSquare, xOffset, newWidthHeight,scaleDen) || vertOverflow(ySquare+1, yOffset, newWidthHeight,scaleDen))
+      if(HorizOverflow(xSquare, xOffset, newWidthHeight,scaleDen) || VertOverflow(ySquare+1, yOffset, newWidthHeight,scaleDen))
       {
+        dbg_sprintf(dbgout,"\n-OOB- xLoc: %d\nyLoc: %d\ntest: %d",(xSquare+xOffset)*(newWidthHeight/scaleDen),(ySquare-yOffset)*(newWidthHeight/scaleDen), (xSquare+xOffset)*(newWidthHeight/scaleDen)-newWidthHeight/scaleDen);
+
         //dbg_sprintf(dbgout,"\nERR: Square would go out of screen bounds! \n %.2s%03u%03u\n x location: %d \n y location: %d",
         //imgID, xSquare, ySquare,(xSquare)*(newWidthHeight/scaleDen),(ySquare+1)*(newWidthHeight/scaleDen));
         continue;
@@ -366,7 +491,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         //square does not exist
         dbg_sprintf(dbgout,"\nERR: Square doesn't exist!");
         dbg_sprintf(dbgout,"\n %s",searchName);
-        //dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
+        //dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \newWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
         gfx_sprite_t *errorImg;
         //uncompresses the error image
         errorImg = gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT);
@@ -374,7 +499,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         //resizes it to outputImg size
         gfx_ScaleSprite(errorImg,outputImg);
         //displays the output image
-        //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
+        //dbg_sprintf(dbgout,"\nxSquare: %d \newWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
         gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
         free(errorImg);
         //while(!os_GetCSC());
@@ -390,7 +515,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         //resizes it to outputImg size
         gfx_ScaleSprite(srcImg,outputImg);
         //displays the output image
-        //dbg_sprintf(dbgout,"\nxSquare: %d \nnewWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
+        //dbg_sprintf(dbgout,"\nxSquare: %d \newWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
         dbg_sprintf(dbgout,"\nxLoc: %d\nyLoc: %d",(xSquare+xOffset)*(newWidthHeight/scaleDen),(ySquare-yOffset)*(newWidthHeight/scaleDen));
 
         gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
@@ -403,71 +528,31 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   free(outputImg);
 }
 //checks if graphics will overflow horizontally
-bool horizOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD){
+bool HorizOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD){
   return false; //temporary
-  if((Sq-off)*(newWH/scaleD)>320)
+  if( ((Sq-off)*(newWH/scaleD)) - newWH/scaleD > 320){
+    //dbg_sprintf(dbgout,"\nLoc: %d\nnewWH %d",(Sq+Off)*(newWH/scaleD),newWH);
     return true;
-  else
+  }
+
+  else{
+    //dbg_sprintf(dbgout,"\nOOB xLoc: %d\nyLoc: %d\nnewWH %d",(xSquare+xOffset)*(newWidthHeight/scaleDen),(ySquare-yOffset)*(newWidthHeight/scaleDen),newWH);
+
     return false;
+  }
 }
 //checks if graphics will overflow vertically
-bool vertOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD){
+bool VertOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD){
   return false; //temporary
-  if((Sq-off)*(newWH/scaleD)>240)
+  if((Sq-off)*(newWH/scaleD) > 240)
     return true;
   else
     return false;
 
 }
 
-/* This UI keeps the user selection in the middle of the screen. */
-void printNames(uint24_t startName, char *picNames, uint24_t numOfPics){
-  uint24_t i, Yoffset=0, y=0, curName=0;
-
-  //clears old text and sets prev for new text
-  gfx_SetTextScale(2,2);
-  gfx_SetColor(0);
-  gfx_FillRectangle_NoClip(0,0,140,240);
-  gfx_SetColor(255);
-
-  //re-draws UI lines
-  gfx_HorizLine_NoClip(0,120,6);
-  gfx_HorizLine_NoClip(136,120,5);
-  gfx_HorizLine_NoClip(6,110,130);
-  gfx_HorizLine_NoClip(6,130,130);
-  gfx_VertLine_NoClip(6,110,20);
-  gfx_VertLine_NoClip(136,110,21);
-
-  /*if the selected start name is under 4, that means we need to start drawing
-  * farther down the screen for the text to go in the right spot */
-  if(startName<4){
-    Yoffset = 75 - startName * Y_SPACING;
-    startName = 0;
-  }else{
-    startName-=4;
-  }
-  curName=startName;
-
-
-  /* draw the text on the screen. Starts displaying the name at element start
-  * then iterates until out of pics or about to draw off the screen */
-  for(i=0;i<numOfPics && y<180;i++){
-    //calculates where the text should be drawn
-    y = i * Y_SPACING + Y_MARGIN + Yoffset;
-
-    //Prints out the correct name
-    gfx_PrintStringXY(&picNames[curName++*BYTES_PER_IMAGE_NAME],X_MARGIN,y);
-    //while(!os_GetCSC());
-
-  }
-  //slows next scrolling speed
-  delay(150);
-}
-
-
-
 /* Rebuilds the database of images on the calculator*/
-uint24_t rebuildDB(uint8_t p){
+uint24_t RebuildDB(uint8_t p){
   char *var_name, *imgInfo[16];// nameBuffer[10];
   void *search_pos = NULL;
   uint24_t imagesFound=0;
@@ -505,17 +590,17 @@ uint24_t rebuildDB(uint8_t p){
   ti_SetArchiveStatus(true,database);
   gfx_Begin();
   SplashScreen();
-  gfx_SetTextXY(100,195);
+  gfx_SetTextXY(150,195);
   gfx_PrintUInt(imagesFound,3);
   if (imagesFound==0){
-    noImagesFound();
+    NoImagesFound();
   }
   SetLoadingBarProgress(++p,TASKS_TO_FINISH);
-
   return imagesFound;
 }
 
-void noImagesFound(){
+void NoImagesFound(){
+  gfx_SetTextBGColor(255);
   gfx_SetTextFGColor(192);
   PrintCenteredX("No Pictures Detected!",1);
   gfx_SetTextFGColor(0);
@@ -527,7 +612,7 @@ void noImagesFound(){
 }
 
 //checks if the database is already created. If not, it creates it.
-uint8_t databaseReady(){
+uint8_t DatabaseReady(){
   char *var_name;
   void *search_pos = NULL;
   uint8_t exists=0, ready = 0;
@@ -598,8 +683,54 @@ void SplashScreen(){
   //sets color to grey
   gfx_SetColor(181);
   gfx_FillRectangle_NoClip(60,80,LCD_WIDTH-120,LCD_HEIGHT-160);
+  gfx_SetTextFGColor(35);
+  gfx_SetTextBGColor(181);
   /* Print title screen */
   PrintCentered("HD Picture Viewer");
+}
+
+/* This UI keeps the user selection in the middle of the screen. */
+void PrintNames(uint24_t startName, char *picNames, uint24_t numOfPics){
+  uint24_t i, Yoffset=0, y=0, curName=0;
+
+  //clears old text and sets prev for new text
+  gfx_SetTextScale(2,2);
+  gfx_SetColor(0);
+  gfx_FillRectangle_NoClip(0,0,140,240);
+  gfx_SetColor(255);
+
+  //re-draws UI lines
+  gfx_HorizLine_NoClip(0,120,6);
+  gfx_HorizLine_NoClip(136,120,5);
+  gfx_HorizLine_NoClip(6,110,130);
+  gfx_HorizLine_NoClip(6,130,130);
+  gfx_VertLine_NoClip(6,110,20);
+  gfx_VertLine_NoClip(136,110,21);
+
+  /*if the selected start name is under 4, that means we need to start drawing
+  * farther down the screen for the text to go in the right spot */
+  if(startName<4){
+    Yoffset = 75 - startName * Y_SPACING;
+    startName = 0;
+  }else{
+    startName-=4;
+  }
+  curName=startName;
+
+
+  /* draw the text on the screen. Starts displaying the name at element start
+  * then iterates until out of pics or about to draw off the screen */
+  for(i=0;i<numOfPics && y<180;i++){
+    //calculates where the text should be drawn
+    y = i * Y_SPACING + Y_MARGIN + Yoffset;
+
+    //Prints out the correct name
+    gfx_PrintStringXY(&picNames[curName++*BYTES_PER_IMAGE_NAME],X_MARGIN,y);
+    //while(!os_GetCSC());
+
+  }
+  //slows next scrolling speed
+  delay(150);
 }
 
 /* Prints a screen centered string */
@@ -620,7 +751,7 @@ void PrintCenteredY(const char *str, uint8_t x)
 
 
 /* Draw text on the homescreen at the given X/Y location */
-void printText(int8_t xpos, int8_t ypos, const char *text) {
+void PrintText(int8_t xpos, int8_t ypos, const char *text) {
   os_SetCursorPos(ypos, xpos);
   os_PutStrFull(text);
 }
