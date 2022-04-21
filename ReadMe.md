@@ -1,7 +1,10 @@
 # High-Definition Picture Viewer
-*For the TI-84 Plus CE, TI-84 Plus CE -t, TI-83 Premium CE, and TI-83 Premium CE Edition Python*
+*For the TI-84 Plus CE family and TI-83 Premium CE family*
 
 By TheLastMillennial and the help of Peter "PT_" Tillema
+
+## Demonstration
+![Comparison GIF of built in picture viewer and HD Picture Viewer](https://www.cemetech.net/media/archives/screenshots/2020/04/1924_legacy-0-004403_8jdum29.gif)
 
 ## How To Use
 ### Full Video Tutorial:
