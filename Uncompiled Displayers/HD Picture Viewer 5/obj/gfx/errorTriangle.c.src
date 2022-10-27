@@ -1,8 +1,0 @@
-	section	.text,"ax",@progbits
-	assume	adl = 1
-	section	.data,"aw",@progbits
-	public	_errorTriangle_compressed
-_errorTriangle_compressed:
-	db	"P P",001o,221o,000o,000o,"P",000o,"K)",003o,232o,"O",000o,"h",000o,004o,325o,"O",000o,025o,000o,000o,230o,243o,"O",000o,240o,000o,022o,331o,"O",343o,"E",340o,013o,"#gO",015o,200o,217o,"O",217o,341o,011o,340o,017o,"#cO",340o,021o,177o,"O",207o,"g;",025o,200o,215o,"O",270o,011o,010o,330o,"O",370o,"M",370o,015o,004o,"vO",035o,347o,"Y",340o,015o,021o,"xO",376o,"/",013o,025o,021o,201o,326o,"Ox=-",021o,201o,276o,"O",035o,"a",340o,000o,"wO",236o,";",014o,340o,023o,"iO",202o,036o,"c",000o,007o,"9O",340o,"9",346o,025o,006o,"8O%e",340o,000o,"oO",236o,"7",017o,340o,027o,"]O",202o,236o,"g",000o,006o,270o,"Of5X",033o,"~3",006o,"XOd",273o,"!",230o,031o,030o,341o,"O",362o,251o,207o,312o,305o,007o,333o,"O",000o,201o,356o,"O>",023o,017o,340o,"QoO",270o,035o,036o,"`O",216o,"M",012o,340o,"Q;`O",237o,227o,240o,234o,263o,340o,"sO",270o,000o,035o,"eO",007o,203o,330o,"S",270o,"C",026o,340o,"O",023o,"8",000o,023o,"G",315o,"M",201o,">O",000o,001o
-
-	ident	"clang version 12.0.0 (https://github.com/jacobly0/llvm-project a4fd568b012f0b193e341952bf10624f559064fd)"

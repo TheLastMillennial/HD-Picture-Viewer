@@ -385,7 +385,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   heightSquares=(((uint24_t)imgWH[3]-'0')*100+((uint24_t)imgWH[4]-'0')*10+(uint24_t)imgWH[5]-'0')+1;
   maxWSquares = (maxWidth/80); //todo: [jacobly] I'm saying you should use numTilesAcross * 80 rather than maxWidth / 80
   maxHSquares = (maxHeight/80);
-  dbg_sprintf(dbgout," maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n",maxWSquares,widthSquares,maxHSquares,heightSquares);
+  dbg_sprintf(dbgout,"\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n",maxWSquares,widthSquares,maxHSquares,heightSquares);
 
   //checks if it should scale an image horizontally or vertically.
   if (widthSquares * maxHSquares < heightSquares * maxWSquares) {
@@ -406,7 +406,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
     return;
   }
   newWidthHeight = SQUARE_WIDTH_AND_HEIGHT*scaleNum;
-
+	
   /*
   [jacobly] so now whenever we want to compute
   `x * scale`
@@ -423,7 +423,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   [MateoC] huh I didn't know about roundDiv
   */
 
-  dbg_sprintf(dbgout,"\n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d",scaleNum,scaleDen, xOffset, yOffset);
+  dbg_sprintf(dbgout,"\n newWH: %d \n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d",newWidthHeight,scaleNum,scaleDen, xOffset, yOffset);
 
   //allocates memory for outputImg according to scale
   outputImg = gfx_MallocSprite(newWidthHeight/scaleDen,newWidthHeight/scaleDen);
@@ -461,15 +461,46 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   //Displays all the images
   dbg_sprintf(dbgout,"\nwS: %d\nxO: %d",widthSquares,xOffset);
   dbg_sprintf(dbgout,"\nhS: %d\nyO: %d",heightSquares,yOffset);
+  
+	
+  int24_t rightMostSquare=(widthSquares*(scaleNum/scaleDen));
+  //This returns the number of squares you can fit in the screen horizontally
+  //we know the horizontal resolution of the screen is 320px. 
+  //We can get the width of each square by doing newWidthHeight/scaleDen
+  //the +1 is to account for rounding down errors. We don't want missing squares.
+  int24_t maxWidthSquaresByResolution = 320/(newWidthHeight/scaleDen)+1;
+  rightMostSquare = maxWidthSquaresByResolution;
 
-  //Maybe need to use a relative scale.
-  for(xSquare=(widthSquares-1);xSquare<MAX_UINT;xSquare--){
+  
+  //applies offsets
+  //if we're panning to the right, increase the rightmost square (xOffset is negative in this case)
+  if(xOffset<0){
+      rightMostSquare-=xOffset;
+  }
+  int24_t leftMostSquare=0;
+  if(xOffset<0){
+      leftMostSquare-=xOffset;
+  }
+  
+  //make sure we don't try to display more squares than exist.
+  //2 is the offset for the for loop
+  if (rightMostSquare>widthSquares)
+	  rightMostSquare = widthSquares;
+  if (leftMostSquare<0)
+	  leftMostSquare = 0;
+
+	dbg_sprintf(dbgout,"\nrightMost %d\nLeftMost %d",rightMostSquare,leftMostSquare);
+
+  //the -1 is to account for both the >= 
+  //the +1 is to prevent underflow which would cause an infinite loop
+  //this for loop outputs pic right to left
+  for(xSquare=rightMostSquare-1;xSquare+1>=leftMostSquare+1;xSquare--){
   dbg_sprintf(dbgout,"\nxS: %d",xSquare);
     //for(ySquare=yOffset;ySquare<(heightSquares);ySquare++){
     for(ySquare=(heightSquares-1);ySquare<MAX_UINT;ySquare--){
 
 
-
+        /*
       //This will eventually not draw squares that are out of frame
       if(HorizOverflow(xSquare, xOffset, newWidthHeight,scaleDen) || VertOverflow(ySquare+1, yOffset, newWidthHeight,scaleDen))
       {
@@ -478,7 +509,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         //dbg_sprintf(dbgout,"\nERR: Square would go out of screen bounds! \n %.2s%03u%03u\n x location: %d \n y location: %d",
         //imgID, xSquare, ySquare,(xSquare)*(newWidthHeight/scaleDen),(ySquare+1)*(newWidthHeight/scaleDen));
         continue;
-      }
+      }*/
       //combines the separate parts into one name to search for
       sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
       //dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
@@ -516,7 +547,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         gfx_ScaleSprite(srcImg,outputImg);
         //displays the output image
         //dbg_sprintf(dbgout,"\nxSquare: %d \newWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
-        dbg_sprintf(dbgout,"\nxLoc: %d\nyLoc: %d",(xSquare+xOffset)*(newWidthHeight/scaleDen),(ySquare-yOffset)*(newWidthHeight/scaleDen));
+        //dbg_sprintf(dbgout,"\nxLoc: %d\nyLoc: %d",(xSquare+xOffset)*(newWidthHeight/scaleDen),(ySquare-yOffset)*(newWidthHeight/scaleDen));
 
         gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
       }
