@@ -98,7 +98,8 @@ void DisplayHomeScreen(uint24_t pics){
   uint8_t Ypos=10;
 
   //kb_key_t key = kb_Data[7];
-  bool prev, next, deletePic,
+  bool prev, next, 
+  deletePic, resetPic,
   zoomIn, zoomOut,
   panUp, panDown, panLeft, panRight;
 
@@ -132,6 +133,7 @@ void DisplayHomeScreen(uint24_t pics){
     //key = kb_Data[7];
     next     = kb_Data[1] & kb_Graph;
     prev     = kb_Data[1] & kb_Yequ;
+	resetPic = kb_Data[1] & kb_Zoom;
     deletePic= kb_Data[1] & kb_Del;
     zoomIn   = kb_Data[6] & kb_Add;
     zoomOut  = kb_Data[6] & kb_Sub;
@@ -160,8 +162,16 @@ void DisplayHomeScreen(uint24_t pics){
         yOffset++;
         DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
       }
-
-
+	  
+		
+	  //if Zoom key was pressed, reset zoom
+	  if (resetPic){
+		  maxWidth = 320;
+		  maxHeight = 240;
+		  xOffset = 0;
+		  yOffset = 0;
+		  DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
+	  }
       //if plus key was pressed, zoom in by double
       if (zoomIn){
         //doubles zoom
@@ -553,7 +563,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         gfx_ScaleSprite(errorImg,outputImg);
         //displays the output image
         //dbg_sprintf(dbgout,"\nxSquare: %d \newWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
-        gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
+        gfx_Sprite_NoClip(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
         free(errorImg);
         //while(!os_GetCSC());
         continue;
