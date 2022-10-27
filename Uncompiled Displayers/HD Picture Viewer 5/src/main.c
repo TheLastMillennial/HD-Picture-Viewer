@@ -491,15 +491,12 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
 
   //applies offsets
   //if we're panning horizontally, shift the rightmost and leftmost squares (xOffset is negative in this case)
-  if(xOffset<0){
-      rightMostSquare-=xOffset;
-	  leftMostSquare-=xOffset;
-  }
+  rightMostSquare-=xOffset;
+  leftMostSquare-=xOffset;
+  
   //if we're panning vertically, shift the topmost and bottomost squares (yOffset is negative in this case)
-  if(yOffset<0)
-	  bottomMostSquare+=yOffset;
-  if(yOffset>0)
-	  topMostSquare+=yOffset;
+  bottomMostSquare+=yOffset;
+  topMostSquare+=yOffset;
   
   
   //make sure we don't try to display more squares than exist.
