@@ -54,7 +54,7 @@ int main(void)
   //os_ClrHome();
 
   gfx_Begin();
-  ti_CloseAll();
+  //ti_CloseAll();
   SplashScreen();
   SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
   //checks if the database exists and is ready 0 failure; 1 created; 2 exists
@@ -70,7 +70,7 @@ int main(void)
     //display the list of images
     DisplayHomeScreen(picsDetected);
     //quit
-    ti_CloseAll();
+    //ti_CloseAll();
     gfx_End();
     return 0;
   }
@@ -79,7 +79,7 @@ int main(void)
   err:
   /* Waits for a keypress */
   while (!os_GetCSC());
-  ti_CloseAll();
+  //ti_CloseAll();
   gfx_End();
 
   /* Return 0 for success */
@@ -200,7 +200,7 @@ void DisplayHomeScreen(uint24_t pics){
         gfx_SetTextBGColor(0);
         PrintCenteredX("Deleting Picture...",120);
         //close all open slots. We don't want any leaks.
-        ti_CloseAll();
+        //ti_CloseAll();
         //delete the palette and all squares
         DeleteImage(startName, maxWidth, maxHeight);
         PrintCenteredX("Picture deleted.",130);
@@ -218,7 +218,7 @@ void DisplayHomeScreen(uint24_t pics){
         if(picsDetected==0){
           //we pause because RebuildDB will show a warning screen we want the user to see
           while (!os_GetCSC());
-          ti_CloseAll();
+          //ti_CloseAll();
           gfx_End();
           return;
         }
@@ -296,8 +296,7 @@ void DeleteImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   ti_var_t database = ti_Open("HDPICDB","r");
   char imgWH[6], imgID[2], searchName[9], palName[9];
   uint24_t widthSquares=0, heightSquares=0,
-  maxWSquares=0, maxHSquares=0,
-  xSquare=0, ySquare=0;
+    maxWSquares, maxHSquares;
   uint8_t delSuccess;
 
   //seeks past header (8bytes), imgName, and unselected images
@@ -309,7 +308,7 @@ void DeleteImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   //closes database
   ti_Close(database);
 
-  ti_CloseAll();
+  //ti_CloseAll();
 
   /*converts the char numbers from the header appvar into uint numbers
   (uint24_t)imgWH[?]-'0')*100 covers the 100's place
@@ -330,9 +329,9 @@ void DeleteImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
     dbg_sprintf(dbgout,"\nERR: Issue deleting palette");
   }
   //delete every square
-  for(xSquare=(widthSquares-1);xSquare<MAX_UINT;xSquare--){
+  for(uint24_t xSquare=(widthSquares-1);xSquare<MAX_UINT;xSquare--){
     dbg_sprintf(dbgout,"\nxS: %d",xSquare);
-    for(ySquare=(heightSquares-1);ySquare<MAX_UINT;ySquare--){
+    for(uint24_t ySquare=(heightSquares-1);ySquare<MAX_UINT;ySquare--){
 
       //combines the separate parts into one name to search for
       sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
@@ -412,7 +411,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
     PrintCenteredX("Press [+] twice to zoom in",145);
     dbg_sprintf(dbgout,"\nERR:\n scaleNum:%d\n scaleDen:%d",scaleNum,scaleDen);
     while(!os_GetCSC());
-    ti_CloseAll();
+    //ti_CloseAll();
     return;
   }
   newWidthHeight = SQUARE_WIDTH_AND_HEIGHT*scaleNum;
@@ -440,7 +439,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   if (!outputImg){
     PrintCenteredX("ERR: Failed to allocate memory!",130);
     while(!os_GetCSC());
-    ti_CloseAll();
+    //ti_CloseAll();
     return;
   }
 
@@ -454,7 +453,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
     PrintCenteredX("Image may have recently been deleted.",130);
     PrintCenteredX("Try restarting the program.",140);
     while(!os_GetCSC());
-    ti_CloseAll();
+    //ti_CloseAll();
     return;
   }
 
@@ -629,7 +628,7 @@ uint24_t RebuildDB(uint8_t p){
   * The palette containts all the useful information such as the image size and
   * the two letter ID for each appvar. This makes it easy to find every square via a loop.
   */
-  while((var_name = ti_DetectVar(&search_pos, "HDPALV10", TI_APPVAR_TYPE)) != NULL) {
+  while((var_name = ti_DetectVar(&search_pos, "HDPALV10", OS_TYPE_APPVAR)) != NULL) {
     //sets progress of how many images were found
     SetLoadingBarProgress(++imagesFound,MAX_IMAGES);
     //finds the name, letter ID, and size of entire image this palette belongs to.
@@ -680,7 +679,7 @@ uint8_t DatabaseReady(){
   char myData[9]="HDDATV10"; //remember have one more space than text you're saving for null termiation
   char compare[9]="HDDATV10";
   //tries to find database using known header
-  while((var_name = ti_DetectVar(&search_pos, myData, TI_APPVAR_TYPE)) != NULL) {
+  while((var_name = ti_DetectVar(&search_pos, myData, OS_TYPE_APPVAR)) != NULL) {
     exists=1;
   }
   //if file already exists, simply return
@@ -704,7 +703,7 @@ uint8_t DatabaseReady(){
       ready = 1;
     }
   }
-  ti_CloseAll();
+  //ti_CloseAll();
 
   //checks what happened
   if(ready==1){
