@@ -464,41 +464,63 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   
 	
   int24_t rightMostSquare=(widthSquares*(scaleNum/scaleDen));
-  //This returns the number of squares you can fit in the screen horizontally
+  //This calculates the number of squares you can fit in the screen horizontally
   //we know the horizontal resolution of the screen is 320px. 
   //We can get the width of each square by doing newWidthHeight/scaleDen
   //the +1 is to account for rounding down errors. We don't want missing squares.
-  int24_t maxWidthSquaresByResolution = 320/(newWidthHeight/scaleDen)+1;
-  rightMostSquare = maxWidthSquaresByResolution;
+  rightMostSquare = 320/(newWidthHeight/scaleDen)+1;
+  //leftmost and topmost always starts at 0
+  int24_t leftMostSquare=0;
+  int24_t topMostSquare=0;
+  //This calculates the number of squares you can fit in the screen virtically
+  //we know the vertical resolution of the screen is 240px. 
+  //We can get the width of each square by doing newWidthHeight/scaleDen
+  //the +1 is to account for rounding down errors. We don't want missing squares.
+  int24_t bottomMostSquare = 240/(newWidthHeight/scaleDen)+1;
 
-  
+
   //applies offsets
-  //if we're panning to the right, increase the rightmost square (xOffset is negative in this case)
+  //if we're panning horizontally, shift the rightmost and leftmost squares (xOffset is negative in this case)
   if(xOffset<0){
       rightMostSquare-=xOffset;
+	  leftMostSquare-=xOffset;
   }
-  int24_t leftMostSquare=0;
-  if(xOffset<0){
-      leftMostSquare-=xOffset;
-  }
+  //if we're panning vertically, shift the topmost and bottomost squares (yOffset is negative in this case)
+  if(yOffset<0)
+	  bottomMostSquare+=yOffset;
+  if(yOffset>0)
+	  topMostSquare+=yOffset;
+  
   
   //make sure we don't try to display more squares than exist.
-  //2 is the offset for the for loop
   if (rightMostSquare>widthSquares)
-	  rightMostSquare = widthSquares;
+	  rightMostSquare=widthSquares;
   if (leftMostSquare<0)
-	  leftMostSquare = 0;
+	  leftMostSquare=0;
+  if (bottomMostSquare>heightSquares)
+	  bottomMostSquare=heightSquares;
+  if (topMostSquare<0)
+	  topMostSquare=0;
 
 	dbg_sprintf(dbgout,"\nrightMost %d\nLeftMost %d",rightMostSquare,leftMostSquare);
+	dbg_sprintf(dbgout,"\ntopMost %d\nbottomMost %d",topMostSquare,bottomMostSquare);
 
   //the -1 is to account for both the >= 
   //the +1 is to prevent underflow which would cause an infinite loop
   //this for loop outputs pic right to left
   for(xSquare=rightMostSquare-1;xSquare+1>=leftMostSquare+1;xSquare--){
   dbg_sprintf(dbgout,"\nxS: %d",xSquare);
-    //for(ySquare=yOffset;ySquare<(heightSquares);ySquare++){
-    for(ySquare=(heightSquares-1);ySquare<MAX_UINT;ySquare--){
-
+    //this for loop outputs pic bottom to top
+    for(ySquare=bottomMostSquare-1;ySquare+1>=topMostSquare+1;ySquare--){
+		if(ySquare == MAX_UINT){
+			
+			dbg_sprintf(dbgout,"ERR: ySquare too high: %d",ySquare);
+			return;
+		}
+		if(xSquare == MAX_UINT){
+			dbg_sprintf(dbgout,"ERR: xSquare too high: %d",xSquare);
+			return;
+		}
 
         /*
       //This will eventually not draw squares that are out of frame
