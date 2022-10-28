@@ -1,0 +1,198 @@
+Section          Base   Top    High   Length
+---------------- ------ ------ ------ -------
+.icon            D1A882 D1A9C2           140h
+.init.libs       D1A9C2 D1AA1A            58h
+.libs            D1AA1A D1AAC5            ABh
+.init.clock      D1AAC5 D1AAE0            1Bh
+.init.reruncheck D1AAE0 D1AAE0             0h
+.init            D1AAE0 D1AB0A            2Ah
+.fini            D1AB0A D1AB3E            34h
+.text            D1AB3E D1DDAA          326Ch
+.data            D1DDAA D1DE91            E7h
+.rodata          D1DE91 D1E17F           2EEh
+.init_array      000000 000000             0h
+.ctors           000000 000000             0h
+.dtors           000000 000000             0h
+.fini_array      000000 000000             0h
+.bss             D052C6 D052CC D13FD8      6h
+.header          D1A87F D1A882             3h
+
+Label                            Value
+------------------------------   ------
+___low_bss                     = D052C6
+___len_bss                     = 000006
+___heaptop                     = D13FD8
+___heapbot                     = D052CC
+___libs                        = D1AA1A
+___init_array_count            = 000000
+___ctors_count                 = 000000
+___dtors_count                 = 000000
+___fini_array_count            = 000000
+__stack                        = D1A87E
+__frameset                     = D1AB3E
+__frameset0                    = D1AB4C
+__iand                         = D1AB57
+__idivu                        = D1AB70
+__idvrmu                       = D1AB78
+__imulu                        = D1AB90
+__indcallhl                    = D1ABC0
+__ineg                         = D1ABC1
+__ior                          = D1ABCA
+__ixor                         = D1ABE3
+__ladd                         = D1ABFC
+__land                         = D1AC02
+__lcmpu                        = D1AC1D
+__lcmpzero                     = D1AC25
+__lladd                        = D1AC2D
+__lland                        = D1AC51
+__llcmpu                       = D1AC8E
+__llcmpzero                    = D1ACB8
+__llctlz                       = D1ACCD
+__lldivs                       = D1ACE5
+__lldivu                       = D1AD35
+__lldvrmu                      = D1AD49
+__lldvrmu.hijack               = D1AD50
+__llmulu                       = D1ADA7
+__llneg                        = D1ADFC
+__llshl                        = D1AE15
+__llshrs.hijack_llshru         = D1AE43
+__llshrs.finish                = D1AE62
+__llshru                       = D1AE66
+__llsub                        = D1AE80
+__lmulu                        = D1AEA2
+__lshrs.hijack_lshru           = D1AF0A
+__lshru                        = D1AF19
+__fcmp                         = 000274
+__fdiv                         = 000278
+__fmul                         = 000288
+__ftol                         = 00027C
+__ftoul                        = 00027C
+__ltof                         = 000284
+__setflag                      = 000218
+__ultof                        = 000280
+__sand                         = D1AF29
+_atomic_load_increasing_32     = D1AF32
+_delay                         = D1AF57
+_os_DisableHomeTextBuffer      = D1AF81
+_os_EnableHomeTextBuffer       = D1AF93
+___sleep_common.3              = D1AFA7
+_os_GetCSC                     = 021D3C
+_zx7_Decompress                = D1AFC0
+_free                          = D1B027
+_malloc                        = D1B0E4
+__alloc_base                   = D052C6
+_npf_vpprintf                  = D1B183
+JTI0_0                         = D1DE91
+JTI0_1                         = D1DEAF
+JTI0_2                         = D1DEF4
+JTI0_3                         = D1DF15
+JTI0_4                         = D1DF2D
+JTI0_5                         = D1DF45
+_npf_utoa_rev                  = D1C8ED
+__printf_c                     = D1C9B5
+__vsnprintf_c                  = D1C9D4
+_npf_bufputc                   = D1CA37
+_npf_bufputc_nop               = D1CA5C
+__snprintf_c                   = D1CA63
+__vsprintf_c                   = D1CA8B
+__vprintf_c                    = D1CAA9
+_npf_putc_std                  = D1CAC9
+__sprintf_c                    = D1CAD9
+_.str                          = D1DF5D
+_.str.1                        = D1DF61
+_.str.2                        = D1DF65
+_clock                         = D1CB02
+__ishl                         = 000174
+__ishru                        = 000184
+_strcmp                        = 0000C8
+_outchar                       = D1CB0D
+_sprintf                       = D1CAD9
+_vprintf                       = D1CAA9
+_vsnprintf                     = D1C9D4
+_sbrk                          = D1CB23
+__sbrkbase                     = D1DDAA
+.missingappvar                 = D1DF69
+.libloadname                   = D1DF6E
+.libloadnamelen                = 000007
+.webaddress                    = D1DF76
+___init_clock                  = D1AAC5
+__start                        = D1AAE0
+___exithl                      = D1AB0A
+skip._exit                     = D1AB0A
+skip.__Exit                    = D1AB0A
+skip._abort                    = D1AB0A
+_exit.sp                       = D1AB0B
+_exit.flash_wait_states        = D1AB15
+_main                          = D1CB41
+_SplashScreen                  = D1CBA6
+_SetLoadingBarProgress         = D1CBE7
+_DatabaseReady                 = D1CC59
+_RebuildDB                     = D1CD9F
+_DisplayHomeScreen             = D1CF03
+_PrintNames                    = D1D535
+_DrawImage                     = D1D6CB
+_PrintCenteredX                = D1DB4B
+_DeleteImage                   = D1DB7D
+_PrintCentered                 = D1DD0E
+_NoImagesFound                 = D1DD3D
+_.str                          = D1DF8B
+_.str.1                        = D1DF93
+_.str.2                        = D1DF95
+_.str.3                        = D1DFA9
+_.str.4                        = D1DFBA
+_.str.5                        = D1DFC9
+_.str.6                        = D1DFD4
+_.str.7                        = D1DFE1
+_.str.8                        = D1DFF7
+_.str.9                        = D1E012
+_.str.10                       = D1E032
+_.str.11                       = D1E04F
+_.str.12                       = D1E075
+_.str.13                       = D1E091
+_errorTriangle_compressed      = D1DDAD
+_.str.14                       = D1E09E
+_.str.16                       = D1E0A0
+_.str.17                       = D1E0A9
+_.str.18                       = D1E0BF
+_.str.19                       = D1E0E9
+_.str.20                       = D1E10F
+_.str.21                       = D1E137
+___const.DatabaseReady.compare = D1E14D
+_.str.22                       = D1E156
+_.str.23                       = D1E15E
+_.str.24                       = D1E165
+_.str.25                       = D1E16D
+lib.LibLoad                    = D1AA1A
+_#ti_Open                      = D1AA2E
+_#ti_Close                     = D1AA32
+_#ti_Write                     = D1AA36
+_#ti_Read                      = D1AA3A
+_#ti_Delete                    = D1AA3E
+_#ti_Seek                      = D1AA42
+_#ti_SetArchiveStatus          = D1AA46
+_#ti_Rewind                    = D1AA4A
+_#ti_GetDataPtr                = D1AA4E
+_#ti_DetectVar                 = D1AA52
+_#gfx_Begin                    = D1AA5F
+_#gfx_End                      = D1AA63
+_#gfx_SetColor                 = D1AA67
+_#gfx_SetDefaultPalette        = D1AA6B
+_#gfx_SetPalette               = D1AA6F
+_#gfx_FillScreen               = D1AA73
+_#gfx_PrintUInt                = D1AA77
+_#gfx_PrintStringXY            = D1AA7B
+_#gfx_SetTextXY                = D1AA7F
+_#gfx_SetTextBGColor           = D1AA83
+_#gfx_SetTextFGColor           = D1AA87
+_#gfx_GetStringWidth           = D1AA8B
+_#gfx_VertLine                 = D1AA8F
+_#gfx_HorizLine_NoClip         = D1AA93
+_#gfx_VertLine_NoClip          = D1AA97
+_#gfx_FillRectangle_NoClip     = D1AA9B
+_#gfx_AllocSprite              = D1AA9F
+_#gfx_Sprite                   = D1AAA3
+_#gfx_Sprite_NoClip            = D1AAA7
+_#gfx_SetTextScale             = D1AAAB
+_#gfx_ScaleSprite              = D1AAAF
+_#kb_Scan                      = D1AABD
+_#kb_AnyKey                    = D1AAC1

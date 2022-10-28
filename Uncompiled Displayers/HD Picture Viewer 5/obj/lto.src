@@ -1,0 +1,2513 @@
+	section	.text,"ax",@progbits
+	assume	adl = 1
+	section	.text,"ax",@progbits
+	public	_main
+_main:
+	ld	hl, -3
+	call	__frameset
+	call	_gfx_Begin
+	call	_SplashScreen
+	ld	hl, 2
+	push	hl
+	dec	hl
+	push	hl
+	call	_SetLoadingBarProgress
+	pop	hl
+	pop	hl
+	call	_DatabaseReady
+	or	a, a
+	jr	z, BB0_2
+	ld	hl, 1
+	push	hl
+	call	_RebuildDB
+	push	hl
+	pop	de
+	pop	hl
+	push	de
+	pop	hl
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	nz, BB0_3
+BB0_2:
+	call	_os_GetCSC
+	or	a, a
+	jr	z, BB0_2
+	jr	BB0_4
+BB0_3:
+	ld	hl, 2
+	push	hl
+	push	hl
+	ld	(ix - 3), de
+	call	_SetLoadingBarProgress
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_DisplayHomeScreen
+	pop	hl
+BB0_4:
+	call	_gfx_End
+	or	a, a
+	sbc	hl, hl
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_SplashScreen
+_SplashScreen:
+	ld	hl, -75
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, 80
+	push	hl
+	ld	de, 200
+	push	de
+	push	hl
+	ld	hl, 60
+	push	hl
+	call	_gfx_FillRectangle_NoClip
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 35
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, -75
+	push	hl
+	call	_gfx_SetTextBGColor
+	pop	hl
+	ld	hl, _.str.25
+	push	hl
+	call	_PrintCentered
+	pop	hl
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_SetLoadingBarProgress
+_SetLoadingBarProgress:
+	ld	hl, -3
+	call	__frameset
+	ld	bc, (ix + 6)
+	ld	d, 67
+	ld	l, 0
+	ld	a, l
+	call	__ultof
+	ld	(ix - 3), bc
+	ld	iyl, a
+	ld	bc, (ix + 9)
+	ld	a, l
+	call	__ultof
+	push	bc
+	pop	hl
+	ld	e, a
+	ld	bc, (ix - 3)
+	ld	a, iyl
+	call	__fdiv
+	ld	hl, 4718592
+	ld	e, d
+	call	__fmul
+	call	__ftoul
+	ld	de, 200
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	jr	c, BB2_2
+	ld	bc, 200
+BB2_2:
+	ld	(ix - 3), bc
+	ld	hl, -128
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, 7
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	ld	hl, -103
+	push	hl
+	ld	hl, 60
+	push	hl
+	call	_gfx_FillRectangle_NoClip
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_DatabaseReady
+_DatabaseReady:
+	ld	hl, -30
+	call	__frameset
+	ld	bc, 0
+	ld	hl, ___const.DatabaseReady.compare
+	xor	a, a
+	lea	de, ix - 12
+	lea	iy, ix - 21
+	ld	(ix - 3), bc
+	ld	(ix - 24), de
+	ld	bc, 9
+	ldir
+	ld	(ix - 30), iy
+	lea	de, iy
+	ld	hl, ___const.DatabaseReady.compare
+	ld	bc, 9
+	ldir
+BB3_1:
+	ld	(ix - 27), a
+	ld	hl, 21
+	push	hl
+	ld	hl, (ix - 24)
+	push	hl
+	pea	ix - 3
+	call	_ti_DetectVar
+	pop	de
+	pop	de
+	pop	de
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	ld	a, 1
+	jr	nz, BB3_1
+	bit	0, (ix - 27)
+	jr	z, BB3_4
+	ld	hl, 4
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, -76
+	push	hl
+	ld	hl, _.str.23
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	a, 2
+	jp	BB3_7
+BB3_4:
+	ld	hl, _.str.14
+	push	hl
+	ld	hl, _.str
+	push	hl
+	call	_ti_Open
+	ld	e, a
+	ld	(ix - 27), de
+	pop	hl
+	pop	hl
+	push	de
+	ld	hl, 1
+	push	hl
+	ld	hl, 8
+	push	hl
+	ld	hl, (ix - 24)
+	push	hl
+	call	_ti_Write
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 27)
+	push	hl
+	call	_ti_Rewind
+	pop	hl
+	ld	hl, (ix - 27)
+	push	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, 8
+	push	hl
+	ld	hl, (ix - 24)
+	push	hl
+	call	_ti_Read
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 30)
+	push	hl
+	ld	hl, (ix - 24)
+	push	hl
+	call	_strcmp
+	ld	(ix - 24), hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 27)
+	push	hl
+	call	_ti_Close
+	pop	hl
+	ld	hl, (ix - 24)
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	nz, BB3_6
+	ld	hl, -61
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, -76
+	push	hl
+	ld	hl, _.str.22
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	a, 1
+	jr	BB3_7
+BB3_6:
+	ld	hl, -32
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, -76
+	push	hl
+	ld	hl, _.str.24
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, 190
+	push	hl
+	ld	hl, 120
+	push	hl
+	call	_gfx_SetTextXY
+	pop	hl
+	pop	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, 7
+	push	hl
+	call	_gfx_PrintUInt
+	pop	hl
+	pop	hl
+	xor	a, a
+BB3_7:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_RebuildDB
+_RebuildDB:
+	ld	hl, -63
+	call	__frameset
+	ld	de, 0
+	ld	iy, _.str
+	ld	bc, _.str.14
+	or	a, a
+	sbc	hl, hl
+	ld	(ix - 54), hl
+	lea	hl, ix - 48
+	ld	(ix - 60), hl
+	ld	(ix - 51), de
+	push	bc
+	push	iy
+	call	_ti_Open
+	ld	e, a
+	pop	hl
+	pop	hl
+	ld	(ix - 57), de
+	push	de
+	ld	hl, 1
+	push	hl
+	ld	hl, 8
+	push	hl
+	ld	hl, ___const.DatabaseReady.compare
+	push	hl
+	call	_ti_Write
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	call	_SplashScreen
+BB4_1:
+	ld	hl, 21
+	push	hl
+	ld	hl, _.str.16
+	push	hl
+	pea	ix - 51
+	call	_ti_DetectVar
+	pop	de
+	pop	de
+	pop	de
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jp	z, BB4_3
+	ld	bc, (ix - 54)
+	inc	bc
+	ld	(ix - 63), hl
+	ld	de, 936
+	push	de
+	ld	(ix - 54), bc
+	push	bc
+	call	_SetLoadingBarProgress
+	pop	hl
+	pop	hl
+	ld	hl, _.str.1
+	push	hl
+	ld	hl, (ix - 63)
+	push	hl
+	call	_ti_Open
+	ld	e, a
+	ld	(ix - 63), de
+	pop	hl
+	pop	hl
+	push	de
+	ld	hl, 1
+	push	hl
+	ld	hl, 8
+	push	hl
+	call	_ti_Seek
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 57)
+	push	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, 16
+	push	hl
+	call	_ti_Seek
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 63)
+	push	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, 16
+	push	hl
+	ld	hl, (ix - 60)
+	push	hl
+	call	_ti_Read
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 57)
+	push	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, 16
+	push	hl
+	ld	hl, (ix - 60)
+	push	hl
+	call	_ti_Write
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 63)
+	push	hl
+	call	_ti_Close
+	pop	hl
+	jp	BB4_1
+BB4_3:
+	ld	hl, (ix - 57)
+	push	hl
+	call	_ti_Close
+	pop	hl
+	call	_gfx_End
+	ld	hl, (ix - 57)
+	push	hl
+	ld	hl, 1
+	push	hl
+	call	_ti_SetArchiveStatus
+	pop	hl
+	pop	hl
+	call	_gfx_Begin
+	call	_SplashScreen
+	ld	hl, 195
+	push	hl
+	ld	hl, 150
+	push	hl
+	call	_gfx_SetTextXY
+	pop	hl
+	pop	hl
+	ld	hl, 3
+	push	hl
+	ld	hl, (ix - 54)
+	push	hl
+	call	_gfx_PrintUInt
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 54)
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	call	z, _NoImagesFound
+	ld	a, (ix + 6)
+	inc	a
+	or	a, a
+	sbc	hl, hl
+	ld	l, a
+	ld	de, 2
+	push	de
+	push	hl
+	call	_SetLoadingBarProgress
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 54)
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_DisplayHomeScreen
+_DisplayHomeScreen:
+	ld	hl, -60
+	call	__frameset
+	ld	hl, (ix + 6)
+	ld	bc, 9
+	call	__imulu
+	push	hl
+	call	_malloc
+	ld	(ix - 6), hl
+	pop	hl
+	ld	hl, _.str.1
+	push	hl
+	ld	hl, _.str
+	push	hl
+	call	_ti_Open
+	ld	l, a
+	ld	(ix - 21), hl
+	pop	hl
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_FillScreen
+	pop	hl
+	ld	hl, -75
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextBGColor
+	pop	hl
+	scf
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, 200
+	push	hl
+	ld	hl, 20
+	push	hl
+	ld	hl, 140
+	push	hl
+	call	_gfx_VertLine
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 21)
+	push	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	ld	hl, 8
+	push	hl
+	call	_ti_Seek
+	ld	de, (ix - 6)
+	pop	hl
+	pop	hl
+	pop	hl
+	push	de
+	pop	iy
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	pop	bc
+BB5_1:
+	ld	hl, (ix + 6)
+	or	a, a
+	sbc	hl, bc
+	jr	c, BB5_3
+	ld	hl, (ix - 21)
+	push	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, 8
+	push	hl
+	push	iy
+	ld	(ix - 3), iy
+	ld	(ix - 9), bc
+	call	_ti_Read
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	iy, (ix - 3)
+	ld	(iy + 8), 0
+	ld	hl, (ix - 21)
+	push	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, 8
+	push	hl
+	call	_ti_Seek
+	ld	bc, (ix - 9)
+	ld	iy, (ix - 3)
+	pop	hl
+	pop	hl
+	pop	hl
+	inc	bc
+	lea	iy, iy + 9
+	ld	de, (ix - 6)
+	jr	BB5_1
+BB5_3:
+	ld	hl, 10
+	push	hl
+	push	hl
+	call	_gfx_SetTextXY
+	pop	hl
+	pop	hl
+	ld	hl, (ix + 6)
+	push	hl
+	ld	hl, (ix - 6)
+	push	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_PrintNames
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	de, 0
+	push	de
+	push	de
+	ld	hl, 240
+	push	hl
+	ld	hl, 320
+	push	hl
+	push	de
+	call	_DrawImage
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	de, (ix + 6)
+	push	de
+	pop	hl
+	dec	hl
+	ld	(ix - 60), hl
+	push	de
+	pop	hl
+	push	de
+	pop	bc
+	ld	de, -2
+	add	hl, de
+	ld	(ix - 54), hl
+	push	bc
+	pop	hl
+	dec	de
+	add	hl, de
+	ld	(ix - 57), hl
+	ld	de, 0
+	ld	(ix - 9), de
+	ld	(ix - 12), de
+	ld	hl, 240
+	ld	(ix - 15), hl
+	ld	hl, 320
+	ld	(ix - 18), hl
+BB5_4:
+	ld	(ix - 3), de
+	call	_kb_Scan
+	ld	iy, -720878
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld.sis	bc, 1
+	call	__sand
+	ld	(ix - 30), hl
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	(ix - 24), hl
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	(ix - 36), hl
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	(ix - 33), hl
+	ld	iy, -720868
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	(ix - 39), hl
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	(ix - 27), hl
+	ld	iy, -720866
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	(ix - 45), hl
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	call	__sand
+	ld	(ix - 42), hl
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	(ix - 51), hl
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	(ix - 48), hl
+	call	_kb_AnyKey
+	or	a, a
+	jr	nz, BB5_6
+	ld	iy, -720868
+	jp	BB5_45
+BB5_6:
+	ld	hl, (ix - 51)
+	ld	a, l
+	bit	1, a
+	jr	z, BB5_8
+	ld	de, (ix - 12)
+	inc	de
+	ld	hl, (ix - 9)
+	push	hl
+	ld	(ix - 12), de
+	push	de
+	ld	hl, (ix - 15)
+	push	hl
+	ld	hl, (ix - 18)
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_DrawImage
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+BB5_8:
+	ld	hl, (ix - 48)
+	ld	a, l
+	bit	2, a
+	jr	z, BB5_10
+	ld	de, (ix - 12)
+	dec	de
+	ld	hl, (ix - 9)
+	push	hl
+	ld	(ix - 12), de
+	push	de
+	ld	hl, (ix - 15)
+	push	hl
+	ld	hl, (ix - 18)
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_DrawImage
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+BB5_10:
+	ld	hl, (ix - 45)
+	ld	a, l
+	bit	3, a
+	jr	z, BB5_12
+	ld	hl, (ix - 9)
+	dec	hl
+	ld	(ix - 9), hl
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	ld	hl, (ix - 15)
+	push	hl
+	ld	hl, (ix - 18)
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_DrawImage
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+BB5_12:
+	ld	hl, (ix - 42)
+	bit	0, l
+	jr	z, BB5_14
+	ld	hl, (ix - 9)
+	inc	hl
+	ld	(ix - 9), hl
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	ld	hl, (ix - 15)
+	push	hl
+	ld	hl, (ix - 18)
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_DrawImage
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+BB5_14:
+	ld	hl, (ix - 27)
+	ld	de, (ix - 36)
+	ld	bc, (ix - 39)
+	ld	a, e
+	ld	e, c
+	bit	2, a
+	jr	z, BB5_16
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	push	hl
+	ld	hl, 240
+	push	hl
+	ld	hl, 320
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	ld	(ix - 36), e
+	call	_DrawImage
+	ld	e, (ix - 36)
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 27)
+	ld	bc, 0
+	ld	(ix - 9), bc
+	ld	(ix - 12), bc
+	ld	bc, 240
+	ld	(ix - 15), bc
+	ld	bc, 320
+	ld	(ix - 18), bc
+BB5_16:
+	ld	a, l
+	bit	1, e
+	jr	z, BB5_18
+	ld	hl, (ix - 18)
+	ld	c, 1
+	call	__ishl
+	push	hl
+	pop	iy
+	ld	hl, (ix - 15)
+	call	__ishl
+	push	hl
+	pop	de
+	ld	hl, (ix - 9)
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	ld	(ix - 15), de
+	push	de
+	ld	(ix - 18), iy
+	push	iy
+	ld	hl, (ix - 3)
+	push	hl
+	ld	(ix - 27), a
+	call	_DrawImage
+	ld	a, (ix - 27)
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+BB5_18:
+	ld	hl, (ix - 33)
+	ld	c, l
+	bit	2, a
+	jr	z, BB5_20
+	ld	hl, (ix - 18)
+	ld	(ix - 27), c
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	iy
+	ld	hl, (ix - 15)
+	call	__ishru
+	push	hl
+	pop	de
+	ld	hl, (ix - 9)
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	ld	(ix - 15), de
+	push	de
+	ld	(ix - 18), iy
+	push	iy
+	ld	hl, (ix - 3)
+	push	hl
+	call	_DrawImage
+	ld	c, (ix - 27)
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+BB5_20:
+	ld	iy, -720868
+	ld	de, (ix - 30)
+	ld	hl, (ix - 24)
+	bit	7, c
+	jr	nz, BB5_22
+	ld	bc, (ix - 3)
+	jp	BB5_32
+BB5_22:
+	ld	hl, 39
+	push	hl
+	call	_gfx_SetDefaultPalette
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_FillScreen
+	pop	hl
+	ld	hl, -75
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextBGColor
+	pop	hl
+	ld	hl, 120
+	push	hl
+	ld	hl, _.str.2
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	push	hl
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_DeleteImage
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, -126
+	push	hl
+	ld	hl, _.str.3
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, -116
+	push	hl
+	ld	hl, _.str.4
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+BB5_23:
+	call	_os_GetCSC
+	or	a, a
+	jr	z, BB5_23
+	ld	hl, (ix - 6)
+	push	hl
+	call	_free
+	pop	hl
+	ld	hl, -75
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextBGColor
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_RebuildDB
+	push	hl
+	pop	de
+	pop	hl
+	push	de
+	pop	hl
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	ld	(ix - 27), de
+	jr	nz, BB5_27
+BB5_25:
+	call	_os_GetCSC
+	or	a, a
+	jr	z, BB5_25
+	call	_gfx_End
+	ld	iy, -720868
+	ld	bc, (ix - 3)
+	jp	BB5_31
+BB5_27:
+	ld	hl, -65
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextBGColor
+	pop	hl
+	ld	hl, (ix - 27)
+	ld	bc, 9
+	call	__imulu
+	push	hl
+	call	_malloc
+	ld	(ix - 6), hl
+	pop	hl
+	ld	hl, (ix - 21)
+	push	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	ld	hl, 8
+	push	hl
+	call	_ti_Seek
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	iy, (ix - 6)
+	or	a, a
+	sbc	hl, hl
+	ld	(ix - 33), hl
+BB5_28:
+	ld	hl, (ix + 6)
+	ld	de, (ix - 33)
+	or	a, a
+	sbc	hl, de
+	jr	c, BB5_30
+	ld	hl, (ix - 21)
+	push	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, 8
+	push	hl
+	push	iy
+	ld	(ix - 36), iy
+	call	_ti_Read
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	iy, (ix - 36)
+	ld	(iy + 8), 0
+	ld	hl, (ix - 21)
+	push	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, 8
+	push	hl
+	call	_ti_Seek
+	ld	iy, (ix - 36)
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 33)
+	inc	hl
+	ld	(ix - 33), hl
+	lea	iy, iy + 9
+	jr	BB5_28
+BB5_30:
+	ld	hl, 10
+	push	hl
+	push	hl
+	call	_gfx_SetTextXY
+	pop	hl
+	pop	hl
+	ld	hl, (ix + 6)
+	push	hl
+	ld	hl, (ix - 6)
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_PrintNames
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 9)
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	ld	hl, (ix - 15)
+	push	hl
+	ld	hl, (ix - 18)
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_DrawImage
+	ld	bc, (ix - 3)
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	iy, -720868
+BB5_31:
+	ld	de, (ix - 30)
+	ld	hl, (ix - 27)
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	ld	hl, (ix - 24)
+	jp	z, BB5_51
+BB5_32:
+	ld	a, l
+	bit	0, e
+	jp	z, BB5_44
+	inc	bc
+	push	bc
+	pop	hl
+	ld	de, (ix - 60)
+	or	a, a
+	sbc	hl, de
+	jr	c, BB5_35
+	ld	bc, (ix - 60)
+BB5_35:
+	ld	(ix - 24), a
+	push	bc
+	pop	iy
+	ld	hl, (ix - 54)
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	ld	e, -1
+	jr	z, BB5_37
+	ld	e, 0
+BB5_37:
+	lea	bc, iy
+	or	a, a
+	sbc	hl, bc
+	ccf
+	sbc	a, a
+	ld	l, a
+	ld	a, e
+	or	a, l
+	bit	0, a
+	jr	nz, BB5_39
+	ld	iy, (ix - 60)
+BB5_39:
+	ld	hl, (ix - 57)
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	ld	e, -1
+	jr	z, BB5_41
+	ld	e, 0
+BB5_41:
+	ld	hl, (ix - 57)
+	lea	bc, iy
+	or	a, a
+	sbc	hl, bc
+	ccf
+	sbc	a, a
+	ld	l, a
+	ld	a, e
+	or	a, l
+	bit	0, a
+	ld	hl, (ix - 54)
+	jr	nz, BB5_43
+	push	hl
+	pop	bc
+BB5_43:
+	ld	(ix - 3), bc
+	ld	hl, (ix + 6)
+	push	hl
+	ld	hl, (ix - 6)
+	push	hl
+	push	bc
+	call	_PrintNames
+	pop	hl
+	pop	hl
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	push	hl
+	ld	hl, 240
+	push	hl
+	ld	hl, 320
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_DrawImage
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	ld	(ix - 9), hl
+	ld	(ix - 12), hl
+	ld	hl, 240
+	ld	(ix - 15), hl
+	ld	hl, 320
+	ld	(ix - 18), hl
+	ld	iy, -720868
+	ld	a, (ix - 24)
+BB5_44:
+	bit	4, a
+	jr	nz, BB5_46
+BB5_45:
+	ld	de, (ix - 3)
+	jr	BB5_49
+BB5_46:
+	ld	bc, (ix - 3)
+	dec	bc
+	push	bc
+	pop	hl
+	ld	de, 937
+	or	a, a
+	sbc	hl, de
+	ld	hl, 0
+	ex	de, hl
+	jr	nc, BB5_48
+	push	bc
+	pop	de
+BB5_48:
+	ld	(ix - 3), de
+	ld	hl, (ix + 6)
+	push	hl
+	ld	hl, (ix - 6)
+	push	hl
+	push	de
+	call	_PrintNames
+	pop	hl
+	pop	hl
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	push	hl
+	ld	hl, 240
+	push	hl
+	ld	hl, 320
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_DrawImage
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	ld	(ix - 9), hl
+	ld	(ix - 12), hl
+	ld	hl, 240
+	ld	(ix - 15), hl
+	ld	hl, 320
+	ld	(ix - 18), hl
+	ld	de, (ix - 3)
+	ld	iy, -720868
+BB5_49:
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	a, l
+	cp	a, 64
+	jp	nz, BB5_4
+	ld	hl, (ix - 21)
+	push	hl
+	call	_ti_Close
+	pop	hl
+	ld	hl, (ix - 6)
+	push	hl
+	call	_free
+	pop	hl
+BB5_51:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_PrintNames
+_PrintNames:
+	ld	hl, -12
+	call	__frameset
+	ld	hl, (ix + 6)
+	ld	(ix - 6), hl
+	ld	hl, (ix + 9)
+	ld	(ix - 3), hl
+	ld	hl, (ix + 12)
+	ld	(ix - 9), hl
+	ld	hl, 2
+	push	hl
+	push	hl
+	call	_gfx_SetTextScale
+	pop	hl
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, -16
+	push	hl
+	ld	hl, 140
+	push	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	push	hl
+	call	_gfx_FillRectangle_NoClip
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	scf
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, 6
+	push	hl
+	ld	hl, 120
+	push	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_HorizLine_NoClip
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 5
+	push	hl
+	ld	hl, 120
+	push	hl
+	ld	hl, 136
+	push	hl
+	call	_gfx_HorizLine_NoClip
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 130
+	push	hl
+	ld	hl, 110
+	push	hl
+	ld	hl, 6
+	push	hl
+	call	_gfx_HorizLine_NoClip
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 130
+	push	hl
+	ld	hl, -126
+	push	hl
+	ld	hl, 6
+	push	hl
+	call	_gfx_HorizLine_NoClip
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 20
+	push	hl
+	ld	hl, 110
+	push	hl
+	ld	hl, 6
+	push	hl
+	call	_gfx_VertLine_NoClip
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 21
+	push	hl
+	ld	hl, 110
+	push	hl
+	ld	hl, 136
+	push	hl
+	call	_gfx_VertLine_NoClip
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 6)
+	ld	bc, -25
+	call	__imulu
+	ld	de, (ix - 6)
+	push	hl
+	pop	iy
+	ld	bc, 113
+	add	iy, bc
+	ld	bc, 4
+	push	de
+	pop	hl
+	or	a, a
+	sbc	hl, bc
+	jr	c, BB6_2
+	ld	iy, 38
+BB6_2:
+	push	de
+	pop	hl
+	ld	bc, 9
+	call	__imulu
+	push	de
+	pop	bc
+	ld	(ix - 12), hl
+	push	bc
+	pop	hl
+	ld	de, 4
+	or	a, a
+	sbc	hl, de
+	jr	c, BB6_4
+	ld	bc, 4
+BB6_4:
+	push	bc
+	pop	hl
+	ld	bc, 9
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	hl, (ix - 12)
+	or	a, a
+	sbc	hl, bc
+	push	hl
+	pop	de
+	ld	hl, (ix - 3)
+	add	hl, de
+	ld	(ix - 3), hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	pop	de
+BB6_5:
+	ld	(ix - 6), hl
+	ld	bc, (ix - 9)
+	or	a, a
+	sbc	hl, bc
+	jr	nc, BB6_8
+	ex	de, hl
+	ld	de, 180
+	or	a, a
+	sbc	hl, de
+	jr	nc, BB6_8
+	push	iy
+	ld	hl, 8
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	ld	(ix - 12), iy
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 6)
+	inc	hl
+	ld	bc, (ix - 12)
+	push	bc
+	pop	iy
+	ld	de, 25
+	add	iy, de
+	lea	de, iy
+	ld	iy, (ix - 3)
+	lea	iy, iy + 9
+	ld	(ix - 3), iy
+	push	de
+	pop	iy
+	push	bc
+	pop	de
+	jr	BB6_5
+BB6_8:
+	ld.sis	hl, 150
+	ld	(ix + 6), l
+	ld	(ix + 7), h
+	ld	sp, ix
+	pop	ix
+	jp	_delay
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_DrawImage
+_DrawImage:
+	ld	hl, -59
+	call	__frameset
+	ld	hl, (ix + 15)
+	ld	de, _.str
+	ld	bc, _.str.1
+	call	__ineg
+	ld	(ix - 47), hl
+	lea	hl, ix - 8
+	ld	(ix - 32), hl
+	push	bc
+	push	de
+	call	_ti_Open
+	ld	l, a
+	ld	(ix - 29), hl
+	pop	hl
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_FillScreen
+	pop	hl
+	ld	c, 4
+	ld	hl, (ix + 6)
+	call	__ishl
+	ld	de, 16
+	add	hl, de
+	ld	de, (ix - 29)
+	push	de
+	ld	de, 1
+	push	de
+	push	hl
+	call	_ti_Seek
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 29)
+	push	hl
+	ld	hl, 1
+	push	hl
+	inc	hl
+	push	hl
+	ld	hl, (ix - 32)
+	push	hl
+	call	_ti_Read
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 29)
+	push	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, 6
+	push	hl
+	pea	ix - 6
+	call	_ti_Read
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 29)
+	push	hl
+	call	_ti_Close
+	pop	hl
+	ld	hl, 1
+	push	hl
+	push	hl
+	call	_gfx_SetTextScale
+	pop	hl
+	pop	hl
+	ld	a, (ix - 6)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 100
+	call	__imulu
+	push	hl
+	pop	iy
+	ld	a, (ix - 5)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 10
+	call	__imulu
+	ld	(ix - 29), hl
+	ld	a, (ix - 4)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	push	hl
+	pop	bc
+	ld	c, a
+	ld	de, -5327
+	add	iy, de
+	ld	de, (ix - 29)
+	add	iy, de
+	add	iy, bc
+	ld	(ix - 29), iy
+	ld	a, (ix - 3)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 100
+	call	__imulu
+	push	hl
+	pop	iy
+	ld	a, (ix - 2)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 10
+	call	__imulu
+	ld	(ix - 35), hl
+	ld	a, (ix - 1)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	push	hl
+	pop	bc
+	ld	c, a
+	ld	de, -5327
+	add	iy, de
+	ld	de, (ix - 35)
+	add	iy, de
+	add	iy, bc
+	ld	hl, (ix + 9)
+	ld	bc, 80
+	call	__idivu
+	push	hl
+	pop	de
+	ld	hl, (ix + 12)
+	call	__idivu
+	push	hl
+	pop	bc
+	ld	hl, (ix - 29)
+	ld	(ix - 44), bc
+	call	__imulu
+	ld	(ix - 38), hl
+	ld	(ix - 41), iy
+	lea	hl, iy
+	ld	(ix - 35), de
+	push	de
+	pop	bc
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	hl, (ix - 38)
+	or	a, a
+	sbc	hl, bc
+	call	pe, __setflag
+	jp	m, BB7_2
+	ld	a, 0
+	jr	BB7_3
+BB7_2:
+	ld	a, -1
+BB7_3:
+	bit	0, a
+	ld	iy, (ix - 29)
+	ld	de, (ix - 35)
+	jr	nz, BB7_5
+	ld	de, (ix - 44)
+BB7_5:
+	bit	0, a
+	jr	nz, BB7_7
+	ld	iy, (ix - 41)
+BB7_7:
+	push	de
+	pop	hl
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	z, BB7_9
+	lea	hl, iy
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	nz, BB7_12
+BB7_9:
+	ld	hl, _.str.7
+	ld	de, -126
+	push	de
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, -111
+	push	hl
+	ld	hl, _.str.8
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+BB7_10:
+	call	_os_GetCSC
+	or	a, a
+	jr	z, BB7_10
+BB7_11:
+	ld	sp, ix
+	pop	ix
+	ret
+BB7_12:
+	ex	de, hl
+	ld	bc, 80
+	call	__imulu
+	lea	bc, iy
+	call	__idivu
+	ld	de, _malloc
+	push	de
+	push	hl
+	ld	(ix - 35), hl
+	push	hl
+	call	_gfx_AllocSprite
+	pop	de
+	pop	de
+	pop	de
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	nz, BB7_15
+	ld	hl, _.str.9
+	ld	de, -126
+	push	de
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+BB7_14:
+	call	_os_GetCSC
+	or	a, a
+	jr	z, BB7_14
+	jr	BB7_11
+BB7_15:
+	ld	(ix - 38), hl
+	ld	hl, _.str.5
+	lea	bc, ix - 26
+	ld	(ix - 44), bc
+	ld	de, (ix - 32)
+	push	de
+	push	hl
+	push	bc
+	call	_sprintf
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, _.str.1
+	push	hl
+	ld	hl, (ix - 44)
+	push	hl
+	call	_ti_Open
+	ld	e, a
+	pop	hl
+	pop	hl
+	or	a, a
+	jr	nz, BB7_18
+	ld	hl, 110
+	push	hl
+	ld	hl, (ix - 44)
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, 120
+	push	hl
+	ld	hl, _.str.10
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, -126
+	push	hl
+	ld	hl, _.str.11
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, -116
+	push	hl
+	ld	hl, _.str.12
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+BB7_17:
+	call	_os_GetCSC
+	or	a, a
+	jr	z, BB7_17
+	jp	BB7_11
+BB7_18:
+	ld	hl, 24
+	push	de
+	ld	(ix - 44), de
+	ld	de, 0
+	push	de
+	push	hl
+	call	_ti_Seek
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 44)
+	push	hl
+	call	_ti_GetDataPtr
+	pop	de
+	ld	de, 0
+	push	de
+	ld	de, 512
+	push	de
+	push	hl
+	call	_gfx_SetPalette
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 44)
+	push	hl
+	call	_ti_Close
+	pop	hl
+	ld	hl, _.str.13
+	push	hl
+	call	_PrintCentered
+	pop	hl
+	ld	hl, 320
+	ld	bc, (ix - 35)
+	call	__idivu
+	ld	(ix - 44), hl
+	ld	hl, 240
+	call	__idivu
+	push	hl
+	pop	bc
+	ld	hl, 1
+	ld	de, (ix + 15)
+	or	a, a
+	sbc	hl, de
+	push	hl
+	pop	iy
+	ld	de, (ix - 44)
+	add	iy, de
+	ld	hl, (ix + 18)
+	inc	hl
+	add	hl, bc
+	ld	(ix - 44), hl
+	lea	hl, iy
+	ld	de, (ix - 29)
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	m, BB7_20
+	push	de
+	pop	iy
+BB7_20:
+	ld	de, 1
+	ld	bc, (ix - 47)
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB7_22
+	ld	bc, 0
+BB7_22:
+	ld	hl, (ix - 44)
+	ld	de, (ix - 41)
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	m, BB7_24
+	ld	(ix - 44), de
+BB7_24:
+	ld	de, (ix + 18)
+	ex	de, hl
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	ld	hl, (ix + 18)
+	ld	(ix - 29), hl
+	jp	p, BB7_26
+	or	a, a
+	sbc	hl, hl
+	ld	(ix - 29), hl
+BB7_26:
+	lea	hl, ix - 17
+	ld	(ix - 41), hl
+	lea	de, iy
+BB7_27:
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB7_35
+	ld	(ix - 47), bc
+	push	de
+	pop	iy
+	dec	iy
+	lea	hl, iy
+	ld	de, (ix + 15)
+	add	hl, de
+	ld	bc, (ix - 35)
+	call	__imulu
+	ld	(ix - 56), hl
+	ld	de, (ix - 44)
+BB7_29:
+	ld	hl, (ix - 29)
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB7_34
+	dec	de
+	ld	(ix - 50), de
+	push	de
+	ld	(ix - 53), iy
+	push	iy
+	ld	hl, (ix - 32)
+	push	hl
+	ld	hl, _.str.6
+	push	hl
+	ld	hl, (ix - 41)
+	push	hl
+	call	_sprintf
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, _.str.1
+	push	hl
+	ld	hl, (ix - 41)
+	push	hl
+	call	_ti_Open
+	ld	e, a
+	pop	hl
+	pop	hl
+	or	a, a
+	jr	nz, BB7_32
+	ld	hl, _malloc
+	push	hl
+	ld	hl, 80
+	push	hl
+	push	hl
+	call	_gfx_AllocSprite
+	push	hl
+	pop	de
+	ld	(ix - 59), de
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, _errorTriangle_compressed
+	push	hl
+	push	de
+	call	_zx7_Decompress
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 38)
+	push	hl
+	ld	hl, (ix - 59)
+	push	hl
+	call	_gfx_ScaleSprite
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 50)
+	ld	a, l
+	ld	hl, (ix + 18)
+	sub	a, l
+	ld	h, a
+	ld	de, (ix - 35)
+	ld	l, e
+	mlt	hl
+	push	hl
+	ld	hl, (ix - 56)
+	push	hl
+	ld	hl, (ix - 38)
+	push	hl
+	call	_gfx_Sprite_NoClip
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 59)
+	push	hl
+	call	_free
+	jr	BB7_33
+BB7_32:
+	push	de
+	ld	hl, 1
+	push	hl
+	ld	hl, 16
+	push	hl
+	ld	(ix - 59), de
+	call	_ti_Seek
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 59)
+	push	hl
+	call	_ti_GetDataPtr
+	pop	de
+	ld	de, (ix - 38)
+	push	de
+	push	hl
+	call	_gfx_ScaleSprite
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 50)
+	ld	de, (ix + 18)
+	or	a, a
+	sbc	hl, de
+	ld	bc, (ix - 35)
+	call	__imulu
+	push	hl
+	ld	hl, (ix - 56)
+	push	hl
+	ld	hl, (ix - 38)
+	push	hl
+	call	_gfx_Sprite
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 59)
+	push	hl
+	call	_ti_Close
+BB7_33:
+	ld	de, (ix - 50)
+	pop	hl
+	ld	iy, (ix - 53)
+	jp	BB7_29
+BB7_34:
+	lea	de, iy
+	ld	bc, (ix - 47)
+	jp	BB7_27
+BB7_35:
+	ld	hl, (ix - 38)
+	push	hl
+	call	_free
+	pop	hl
+	jp	BB7_11
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_PrintCenteredX
+_PrintCenteredX:
+	call	__frameset0
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_GetStringWidth
+	push	hl
+	pop	de
+	pop	hl
+	ld	hl, 320
+	or	a, a
+	sbc	hl, de
+	ld	c, 1
+	call	__ishru
+	ld	de, 0
+	ld	e, (ix + 9)
+	push	de
+	push	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_PrintStringXY
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_DeleteImage
+_DeleteImage:
+	ld	hl, -41
+	call	__frameset
+	ld	hl, _.str
+	ld	de, _.str.1
+	lea	bc, ix - 8
+	ld	(ix - 32), bc
+	lea	bc, ix - 26
+	ld	(ix - 35), bc
+	push	de
+	push	hl
+	call	_ti_Open
+	ld	l, a
+	ld	(ix - 29), hl
+	pop	hl
+	pop	hl
+	ld	c, 4
+	ld	hl, (ix + 6)
+	call	__ishl
+	ld	de, 16
+	add	hl, de
+	ld	de, (ix - 29)
+	push	de
+	ld	de, 1
+	push	de
+	push	hl
+	call	_ti_Seek
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 29)
+	push	hl
+	ld	hl, 1
+	push	hl
+	inc	hl
+	push	hl
+	ld	hl, (ix - 32)
+	push	hl
+	call	_ti_Read
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 29)
+	push	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, 6
+	push	hl
+	pea	ix - 6
+	call	_ti_Read
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 29)
+	push	hl
+	call	_ti_Close
+	pop	hl
+	ld	a, (ix - 6)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 100
+	call	__imulu
+	push	hl
+	pop	iy
+	ld	a, (ix - 5)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 10
+	call	__imulu
+	ld	(ix - 29), hl
+	ld	a, (ix - 4)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	push	hl
+	pop	bc
+	ld	c, a
+	ld	de, -5328
+	add	iy, de
+	ld	de, (ix - 29)
+	add	iy, de
+	add	iy, bc
+	ld	(ix - 29), iy
+	ld	a, (ix - 3)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 100
+	call	__imulu
+	push	hl
+	pop	iy
+	ld	a, (ix - 2)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 10
+	call	__imulu
+	ld	(ix - 38), hl
+	ld	a, (ix - 1)
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	push	hl
+	pop	bc
+	ld	c, a
+	ld	de, -5328
+	add	iy, de
+	ld	de, (ix - 38)
+	add	iy, de
+	add	iy, bc
+	ld	(ix - 38), iy
+	ld	hl, (ix - 32)
+	push	hl
+	ld	hl, _.str.5
+	push	hl
+	ld	hl, (ix - 35)
+	push	hl
+	call	_sprintf
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 35)
+	push	hl
+	call	_ti_Delete
+	pop	de
+	ld	a, l
+	or	a, a
+	ld	hl, 120
+	push	hl
+	ld	hl, (ix - 35)
+	push	hl
+	call	z, _PrintCenteredX
+	pop	hl
+	pop	hl
+	lea	hl, ix - 17
+	ld	(ix - 35), hl
+	ld	iy, (ix - 29)
+BB9_1:
+	lea	hl, iy
+	ld	de, -1
+	or	a, a
+	sbc	hl, de
+	ld	de, (ix - 38)
+	jr	z, BB9_5
+BB9_2:
+	push	de
+	pop	hl
+	ld	bc, -1
+	or	a, a
+	sbc	hl, bc
+	jr	z, BB9_4
+	push	de
+	push	iy
+	ld	hl, (ix - 32)
+	push	hl
+	ld	hl, _.str.6
+	push	hl
+	ld	hl, (ix - 35)
+	push	hl
+	ld	(ix - 29), iy
+	ld	(ix - 41), de
+	call	_sprintf
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 35)
+	push	hl
+	call	_ti_Delete
+	ld	de, (ix - 41)
+	ld	iy, (ix - 29)
+	pop	hl
+	dec	de
+	jr	BB9_2
+BB9_4:
+	dec	iy
+	jr	BB9_1
+BB9_5:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_PrintCentered
+_PrintCentered:
+	call	__frameset0
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_GetStringWidth
+	push	hl
+	pop	de
+	pop	hl
+	ld	hl, 320
+	or	a, a
+	sbc	hl, de
+	ld	c, 1
+	call	__ishru
+	ld	de, 116
+	push	de
+	push	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_PrintStringXY
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_NoImagesFound
+_NoImagesFound:
+	scf
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextBGColor
+	pop	hl
+	ld	hl, -64
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, _.str.17
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, 11
+	push	hl
+	ld	hl, _.str.18
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, 21
+	push	hl
+	ld	hl, _.str.19
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, 31
+	push	hl
+	ld	hl, _.str.20
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, 41
+	push	hl
+	ld	hl, _.str.21
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_PrintCenteredY
+_PrintCenteredY:
+	call	__frameset0
+	ld	hl, (ix + 6)
+	ld	de, 116
+	ld	bc, 0
+	ld	c, (ix + 9)
+	push	de
+	push	bc
+	push	hl
+	call	_gfx_PrintStringXY
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_PrintText
+_PrintText:
+	ld	hl, -3
+	call	__frameset
+	ld	a, (ix + 9)
+	ld	hl, (ix + 12)
+	ld	(ix - 3), hl
+	ld	l, (ix + 6)
+	push	hl
+	ld	l, a
+	push	hl
+	call	_os_SetCursorPos
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 3)
+	ld	(ix + 6), hl
+	pop	hl
+	pop	ix
+	jp	_os_PutStrFull
+	section	.text,"ax",@progbits
+
+	section	.data,"aw",@progbits
+	public	_global_palette
+_global_palette:
+	db	0, 0, "ÿÿ"
+
+	section	.rodata,"a",@progbits
+	private	_.str
+_.str:
+	db	"HDPICDB", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.1
+_.str.1:
+	db	"r", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.2
+_.str.2:
+	db	"Deleting Picture...", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.3
+_.str.3:
+	db	"Picture deleted.", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.4
+_.str.4:
+	db	"Press any key.", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.5
+_.str.5:
+	db	"HP%.2s0000", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.6
+_.str.6:
+	db	"%.2s%03u%03u", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.7
+_.str.7:
+	db	"ERR: Cannot zoom out!", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.8
+_.str.8:
+	db	"Press [+] twice to zoom in", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.9
+_.str.9:
+	db	"ERR: Failed to allocate memory!", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.10
+_.str.10:
+	db	"ERR: Palette does not exist!", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.11
+_.str.11:
+	db	"Image may have recently been deleted.", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.12
+_.str.12:
+	db	"Try restarting the program.", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.13
+_.str.13:
+	db	"Rendering...", 0
+
+	section	.data,"aw",@progbits
+	public	_errorTriangle_compressed
+_errorTriangle_compressed:
+	db	"P P‘", 0, 0, "P", 0, "K)šO", 0, "h", 0, "ÕO", 0, "", 0, 0, "˜£O", 0, " ", 0, "ÙOãEà#gO", 13, "€Oá	à#cOàO‡g;€O¸	ØOøMø", 13, "vOçYà", 13, "xOþ/ÖOx=-¾Oaà", 0, "wOž;àiO‚c", 0, "9Oà9æ8O%eà", 0, "oOž7à]O‚žg", 0, "¸Of5X~3XOd»!˜áOò©‡ÊÅÛO", 0, "îO>àQoO¸`OŽM", 10, "àQ;`OŸ— œ³àsO¸", 0, "eOƒØS¸CàO8", 0, "GÍM>O", 0, ""
+
+	section	.rodata,"a",@progbits
+	private	_.str.14
+_.str.14:
+	db	"w", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.16
+_.str.16:
+	db	"HDPALV10", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.17
+_.str.17:
+	db	"No Pictures Detected!", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.18
+_.str.18:
+	db	"Convert some images and send them to your", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.19
+_.str.19:
+	db	"calculator using the HDpic converter!", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.20
+_.str.20:
+	db	"Tutorial:  https://youtu.be/s1-g8oSueQg", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.21
+_.str.21:
+	db	"Press any key to quit", 0
+
+	section	.rodata,"a",@progbits
+	private	___const.DatabaseReady.compare
+___const.DatabaseReady.compare:
+	db	"HDDATV10", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.22
+_.str.22:
+	db	"created", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.23
+_.str.23:
+	db	"exists", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.24
+_.str.24:
+	db	"failure", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.25
+_.str.25:
+	db	"HD Picture Viewer", 0
+
+	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
+	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
+	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
+	extern	__Unwind_SjLj_Register
+	extern	_malloc
+	extern	_gfx_SetTextFGColor
+	extern	_gfx_Begin
+	extern	_gfx_SetPalette
+	extern	_ti_Close
+	extern	_ti_DetectVar
+	extern	_ti_Rewind
+	extern	__sand
+	extern	__ftoul
+	extern	__ishl
+	extern	_ti_Read
+	extern	__idivu
+	extern	__setflag
+	extern	_gfx_AllocSprite
+	extern	_os_PutStrFull
+	extern	_ti_Open
+	extern	_gfx_PrintUInt
+	extern	_gfx_Sprite
+	extern	_zx7_Decompress
+	extern	__ineg
+	extern	_gfx_SetDefaultPalette
+	extern	_delay
+	extern	_gfx_HorizLine_NoClip
+	extern	_os_GetCSC
+	extern	_gfx_Sprite_NoClip
+	extern	_free
+	extern	_gfx_ScaleSprite
+	extern	__frameset
+	extern	_gfx_SetTextBGColor
+	extern	_kb_AnyKey
+	extern	_gfx_FillRectangle_NoClip
+	extern	_sprintf
+	extern	_ti_Delete
+	extern	_kb_Scan
+	extern	_strcmp
+	extern	_gfx_GetStringWidth
+	extern	_ti_Write
+	extern	_ti_Seek
+	extern	__ultof
+	extern	__ishru
+	extern	_gfx_VertLine_NoClip
+	extern	__fmul
+	extern	_gfx_FillScreen
+	extern	_gfx_VertLine
+	extern	_ti_SetArchiveStatus
+	extern	__Unwind_SjLj_Unregister
+	extern	__fdiv
+	extern	_gfx_SetColor
+	extern	__imulu
+	extern	_ti_GetDataPtr
+	extern	_gfx_PrintStringXY
+	extern	_gfx_End
+	extern	_gfx_SetTextXY
+	extern	__frameset0
+	extern	_gfx_SetTextScale
+	extern	_os_SetCursorPos
