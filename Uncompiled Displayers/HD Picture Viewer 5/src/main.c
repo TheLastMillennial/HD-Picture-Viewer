@@ -42,8 +42,6 @@ void PrintText(int8_t xpos, int8_t ypos, const char *text);
 uint24_t RebuildDB(uint8_t p);
 void SplashScreen();
 void SetLoadingBarProgress(uint24_t p, uint24_t t);
-bool HorizOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD);
-bool VertOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD);
 
 /* Main function, called first */
 int main(void)
@@ -229,7 +227,7 @@ void DisplayHomeScreen(uint24_t pics){
         picNames = malloc(picsDetected*BYTES_PER_IMAGE_NAME);
 
         //re-open the database since we closed everything earlier
-        database = ti_Open("HDPICDB","r");
+        //database = ti_Open("HDPICDB","r");
         //seeks to the first image name
         ti_Seek(8,SEEK_SET,database);
         //loops through every picture that was detected and store the image name to picNames
@@ -287,6 +285,7 @@ void DisplayHomeScreen(uint24_t pics){
     }
   }   while(kb_Data[6]!=kb_Clear);
 
+  ti_Close(database);
   free(picNames);
 }
 
@@ -361,9 +360,8 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   dbg_sprintf(dbgout,"\n\n--IMAGE CHANGE--");
   ti_var_t database = ti_Open("HDPICDB","r"), squareSlot, palSlot;
   char imgWH[6], imgID[2], searchName[9], palName[9];
-  uint24_t widthSquares=0, heightSquares=0,
-  maxWSquares=0, maxHSquares=0,
-  xSquare=0, ySquare=0;
+  int24_t widthSquares=0, heightSquares=0,
+  maxWSquares=0, maxHSquares=0;
   uint16_t *palPtr[256];
   gfx_sprite_t *outputImg, *srcImg;
   uint24_t scaleNum=1, scaleDen=1, newWidthHeight;
@@ -472,12 +470,11 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   dbg_sprintf(dbgout,"\nhS: %d\nyO: %d",heightSquares,yOffset);
   
 	
-  int24_t rightMostSquare=(widthSquares*(scaleNum/scaleDen));
   //This calculates the number of squares you can fit in the screen horizontally
   //we know the horizontal resolution of the screen is 320px. 
   //We can get the width of each square by doing newWidthHeight/scaleDen
   //the +1 is to account for rounding down errors. We don't want missing squares.
-  rightMostSquare = 320/(newWidthHeight/scaleDen)+1;
+  int24_t rightMostSquare = 320/(newWidthHeight/scaleDen)+1;
   //leftmost and topmost always starts at 0
   int24_t leftMostSquare=0;
   int24_t topMostSquare=0;
@@ -514,34 +511,17 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   //the -1 is to account for both the >= 
   //the +1 is to prevent underflow which would cause an infinite loop
   //this for loop outputs pic right to left
-  for(xSquare=rightMostSquare-1;xSquare+1>=leftMostSquare+1;xSquare--){
+  for(int24_t xSquare=rightMostSquare-1;xSquare+1>=leftMostSquare+1;xSquare--){
   dbg_sprintf(dbgout,"\nxS: %d",xSquare);
     //this for loop outputs pic bottom to top
-    for(ySquare=bottomMostSquare-1;ySquare+1>=topMostSquare+1;ySquare--){
-		if(ySquare == MAX_UINT){
-			
-			dbg_sprintf(dbgout,"ERR: ySquare too high: %d",ySquare);
-			return;
-		}
-		if(xSquare == MAX_UINT){
-			dbg_sprintf(dbgout,"ERR: xSquare too high: %d",xSquare);
-			return;
-		}
+    for(int24_t ySquare=bottomMostSquare-1;ySquare+1>=topMostSquare+1;ySquare--){
 
-        /*
-      //This will eventually not draw squares that are out of frame
-      if(HorizOverflow(xSquare, xOffset, newWidthHeight,scaleDen) || VertOverflow(ySquare+1, yOffset, newWidthHeight,scaleDen))
-      {
-        dbg_sprintf(dbgout,"\n-OOB- xLoc: %d\nyLoc: %d\ntest: %d",(xSquare+xOffset)*(newWidthHeight/scaleDen),(ySquare-yOffset)*(newWidthHeight/scaleDen), (xSquare+xOffset)*(newWidthHeight/scaleDen)-newWidthHeight/scaleDen);
 
-        //dbg_sprintf(dbgout,"\nERR: Square would go out of screen bounds! \n %.2s%03u%03u\n x location: %d \n y location: %d",
-        //imgID, xSquare, ySquare,(xSquare)*(newWidthHeight/scaleDen),(ySquare+1)*(newWidthHeight/scaleDen));
-        continue;
-      }*/
       //combines the separate parts into one name to search for
       sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
       //dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
-      /*This opens the variable with the name that was just assembled.
+      /*
+	  * This opens the variable with the name that was just assembled.
       * It then gets the pointer to that and stores it in a graphics variable
       */
       squareSlot = ti_Open(searchName,"r");
@@ -566,17 +546,15 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
       }
       else
       {
-        //if the square was detected, load it
+        //square exists, load it
         //seeks past header
         ti_Seek(16,SEEK_CUR,squareSlot);
         //store the original image into srcImg
         srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
         //resizes it to outputImg size
         gfx_ScaleSprite(srcImg,outputImg);
-        //displays the output image
-        //dbg_sprintf(dbgout,"\nxSquare: %d \newWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
-        //dbg_sprintf(dbgout,"\nxLoc: %d\nyLoc: %d",(xSquare+xOffset)*(newWidthHeight/scaleDen),(ySquare-yOffset)*(newWidthHeight/scaleDen));
 
+		//outputs square
         gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
       }
       //cleans up
@@ -586,29 +564,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   }
   free(outputImg);
 }
-//checks if graphics will overflow horizontally
-bool HorizOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD){
-  return false; //temporary
-  if( ((Sq-off)*(newWH/scaleD)) - newWH/scaleD > 320){
-    //dbg_sprintf(dbgout,"\nLoc: %d\nnewWH %d",(Sq+Off)*(newWH/scaleD),newWH);
-    return true;
-  }
 
-  else{
-    //dbg_sprintf(dbgout,"\nOOB xLoc: %d\nyLoc: %d\nnewWH %d",(xSquare+xOffset)*(newWidthHeight/scaleDen),(ySquare-yOffset)*(newWidthHeight/scaleDen),newWH);
-
-    return false;
-  }
-}
-//checks if graphics will overflow vertically
-bool VertOverflow(uint24_t Sq, int24_t off, uint24_t newWH, uint24_t scaleD){
-  return false; //temporary
-  if((Sq-off)*(newWH/scaleD) > 240)
-    return true;
-  else
-    return false;
-
-}
 
 /* Rebuilds the database of images on the calculator*/
 uint24_t RebuildDB(uint8_t p){
@@ -675,7 +631,7 @@ uint8_t DatabaseReady(){
   char *var_name;
   void *search_pos = NULL;
   uint8_t exists=0, ready = 0;
-  ti_var_t myAppVar;
+  ti_var_t database;
   char myData[9]="HDDATV10"; //remember have one more space than text you're saving for null termiation
   char compare[9]="HDDATV10";
   //tries to find database using known header
@@ -688,21 +644,23 @@ uint8_t DatabaseReady(){
   else{
     //if file doesn't already exist, create it.
     //creates the database appvar and writes the header. Checks if wrote successfuly
-    myAppVar=ti_Open("HDPICDB", "w");
-    if(!myAppVar)
+    database=ti_Open("HDPICDB", "w");
+    if(!database)
     ready = 3;
-    if(ti_Write(&myData,8,1,myAppVar)!=1)
+    if(ti_Write(&myData,8,1,database)!=1)
     ready = 4;
-    if (ti_Rewind(myAppVar) == EOF)
+    if (ti_Rewind(database) == EOF)
     ready = 5;
-    if (ti_Read(&myData,8, 1, myAppVar) != 1)
+    if (ti_Read(&myData,8, 1, database) != 1)
     ready = 6;
     if (strcmp(myData,compare)!=0)
     ready = 7;
     else{
       ready = 1;
     }
+	ti_Close(database);
   }
+  
   //ti_CloseAll();
 
   //checks what happened
