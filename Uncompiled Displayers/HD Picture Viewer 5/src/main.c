@@ -16,7 +16,11 @@
 
 /* globals */
 #define BYTES_PER_IMAGE_NAME 9 //8 for image name, 1 for null terminator
-#define MAX_IMAGES 936 //Max images is this because max combinations of appvars goes up to that
+//Max images is this because max combinations of appvars goes up to 936.
+// Two characters for appvar identifier. 
+// First character can be alphabetic (26 options). Second character can be alphanumeric (36 options). 
+// 26*36=936
+#define MAX_IMAGES 936 
 #define TASKS_TO_FINISH 2
 #define X_MARGIN 8
 #define Y_MARGIN 38
@@ -26,6 +30,11 @@
 #define THUMBNAIL_ZOOM 0
 #define SQUARE_WIDTH_AND_HEIGHT 80
 #define MAX_UINT 16777215
+//colors
+#define XLIBC_GREY 181 //the best grey xlibc has to offer
+#define XLIBC_RED 192 //xlibc red
+#define PALETTE_BLACK 0 //the xlibc palette and all hdpic generated palettes will have black as 0
+#define PALETTE_WHITE 255 //the xlibc palette and all hdpic generated palettes will have white as 255
 
 
 /* Function Prototyptes */
@@ -91,7 +100,7 @@ void DisplayHomeScreen(uint24_t pics){
   char *picNames = malloc(pics*BYTES_PER_IMAGE_NAME); //BYTES_PER_IMAGE_NAME = 9
   ti_var_t database = ti_Open("HDPICDB","r");
   uint24_t i,startName=0,
-  maxWidth=320, maxHeight=240;
+  maxWidth=LCD_WIDTH, maxHeight=LCD_HEIGHT;
   int24_t xOffset=0, yOffset=0;
   uint8_t Ypos=10;
 
@@ -103,10 +112,10 @@ void DisplayHomeScreen(uint24_t pics){
 
 
   //makes the screen black and sets text gray
-  gfx_FillScreen(0);
-  gfx_SetTextFGColor(181);
-  gfx_SetTextBGColor(0);
-  gfx_SetColor(255);
+  gfx_FillScreen(PALETTE_BLACK);
+  gfx_SetTextFGColor(XLIBC_GREY);
+  gfx_SetTextBGColor(PALETTE_BLACK);
+  gfx_SetColor(PALETTE_WHITE);
   gfx_VertLine(140,20,200);
 
 
@@ -131,7 +140,7 @@ void DisplayHomeScreen(uint24_t pics){
     //key = kb_Data[7];
     next     = kb_Data[1] & kb_Graph;
     prev     = kb_Data[1] & kb_Yequ;
-	resetPic = kb_Data[1] & kb_Zoom;
+	resetPic = kb_Data[1] & kb_Window;
     deletePic= kb_Data[1] & kb_Del;
     zoomIn   = kb_Data[6] & kb_Add;
     zoomOut  = kb_Data[6] & kb_Sub;
@@ -161,11 +170,10 @@ void DisplayHomeScreen(uint24_t pics){
         DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
       }
 	  
-		
-	  //if Zoom key was pressed, reset zoom
+	  //if Window key was pressed, reset zoom and pan
 	  if (resetPic){
-		  maxWidth = 320;
-		  maxHeight = 240;
+		  maxWidth = LCD_WIDTH;
+		  maxHeight = LCD_HEIGHT;
 		  xOffset = 0;
 		  yOffset = 0;
 		  DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
@@ -184,7 +192,6 @@ void DisplayHomeScreen(uint24_t pics){
         maxHeight = maxHeight/2;
         dbg_sprintf(dbgout,"\n\nKEYPRESS: Zoom Out\n maxWidth: %d\n maxHeight: %d ", maxWidth, maxHeight);
         DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
-
       }
 
       //if delete key pressed, delete all appvars related to current image
@@ -193,12 +200,11 @@ void DisplayHomeScreen(uint24_t pics){
         gfx_SetDefaultPalette(gfx_8bpp);
         //we don't want the user seeing the horrors of their image with the wrong palette
 
-        gfx_FillScreen(0);
-        gfx_SetTextFGColor(181);
-        gfx_SetTextBGColor(0);
+        gfx_FillScreen(PALETTE_BLACK);
+        gfx_SetTextFGColor(XLIBC_GREY);
+        gfx_SetTextBGColor(PALETTE_BLACK);
         PrintCenteredX("Deleting Picture...",120);
-        //close all open slots. We don't want any leaks.
-        //ti_CloseAll();
+
         //delete the palette and all squares
         DeleteImage(startName, maxWidth, maxHeight);
         PrintCenteredX("Picture deleted.",130);
@@ -208,21 +214,21 @@ void DisplayHomeScreen(uint24_t pics){
         //picture names will change. Delete what we currently have
         free(picNames);
         //set color for potential splash screen
-        gfx_SetTextFGColor(181);
-        gfx_SetTextBGColor(0);
+        gfx_SetTextFGColor(XLIBC_GREY);
+        gfx_SetTextBGColor(PALETTE_BLACK);
         //rebuild the database to account for the deleted image. Plug in 0 temporarily
         int picsDetected=RebuildDB(0);
         //check if all images were deleted. If so, just quit.
         if(picsDetected==0){
           //we pause because RebuildDB will show a warning screen we want the user to see
           while (!os_GetCSC());
-          //ti_CloseAll();
           gfx_End();
           return;
         }
+		
         //ensure text is readable
-        gfx_SetTextFGColor(191);
-        gfx_SetTextBGColor(0);
+        gfx_SetTextFGColor(XLIBC_GREY);
+        gfx_SetTextBGColor(PALETTE_BLACK);
         //re-allocate memory for the picture names
         picNames = malloc(picsDetected*BYTES_PER_IMAGE_NAME);
 
@@ -262,8 +268,8 @@ void DisplayHomeScreen(uint24_t pics){
         PrintNames(startName, picNames, pics);
         xOffset = 0;
         yOffset = 0;
-        maxWidth = 320;
-        maxHeight = 240;
+        maxWidth = LCD_WIDTH;
+        maxHeight = LCD_HEIGHT;
         DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
       }
 
@@ -277,8 +283,8 @@ void DisplayHomeScreen(uint24_t pics){
         PrintNames(startName, picNames, pics);
         xOffset = 0;
         yOffset = 0;
-        maxWidth = 320;
-        maxHeight = 240;
+        maxWidth = LCD_WIDTH;
+        maxHeight = LCD_HEIGHT;
         DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
       }
 
@@ -365,7 +371,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   uint16_t *palPtr[256];
   gfx_sprite_t *outputImg, *srcImg;
   uint24_t scaleNum=1, scaleDen=1, newWidthHeight;
-  gfx_FillScreen(0);
+  gfx_FillScreen(PALETTE_BLACK);
 
   //seeks past header (8bytes), imgName, and unselected images
   ti_Seek(16+(16*picName),SEEK_CUR,database);
@@ -474,7 +480,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   //we know the horizontal resolution of the screen is 320px. 
   //We can get the width of each square by doing newWidthHeight/scaleDen
   //the +1 is to account for rounding down errors. We don't want missing squares.
-  int24_t rightMostSquare = 320/(newWidthHeight/scaleDen)+1;
+  int24_t rightMostSquare = LCD_WIDTH/(newWidthHeight/scaleDen)+1;
   //leftmost and topmost always starts at 0
   int24_t leftMostSquare=0;
   int24_t topMostSquare=0;
@@ -482,7 +488,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   //we know the vertical resolution of the screen is 240px. 
   //We can get the width of each square by doing newWidthHeight/scaleDen
   //the +1 is to account for rounding down errors. We don't want missing squares.
-  int24_t bottomMostSquare = 240/(newWidthHeight/scaleDen)+1;
+  int24_t bottomMostSquare = LCD_HEIGHT/(newWidthHeight/scaleDen)+1;
 
 
   //applies offsets
@@ -512,7 +518,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   //the +1 is to prevent underflow which would cause an infinite loop
   //this for loop outputs pic right to left
   for(int24_t xSquare=rightMostSquare-1;xSquare+1>=leftMostSquare+1;xSquare--){
-  dbg_sprintf(dbgout,"\nxS: %d",xSquare);
+	dbg_sprintf(dbgout,"\nxS: %d",xSquare);
     //this for loop outputs pic bottom to top
     for(int24_t ySquare=bottomMostSquare-1;ySquare+1>=topMostSquare+1;ySquare--){
 
@@ -550,12 +556,16 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         //seeks past header
         ti_Seek(16,SEEK_CUR,squareSlot);
         //store the original image into srcImg
-        srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
+        //srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
+		srcImg = gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT);
+		zx7_Decompress(srcImg, ti_GetDataPtr(squareSlot));
         //resizes it to outputImg size
         gfx_ScaleSprite(srcImg,outputImg);
 
 		//outputs square
         gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
+		//free's square's mem
+		free(srcImg);
       }
       //cleans up
       ti_Close(squareSlot);
@@ -615,10 +625,10 @@ uint24_t RebuildDB(uint8_t p){
 }
 
 void NoImagesFound(){
-  gfx_SetTextBGColor(255);
-  gfx_SetTextFGColor(192);
+  gfx_SetTextBGColor(PALETTE_WHITE);
+  gfx_SetTextFGColor(XLIBC_RED);
   PrintCenteredX("No Pictures Detected!",1);
-  gfx_SetTextFGColor(0);
+  gfx_SetTextFGColor(PALETTE_BLACK);
   PrintCenteredX("Convert some images and send them to your",11);
   PrintCenteredX("calculator using the HDpic converter!",21);
   PrintCenteredX("Tutorial:  https://youtu.be/s1-g8oSueQg",31);
@@ -661,21 +671,19 @@ uint8_t DatabaseReady(){
 	ti_Close(database);
   }
   
-  //ti_CloseAll();
 
   //checks what happened
   if(ready==1){
-    gfx_SetTextFGColor(195);
-    PrintCenteredX("created",180);
+	dbg_sprintf(dbgout,"\nDatabase Created");
     return 1;
   }else if(ready==2){
-    gfx_SetTextFGColor(004);
-    PrintCenteredX("exists",180);
+	dbg_sprintf(dbgout,"\nDatabase Aready Exists");
     return 2;
   }else{
-    gfx_SetTextFGColor(224);
-    PrintCenteredX("failure",180);
-    gfx_SetTextXY(120,190);
+	dbg_sprintf(dbgout,"\nDatabase Failed to Create: %d\n",ready);
+    gfx_SetTextFGColor(XLIBC_RED);
+    PrintCenteredX("DB Failure! Please report:",180);
+    gfx_SetTextXY(120,200);
     gfx_PrintUInt(ready,1);
     return 0;
   }
@@ -698,10 +706,10 @@ void SetLoadingBarProgress(uint24_t p, uint24_t t){
 //creates a simple splash screen when program starts
 void SplashScreen(){
   //sets color to grey
-  gfx_SetColor(181);
+  gfx_SetColor(XLIBC_GREY);
   gfx_FillRectangle_NoClip(60,80,LCD_WIDTH-120,LCD_HEIGHT-160);
   gfx_SetTextFGColor(35);
-  gfx_SetTextBGColor(181);
+  gfx_SetTextBGColor(XLIBC_GREY);
   /* Print title screen */
   PrintCentered("HD Picture Viewer");
 }
@@ -712,9 +720,9 @@ void PrintNames(uint24_t startName, char *picNames, uint24_t numOfPics){
 
   //clears old text and sets prev for new text
   gfx_SetTextScale(2,2);
-  gfx_SetColor(0);
+  gfx_SetColor(PALETTE_BLACK);
   gfx_FillRectangle_NoClip(0,0,140,240);
-  gfx_SetColor(255);
+  gfx_SetColor(PALETTE_WHITE);
 
   //re-draws UI lines
   gfx_HorizLine_NoClip(0,120,6);
