@@ -82,7 +82,7 @@ _SplashScreen:
 	push	hl
 	call	_gfx_SetTextBGColor
 	pop	hl
-	ld	hl, _.str.25
+	ld	hl, _.str.27
 	push	hl
 	call	_PrintCentered
 	pop	hl
@@ -177,22 +177,9 @@ BB3_1:
 	ld	a, 1
 	jr	nz, BB3_1
 	bit	0, (ix - 27)
-	jr	z, BB3_4
-	ld	hl, 4
-	push	hl
-	call	_gfx_SetTextFGColor
-	pop	hl
-	ld	hl, -76
-	push	hl
-	ld	hl, _.str.23
-	push	hl
-	call	_PrintCenteredX
-	pop	hl
-	pop	hl
 	ld	a, 2
-	jp	BB3_7
-BB3_4:
-	ld	hl, _.str.14
+	jp	nz, BB3_5
+	ld	hl, _.str.15
 	push	hl
 	ld	hl, _.str
 	push	hl
@@ -246,33 +233,20 @@ BB3_4:
 	add	hl, bc
 	or	a, a
 	sbc	hl, bc
-	jr	nz, BB3_6
-	ld	hl, -61
-	push	hl
-	call	_gfx_SetTextFGColor
-	pop	hl
-	ld	hl, -76
-	push	hl
-	ld	hl, _.str.22
-	push	hl
-	call	_PrintCenteredX
-	pop	hl
-	pop	hl
 	ld	a, 1
-	jr	BB3_7
-BB3_6:
-	ld	hl, -32
+	jr	z, BB3_5
+	ld	hl, -64
 	push	hl
 	call	_gfx_SetTextFGColor
 	pop	hl
 	ld	hl, -76
 	push	hl
-	ld	hl, _.str.24
+	ld	hl, _.str.26
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
-	ld	hl, 190
+	ld	hl, 200
 	push	hl
 	ld	hl, 120
 	push	hl
@@ -287,7 +261,7 @@ BB3_6:
 	pop	hl
 	pop	hl
 	xor	a, a
-BB3_7:
+BB3_5:
 	ld	sp, ix
 	pop	ix
 	ret
@@ -300,7 +274,7 @@ _RebuildDB:
 	call	__frameset
 	ld	de, 0
 	ld	iy, _.str
-	ld	bc, _.str.14
+	ld	bc, _.str.15
 	or	a, a
 	sbc	hl, hl
 	ld	(ix - 54), hl
@@ -330,7 +304,7 @@ _RebuildDB:
 BB4_1:
 	ld	hl, 21
 	push	hl
-	ld	hl, _.str.16
+	ld	hl, _.str.17
 	push	hl
 	pea	ix - 51
 	call	_ti_DetectVar
@@ -763,7 +737,7 @@ BB5_14:
 	ld	bc, (ix - 39)
 	ld	a, e
 	ld	e, c
-	bit	2, a
+	bit	3, a
 	jr	z, BB5_16
 	or	a, a
 	sbc	hl, hl
@@ -950,7 +924,7 @@ BB5_25:
 	ld	bc, (ix - 3)
 	jp	BB5_31
 BB5_27:
-	ld	hl, -65
+	ld	hl, -75
 	push	hl
 	call	_gfx_SetTextFGColor
 	pop	hl
@@ -1431,13 +1405,13 @@ BB6_8:
 	section	.text,"ax",@progbits
 	public	_DrawImage
 _DrawImage:
-	ld	hl, -59
+	ld	hl, -62
 	call	__frameset
 	ld	hl, (ix + 15)
 	ld	de, _.str
 	ld	bc, _.str.1
 	call	__ineg
-	ld	(ix - 47), hl
+	ld	(ix - 44), hl
 	lea	hl, ix - 8
 	ld	(ix - 32), hl
 	push	bc
@@ -1570,20 +1544,19 @@ _DrawImage:
 	push	hl
 	pop	bc
 	ld	hl, (ix - 29)
-	ld	(ix - 44), bc
+	ld	(ix - 41), bc
 	call	__imulu
-	ld	(ix - 38), hl
-	ld	(ix - 41), iy
+	ld	(ix - 35), hl
+	ld	(ix - 38), iy
 	lea	hl, iy
-	ld	(ix - 35), de
 	push	de
 	pop	bc
 	call	__imulu
 	push	hl
-	pop	bc
-	ld	hl, (ix - 38)
+	pop	de
+	ld	hl, (ix - 35)
 	or	a, a
-	sbc	hl, bc
+	sbc	hl, de
 	call	pe, __setflag
 	jp	m, BB7_2
 	ld	a, 0
@@ -1593,15 +1566,15 @@ BB7_2:
 BB7_3:
 	bit	0, a
 	ld	iy, (ix - 29)
-	ld	de, (ix - 35)
+	ld	de, 80
 	jr	nz, BB7_5
-	ld	de, (ix - 44)
+	ld	iy, (ix - 38)
 BB7_5:
 	bit	0, a
 	jr	nz, BB7_7
-	ld	iy, (ix - 41)
+	ld	bc, (ix - 41)
 BB7_7:
-	push	de
+	push	bc
 	pop	hl
 	add	hl, bc
 	or	a, a
@@ -1636,16 +1609,12 @@ BB7_11:
 	pop	ix
 	ret
 BB7_12:
-	ex	de, hl
-	ld	bc, 80
-	call	__imulu
-	lea	bc, iy
-	call	__idivu
-	ld	de, _malloc
+	ld	(ix - 41), iy
+	ld	(ix - 35), bc
+	ld	hl, _malloc
+	push	hl
 	push	de
-	push	hl
-	ld	(ix - 35), hl
-	push	hl
+	push	de
 	call	_gfx_AllocSprite
 	pop	de
 	pop	de
@@ -1667,10 +1636,42 @@ BB7_14:
 	jr	z, BB7_14
 	jr	BB7_11
 BB7_15:
-	ld	(ix - 38), hl
+	ld	(ix - 47), hl
+	ld	hl, (ix - 35)
+	ld	bc, 80
+	call	__imulu
+	ld	bc, (ix - 41)
+	call	__idivu
+	ld	de, _malloc
+	push	de
+	push	hl
+	ld	(ix - 35), hl
+	push	hl
+	call	_gfx_AllocSprite
+	pop	de
+	pop	de
+	pop	de
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	nz, BB7_18
+	ld	hl, _.str.10
+	ld	de, -126
+	push	de
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+BB7_17:
+	call	_os_GetCSC
+	or	a, a
+	jr	z, BB7_17
+	jr	BB7_11
+BB7_18:
+	ld	(ix - 41), hl
 	ld	hl, _.str.5
 	lea	bc, ix - 26
-	ld	(ix - 44), bc
+	ld	(ix - 50), bc
 	ld	de, (ix - 32)
 	push	de
 	push	hl
@@ -1681,51 +1682,51 @@ BB7_15:
 	pop	hl
 	ld	hl, _.str.1
 	push	hl
-	ld	hl, (ix - 44)
+	ld	hl, (ix - 50)
 	push	hl
 	call	_ti_Open
 	ld	e, a
 	pop	hl
 	pop	hl
 	or	a, a
-	jr	nz, BB7_18
+	jr	nz, BB7_21
 	ld	hl, 110
 	push	hl
-	ld	hl, (ix - 44)
+	ld	hl, (ix - 50)
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
 	ld	hl, 120
 	push	hl
-	ld	hl, _.str.10
+	ld	hl, _.str.11
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
 	ld	hl, -126
 	push	hl
-	ld	hl, _.str.11
+	ld	hl, _.str.12
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
 	ld	hl, -116
 	push	hl
-	ld	hl, _.str.12
+	ld	hl, _.str.13
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
-BB7_17:
+BB7_20:
 	call	_os_GetCSC
 	or	a, a
-	jr	z, BB7_17
+	jr	z, BB7_20
 	jp	BB7_11
-BB7_18:
+BB7_21:
 	ld	hl, 24
 	push	de
-	ld	(ix - 44), de
+	ld	(ix - 50), de
 	ld	de, 0
 	push	de
 	push	hl
@@ -1733,7 +1734,7 @@ BB7_18:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, (ix - 44)
+	ld	hl, (ix - 50)
 	push	hl
 	call	_ti_GetDataPtr
 	pop	de
@@ -1746,18 +1747,18 @@ BB7_18:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, (ix - 44)
+	ld	hl, (ix - 50)
 	push	hl
 	call	_ti_Close
 	pop	hl
-	ld	hl, _.str.13
+	ld	hl, _.str.14
 	push	hl
 	call	_PrintCentered
 	pop	hl
 	ld	hl, 320
 	ld	bc, (ix - 35)
 	call	__idivu
-	ld	(ix - 44), hl
+	ld	(ix - 50), hl
 	ld	hl, 240
 	call	__idivu
 	push	hl
@@ -1768,39 +1769,39 @@ BB7_18:
 	sbc	hl, de
 	push	hl
 	pop	iy
-	ld	de, (ix - 44)
+	ld	de, (ix - 50)
 	add	iy, de
 	ld	hl, (ix + 18)
 	inc	hl
 	add	hl, bc
-	ld	(ix - 44), hl
+	ld	(ix - 50), hl
 	lea	hl, iy
 	ld	de, (ix - 29)
 	or	a, a
 	sbc	hl, de
 	call	pe, __setflag
-	jp	m, BB7_20
+	jp	m, BB7_23
 	push	de
 	pop	iy
-BB7_20:
+BB7_23:
 	ld	de, 1
-	ld	bc, (ix - 47)
+	ld	bc, (ix - 44)
 	push	bc
 	pop	hl
 	or	a, a
 	sbc	hl, de
 	call	pe, __setflag
-	jp	p, BB7_22
+	jp	p, BB7_25
 	ld	bc, 0
-BB7_22:
-	ld	hl, (ix - 44)
-	ld	de, (ix - 41)
+BB7_25:
+	ld	hl, (ix - 50)
+	ld	de, (ix - 38)
 	or	a, a
 	sbc	hl, de
 	call	pe, __setflag
-	jp	m, BB7_24
-	ld	(ix - 44), de
-BB7_24:
+	jp	m, BB7_27
+	ld	(ix - 50), de
+BB7_27:
 	ld	de, (ix + 18)
 	ex	de, hl
 	ld	de, 1
@@ -1809,22 +1810,22 @@ BB7_24:
 	call	pe, __setflag
 	ld	hl, (ix + 18)
 	ld	(ix - 29), hl
-	jp	p, BB7_26
+	jp	p, BB7_29
 	or	a, a
 	sbc	hl, hl
 	ld	(ix - 29), hl
-BB7_26:
+BB7_29:
 	lea	hl, ix - 17
-	ld	(ix - 41), hl
+	ld	(ix - 38), hl
 	lea	de, iy
-BB7_27:
+BB7_30:
 	push	bc
 	pop	hl
 	or	a, a
 	sbc	hl, de
 	call	pe, __setflag
-	jp	p, BB7_35
-	ld	(ix - 47), bc
+	jp	p, BB7_38
+	ld	(ix - 44), bc
 	push	de
 	pop	iy
 	dec	iy
@@ -1833,24 +1834,24 @@ BB7_27:
 	add	hl, de
 	ld	bc, (ix - 35)
 	call	__imulu
-	ld	(ix - 56), hl
-	ld	de, (ix - 44)
-BB7_29:
+	ld	(ix - 59), hl
+	ld	de, (ix - 50)
+BB7_32:
 	ld	hl, (ix - 29)
 	or	a, a
 	sbc	hl, de
 	call	pe, __setflag
-	jp	p, BB7_34
+	jp	p, BB7_37
 	dec	de
-	ld	(ix - 50), de
+	ld	(ix - 53), de
 	push	de
-	ld	(ix - 53), iy
+	ld	(ix - 56), iy
 	push	iy
 	ld	hl, (ix - 32)
 	push	hl
 	ld	hl, _.str.6
 	push	hl
-	ld	hl, (ix - 41)
+	ld	hl, (ix - 38)
 	push	hl
 	call	_sprintf
 	pop	hl
@@ -1860,40 +1861,29 @@ BB7_29:
 	pop	hl
 	ld	hl, _.str.1
 	push	hl
-	ld	hl, (ix - 41)
+	ld	hl, (ix - 38)
 	push	hl
 	call	_ti_Open
 	ld	e, a
 	pop	hl
 	pop	hl
 	or	a, a
-	jr	nz, BB7_32
-	ld	hl, _malloc
-	push	hl
-	ld	hl, 80
-	push	hl
-	push	hl
-	call	_gfx_AllocSprite
-	push	hl
-	pop	de
-	ld	(ix - 59), de
-	pop	hl
-	pop	hl
-	pop	hl
+	jr	nz, BB7_35
 	ld	hl, _errorTriangle_compressed
 	push	hl
-	push	de
+	ld	hl, (ix - 47)
+	push	hl
 	call	_zx7_Decompress
 	pop	hl
 	pop	hl
-	ld	hl, (ix - 38)
+	ld	hl, (ix - 41)
 	push	hl
-	ld	hl, (ix - 59)
+	ld	hl, (ix - 47)
 	push	hl
 	call	_gfx_ScaleSprite
 	pop	hl
 	pop	hl
-	ld	hl, (ix - 50)
+	ld	hl, (ix - 53)
 	ld	a, l
 	ld	hl, (ix + 18)
 	sub	a, l
@@ -1902,68 +1892,76 @@ BB7_29:
 	ld	l, e
 	mlt	hl
 	push	hl
-	ld	hl, (ix - 56)
-	push	hl
-	ld	hl, (ix - 38)
-	push	hl
-	call	_gfx_Sprite_NoClip
-	pop	hl
-	pop	hl
-	pop	hl
 	ld	hl, (ix - 59)
 	push	hl
-	call	_free
-	jr	BB7_33
-BB7_32:
+	ld	hl, (ix - 41)
+	push	hl
+	call	_gfx_Sprite_NoClip
+	ld	de, (ix - 53)
+	pop	hl
+	pop	hl
+	jr	BB7_36
+BB7_35:
 	push	de
 	ld	hl, 1
 	push	hl
 	ld	hl, 16
 	push	hl
-	ld	(ix - 59), de
+	ld	(ix - 62), de
 	call	_ti_Seek
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, (ix - 59)
+	ld	hl, (ix - 62)
 	push	hl
 	call	_ti_GetDataPtr
 	pop	de
-	ld	de, (ix - 38)
-	push	de
+	push	hl
+	ld	hl, (ix - 47)
+	push	hl
+	call	_zx7_Decompress
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 41)
+	push	hl
+	ld	hl, (ix - 47)
 	push	hl
 	call	_gfx_ScaleSprite
 	pop	hl
 	pop	hl
-	ld	hl, (ix - 50)
+	ld	hl, (ix - 53)
 	ld	de, (ix + 18)
 	or	a, a
 	sbc	hl, de
 	ld	bc, (ix - 35)
 	call	__imulu
 	push	hl
-	ld	hl, (ix - 56)
+	ld	hl, (ix - 59)
 	push	hl
-	ld	hl, (ix - 38)
+	ld	hl, (ix - 41)
 	push	hl
 	call	_gfx_Sprite
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, (ix - 59)
+	ld	hl, (ix - 62)
 	push	hl
 	call	_ti_Close
-BB7_33:
-	ld	de, (ix - 50)
+	ld	de, (ix - 53)
+BB7_36:
 	pop	hl
-	ld	iy, (ix - 53)
-	jp	BB7_29
-BB7_34:
+	ld	iy, (ix - 56)
+	jp	BB7_32
+BB7_37:
 	lea	de, iy
-	ld	bc, (ix - 47)
-	jp	BB7_27
-BB7_35:
-	ld	hl, (ix - 38)
+	ld	bc, (ix - 44)
+	jp	BB7_30
+BB7_38:
+	ld	hl, (ix - 47)
+	push	hl
+	call	_free
+	pop	hl
+	ld	hl, (ix - 41)
 	push	hl
 	call	_free
 	pop	hl
@@ -2231,7 +2229,7 @@ _NoImagesFound:
 	pop	hl
 	ld	hl, 1
 	push	hl
-	ld	hl, _.str.17
+	ld	hl, _.str.18
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
@@ -2243,28 +2241,49 @@ _NoImagesFound:
 	pop	hl
 	ld	hl, 11
 	push	hl
-	ld	hl, _.str.18
+	ld	hl, _.str.19
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
 	ld	hl, 21
 	push	hl
-	ld	hl, _.str.19
+	ld	hl, _.str.20
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
 	ld	hl, 31
 	push	hl
-	ld	hl, _.str.20
+	ld	hl, _.str.21
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
-	ld	hl, 41
+	ld	hl, 51
 	push	hl
-	ld	hl, _.str.21
+	ld	hl, _.str.22
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, 61
+	push	hl
+	ld	hl, _.str.23
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, 71
+	push	hl
+	ld	hl, _.str.24
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, 91
+	push	hl
+	ld	hl, _.str.25
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
@@ -2364,26 +2383,31 @@ _.str.8:
 	section	.rodata,"a",@progbits
 	private	_.str.9
 _.str.9:
-	db	"ERR: Failed to allocate memory!", 0
+	db	"ERR: Failed to allocate src memory!", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.10
 _.str.10:
-	db	"ERR: Palette does not exist!", 0
+	db	"ERR: Failed to allocate output memory!", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.11
 _.str.11:
-	db	"Image may have recently been deleted.", 0
+	db	"ERR: Palette does not exist!", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.12
 _.str.12:
-	db	"Try restarting the program.", 0
+	db	"Image may have recently been deleted.", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.13
 _.str.13:
+	db	"Try restarting the program.", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.14
+_.str.14:
 	db	"Rendering...", 0
 
 	section	.data,"aw",@progbits
@@ -2392,39 +2416,54 @@ _errorTriangle_compressed:
 	db	"P P‘", 0, 0, "P", 0, "K)šO", 0, "h", 0, "ÕO", 0, "", 0, 0, "˜£O", 0, " ", 0, "ÙOãEà#gO", 13, "€Oá	à#cOàO‡g;€O¸	ØOøMø", 13, "vOçYà", 13, "xOþ/ÖOx=-¾Oaà", 0, "wOž;àiO‚c", 0, "9Oà9æ8O%eà", 0, "oOž7à]O‚žg", 0, "¸Of5X~3XOd»!˜áOò©‡ÊÅÛO", 0, "îO>àQoO¸`OŽM", 10, "àQ;`OŸ— œ³àsO¸", 0, "eOƒØS¸CàO8", 0, "GÍM>O", 0, ""
 
 	section	.rodata,"a",@progbits
-	private	_.str.14
-_.str.14:
+	private	_.str.15
+_.str.15:
 	db	"w", 0
-
-	section	.rodata,"a",@progbits
-	private	_.str.16
-_.str.16:
-	db	"HDPALV10", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.17
 _.str.17:
-	db	"No Pictures Detected!", 0
+	db	"HDPALV10", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.18
 _.str.18:
-	db	"Convert some images and send them to your", 0
+	db	"No Pictures Detected!", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.19
 _.str.19:
-	db	"calculator using the HDpic converter!", 0
+	db	"Convert some images and send them to your", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.20
 _.str.20:
-	db	"Tutorial:  https://youtu.be/s1-g8oSueQg", 0
+	db	"calculator using the HDpic converter!", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.21
 _.str.21:
-	db	"Press any key to quit", 0
+	db	"Tutorial:  <no pre-release tutorial>", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.22
+_.str.22:
+	db	"If you keep getting this error:", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.23
+_.str.23:
+	db	" Go to home screen, press [2nd]>[+],", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.24
+_.str.24:
+	db	" then select 'AppVars'. Ensure picture are there.", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.25
+_.str.25:
+	db	"Press any key to quit.", 0
 
 	section	.rodata,"a",@progbits
 	private	___const.DatabaseReady.compare
@@ -2432,23 +2471,13 @@ ___const.DatabaseReady.compare:
 	db	"HDDATV10", 0
 
 	section	.rodata,"a",@progbits
-	private	_.str.22
-_.str.22:
-	db	"created", 0
+	private	_.str.26
+_.str.26:
+	db	"DB Failure! Please report:", 0
 
 	section	.rodata,"a",@progbits
-	private	_.str.23
-_.str.23:
-	db	"exists", 0
-
-	section	.rodata,"a",@progbits
-	private	_.str.24
-_.str.24:
-	db	"failure", 0
-
-	section	.rodata,"a",@progbits
-	private	_.str.25
-_.str.25:
+	private	_.str.27
+_.str.27:
 	db	"HD Picture Viewer", 0
 
 	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
@@ -2502,8 +2531,8 @@ _.str.25:
 	extern	_ti_SetArchiveStatus
 	extern	__Unwind_SjLj_Unregister
 	extern	__fdiv
-	extern	_gfx_SetColor
 	extern	__imulu
+	extern	_gfx_SetColor
 	extern	_ti_GetDataPtr
 	extern	_gfx_PrintStringXY
 	extern	_gfx_End

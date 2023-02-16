@@ -313,9 +313,8 @@ void DeleteImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight){
   //closes database
   ti_Close(database);
 
-  //ti_CloseAll();
-
   /*converts the char numbers from the header appvar into uint numbers
+  The header has 6 numbers so the below ? will go from 0-5
   (uint24_t)imgWH[?]-'0')*100 covers the 100's place
   (uint24_t)imgWH[?]-'0')*10 covers the 10's place
   (uint24_t)imgWH[?]-'0' covers the 1's place
@@ -438,15 +437,22 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
 
   dbg_sprintf(dbgout,"\n newWH: %d \n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d",newWidthHeight,scaleNum,scaleDen, xOffset, yOffset);
 
-  //allocates memory for outputImg according to scale
-  outputImg = gfx_MallocSprite(newWidthHeight/scaleDen,newWidthHeight/scaleDen);
-  if (!outputImg){
-    PrintCenteredX("ERR: Failed to allocate memory!",130);
+  //memory where each unsized image will be stored
+  srcImg = gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT);
+  if (!srcImg){
+    PrintCenteredX("ERR: Failed to allocate src memory!",130);
     while(!os_GetCSC());
     //ti_CloseAll();
     return;
   }
-
+  //allocates memory for resized image (according to scale)
+  outputImg = gfx_MallocSprite(newWidthHeight/scaleDen,newWidthHeight/scaleDen);
+  if (!outputImg){
+    PrintCenteredX("ERR: Failed to allocate output memory!",130);
+    while(!os_GetCSC());
+    //ti_CloseAll();
+    return;
+  }
 
   //sets correct palettes
   sprintf(palName, "HP%.2s0000",imgID);
@@ -487,21 +493,20 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
   //This calculates the number of squares you can fit in the screen virtically
   //we know the vertical resolution of the screen is 240px. 
   //We can get the width of each square by doing newWidthHeight/scaleDen
-  //the +1 is to account for rounding down errors. We don't want missing squares.
+  //the +1 is to account for rounding down errors. We don't want missing squares. (Overflow is compensated for, if neessary, below)
   int24_t bottomMostSquare = LCD_HEIGHT/(newWidthHeight/scaleDen)+1;
 
 
-  //applies offsets
+  /*applies offsets*/
   //if we're panning horizontally, shift the rightmost and leftmost squares (xOffset is negative in this case)
   rightMostSquare-=xOffset;
   leftMostSquare-=xOffset;
-  
   //if we're panning vertically, shift the topmost and bottomost squares (yOffset is negative in this case)
   bottomMostSquare+=yOffset;
   topMostSquare+=yOffset;
   
   
-  //make sure we don't try to display more squares than exist.
+  /*make sure we don't try to display more squares than exist.*/
   if (rightMostSquare>widthSquares)
 	  rightMostSquare=widthSquares;
   if (leftMostSquare<0)
@@ -513,16 +518,18 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
 
 	dbg_sprintf(dbgout,"\nrightMost %d\nLeftMost %d",rightMostSquare,leftMostSquare);
 	dbg_sprintf(dbgout,"\ntopMost %d\nbottomMost %d",topMostSquare,bottomMostSquare);
-
-  //the -1 is to account for both the >= 
+  
+  /*Loop to display images*/
+  //the -1 is to account for both the
   //the +1 is to prevent underflow which would cause an infinite loop
-  //this for loop outputs pic right to left
-  for(int24_t xSquare=rightMostSquare-1;xSquare+1>=leftMostSquare+1;xSquare--){
+  //this for loop outputs pic right to left, top to bottom
+  int24_t xStart=leftMostSquare-1, xEnd=rightMostSquare-1;
+  int24_t yStart =topMostSquare-1,  yEnd =bottomMostSquare-1;
+  
+  for(int24_t xSquare=xEnd;xSquare>xStart;--xSquare){
 	dbg_sprintf(dbgout,"\nxS: %d",xSquare);
     //this for loop outputs pic bottom to top
-    for(int24_t ySquare=bottomMostSquare-1;ySquare+1>=topMostSquare+1;ySquare--){
-
-
+    for(int24_t ySquare=yEnd;ySquare>yStart;--ySquare){
       //combines the separate parts into one name to search for
       sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
       //dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
@@ -531,47 +538,42 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
       * It then gets the pointer to that and stores it in a graphics variable
       */
       squareSlot = ti_Open(searchName,"r");
-      //checks if the square does not exist
-      if (!squareSlot){
-        //square does not exist
-        dbg_sprintf(dbgout,"\nERR: Square doesn't exist!");
-        dbg_sprintf(dbgout,"\n %s",searchName);
-        //dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \newWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
-        gfx_sprite_t *errorImg;
-        //uncompresses the error image
-        errorImg = gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT);
-        zx7_Decompress(errorImg, errorTriangle_compressed);
-        //resizes it to outputImg size
-        gfx_ScaleSprite(errorImg,outputImg);
-        //displays the output image
-        //dbg_sprintf(dbgout,"\nxSquare: %d \newWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
-        gfx_Sprite_NoClip(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
-        free(errorImg);
-        //while(!os_GetCSC());
-        continue;
-      }
-      else
-      {
-        //square exists, load it
+      //checks if the square exists
+      if (squareSlot){
+		//square exists, load it
         //seeks past header
         ti_Seek(16,SEEK_CUR,squareSlot);
         //store the original image into srcImg
         //srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
-		srcImg = gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT);
+		
 		zx7_Decompress(srcImg, ti_GetDataPtr(squareSlot));
         //resizes it to outputImg size
         gfx_ScaleSprite(srcImg,outputImg);
 
 		//outputs square
         gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
-		//free's square's mem
-		free(srcImg);
+	  }else{
+        //square does not exist
+        dbg_sprintf(dbgout,"\nERR: Square doesn't exist!");
+        dbg_sprintf(dbgout,"\n %s",searchName);
+        //dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \newWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
+        zx7_Decompress(srcImg, errorTriangle_compressed);
+        //resizes it to outputImg size
+        gfx_ScaleSprite(srcImg,outputImg);
+        //displays the output image
+        //dbg_sprintf(dbgout,"\nxSquare: %d \newWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
+        gfx_Sprite_NoClip(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
+        //while(!os_GetCSC());
+        continue;
       }
+
       //cleans up
       ti_Close(squareSlot);
 
     }
   }
+  //free up source and output memory
+  free(srcImg);
   free(outputImg);
 }
 
@@ -631,8 +633,11 @@ void NoImagesFound(){
   gfx_SetTextFGColor(PALETTE_BLACK);
   PrintCenteredX("Convert some images and send them to your",11);
   PrintCenteredX("calculator using the HDpic converter!",21);
-  PrintCenteredX("Tutorial:  https://youtu.be/s1-g8oSueQg",31);
-  PrintCenteredX("Press any key to quit",41);
+  PrintCenteredX("Tutorial:  <no pre-release tutorial>",31);
+  PrintCenteredX("If you keep getting this error:",51);
+  PrintCenteredX(" Go to home screen, press [2nd]>[+],",61);
+  PrintCenteredX(" then select 'AppVars'. Ensure picture are there.",71);
+  PrintCenteredX("Press any key to quit.",91);
   return;
 }
 
