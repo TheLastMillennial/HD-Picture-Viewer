@@ -1919,7 +1919,7 @@ BB7_35:
 	push	hl
 	ld	hl, (ix - 47)
 	push	hl
-	call	_zx7_Decompress
+	call	_zx0_Decompress
 	pop	hl
 	pop	hl
 	ld	hl, (ix - 41)
@@ -2512,6 +2512,7 @@ _.str.27:
 	extern	_free
 	extern	_gfx_ScaleSprite
 	extern	__frameset
+	extern	_zx0_Decompress
 	extern	_gfx_SetTextBGColor
 	extern	_kb_AnyKey
 	extern	_gfx_FillRectangle_NoClip

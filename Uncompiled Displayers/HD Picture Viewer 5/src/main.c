@@ -546,7 +546,7 @@ void DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t 
         //store the original image into srcImg
         //srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
 		
-		zx7_Decompress(srcImg, ti_GetDataPtr(squareSlot));
+		zx0_Decompress(srcImg, ti_GetDataPtr(squareSlot));
         //resizes it to outputImg size
         gfx_ScaleSprite(srcImg,outputImg);
 
