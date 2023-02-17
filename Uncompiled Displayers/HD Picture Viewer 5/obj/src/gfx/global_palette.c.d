@@ -1,1 +1,1 @@
-obj/src/gfx/global_palette.c.bc: src\gfx\global_palette.c
+obj/src/gfx/global_palette.c.src: src\gfx\global_palette.c

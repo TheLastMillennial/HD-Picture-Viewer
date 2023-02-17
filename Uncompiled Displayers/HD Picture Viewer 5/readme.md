@@ -7,7 +7,10 @@ By TheLastMillennial
 
 ### Converting Images
 Convert an image using the HD Picture Viewer Converter: https://github.com/TheLastMillennial/HDPictureViewerConverter2/releases
-Refer to the HD Picture Viewer Converter's readme.md file for instructions on converting an image.
+Refer to the HD Picture Viewer Converter's readme.md file for instructions on converting an image. 
+
+Alternatively, you can use a web converter created and maintained by Peter Marheine: https://taricorp.gitlab.io/hdpictureconverter-rs/
+Please note I cannot guarantee the web converter's compatibility with this program.
 
 ### Tutorial:
 - Send "HDPICV.8xp" and any converted image(s) to your calculator.
@@ -27,10 +30,21 @@ Refer to the HD Picture Viewer Converter's readme.md file for instructions on co
 
 #### Example Image:
 - Sending all the files from the `Example Image` folder is a good start. They are known to work with this program.
-- The photo is of a cute puppy! It was photographed by Alex Glanville. You can see more of his work at: alex.takes.pics
+- The photo is of a cute puppy! It was photographed by Alex Glanville. You can see more of his work on his instagram: @alex.takes.pics
 
 ## Programs 
 - [Wine](https://www.winehq.org/) (Only needed if you are on Mac or Linux)
+
+## FAQ
+
+### How do I quit?
+Press [clear]. If that's not working, press and hold the reset button on the back of the calculator for at least two seconds.
+
+### How many pictures can I put on the calculator?
+This depends on how many files you already have on the calculator, how large each picture is, and how well it can be compressed. In an ideal situation, you could fit 833 pictures at native 320x240 resolution. I tested this by sending over 10,000 files to my calculator. It was physically unable to handle anymore files. A more realistic answer would be about 50 pictures total.
+
+### The picture won't show up!
+This is always because not all of the files actually sent to the calculator, or they were accidentally deleted. Try re-sending them. Press [2nd] then [+] then [2] and scroll down to AppVars. Verify all the files are on the calculator.
 
 ## Changelog
 *Most recent update first*
@@ -56,7 +70,7 @@ Refer to the HD Picture Viewer Converter's readme.md file for instructions on co
 - Fixed minor visual bugs.
 
 ### v4.0.208
-- Resdesigned GUI completely.
+- Redesigned GUI completely.
 - Improved image quality drastically.
 - Included image converter application.
 - Updated ReadMe.
