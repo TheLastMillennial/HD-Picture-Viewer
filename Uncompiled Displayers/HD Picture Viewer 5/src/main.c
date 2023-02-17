@@ -1,3 +1,9 @@
+/*HD Picture Viewer 
+* By TheLastMillennial
+* https://github.com/TheLastMillennial/HD-Picture-Viewer
+* Build With:  ./make debug --directory="path/to/HD-Picture-Viewer/Uncompiled Displayers/HD Picture Viewer 5"               
+*/
+
 #include <tice.h>
 #include <graphx.h>
 #include <keypadc.h>
@@ -19,7 +25,7 @@
 //Max images is this because max combinations of appvars goes up to 936.
 // Two characters for appvar identifier. 
 // First character can be alphabetic (26 options). Second character can be alphanumeric (36 options). 
-// 26*36=936
+// 26*36=936 
 #define MAX_IMAGES 936 
 #define TASKS_TO_FINISH 2
 #define X_MARGIN 8
@@ -59,18 +65,21 @@ int main(void)
   uint24_t picsDetected=0;
   /* Clear the homescreen */
   //os_ClrHome();
-
   gfx_Begin();
   //ti_CloseAll();
   SplashScreen();
+
   SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
   //checks if the database exists and is ready 0 failure; 1 created; 2 exists
   ready = DatabaseReady();
+
   if (ready==0)
-  goto err;
+    goto err;
+
 
   //returns how many images were found. 0 means no images found so quit.
   picsDetected=RebuildDB(tasksFinished);
+
   if(picsDetected>0)
   {
     SetLoadingBarProgress(++tasksFinished,TASKS_TO_FINISH);
@@ -81,9 +90,12 @@ int main(void)
     gfx_End();
     return 0;
   }
+  
 
   //something went wrong. Close all slots and quit.
   err:
+  	dbg_sprintf(dbgout,"\nNot Ready");
+
   /* Waits for a keypress */
   while (!os_GetCSC());
   //ti_CloseAll();
@@ -617,7 +629,7 @@ uint24_t RebuildDB(uint8_t p){
   ti_SetArchiveStatus(true,database);
   gfx_Begin();
   SplashScreen();
-  gfx_SetTextXY(150,195);
+  gfx_SetTextXY(150,130);
   gfx_PrintUInt(imagesFound,3);
   if (imagesFound==0){
     NoImagesFound();
@@ -633,11 +645,12 @@ void NoImagesFound(){
   gfx_SetTextFGColor(PALETTE_BLACK);
   PrintCenteredX("Convert some images and send them to your",11);
   PrintCenteredX("calculator using the HDpic converter!",21);
-  PrintCenteredX("Tutorial:  <no pre-release tutorial>",31);
-  PrintCenteredX("If you keep getting this error:",51);
-  PrintCenteredX(" Go to home screen, press [2nd]>[+],",61);
-  PrintCenteredX(" then select 'AppVars'. Ensure picture are there.",71);
-  PrintCenteredX("Press any key to quit.",91);
+  PrintCenteredX("Tutorial: no pre-release tutorial!",31);
+  PrintCenteredX("If you keep getting this error:",181);
+  PrintCenteredX(" Go to home screen, press 2nd then +",191);
+  PrintCenteredX(" then select 'AppVars'. ",201);
+  PrintCenteredX(" Ensure the picture is there. ",211);
+  PrintCenteredX("Press any key to quit.",231);
   return;
 }
 

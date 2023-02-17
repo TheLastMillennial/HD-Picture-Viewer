@@ -82,7 +82,7 @@ _SplashScreen:
 	push	hl
 	call	_gfx_SetTextBGColor
 	pop	hl
-	ld	hl, _.str.27
+	ld	hl, _.str.28
 	push	hl
 	call	_PrintCentered
 	pop	hl
@@ -241,7 +241,7 @@ BB3_1:
 	pop	hl
 	ld	hl, -76
 	push	hl
-	ld	hl, _.str.26
+	ld	hl, _.str.27
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
@@ -399,7 +399,7 @@ BB4_3:
 	pop	hl
 	call	_gfx_Begin
 	call	_SplashScreen
-	ld	hl, 195
+	ld	hl, 130
 	push	hl
 	ld	hl, 150
 	push	hl
@@ -2260,30 +2260,37 @@ _NoImagesFound:
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
-	ld	hl, 51
+	ld	hl, -75
 	push	hl
 	ld	hl, _.str.22
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
-	ld	hl, 61
+	ld	hl, -65
 	push	hl
 	ld	hl, _.str.23
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
-	ld	hl, 71
+	ld	hl, -55
 	push	hl
 	ld	hl, _.str.24
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
 	pop	hl
-	ld	hl, 91
+	ld	hl, -45
 	push	hl
 	ld	hl, _.str.25
+	push	hl
+	call	_PrintCenteredX
+	pop	hl
+	pop	hl
+	ld	hl, -25
+	push	hl
+	ld	hl, _.str.26
 	push	hl
 	call	_PrintCenteredX
 	pop	hl
@@ -2443,7 +2450,7 @@ _.str.20:
 	section	.rodata,"a",@progbits
 	private	_.str.21
 _.str.21:
-	db	"Tutorial:  <no pre-release tutorial>", 0
+	db	"Tutorial: no pre-release tutorial!", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.22
@@ -2453,16 +2460,21 @@ _.str.22:
 	section	.rodata,"a",@progbits
 	private	_.str.23
 _.str.23:
-	db	" Go to home screen, press [2nd]>[+],", 0
+	db	" Go to home screen, press 2nd then +", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.24
 _.str.24:
-	db	" then select 'AppVars'. Ensure picture are there.", 0
+	db	" then select 'AppVars'. ", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.25
 _.str.25:
+	db	" Ensure the picture is there. ", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.26
+_.str.26:
 	db	"Press any key to quit.", 0
 
 	section	.rodata,"a",@progbits
@@ -2471,13 +2483,13 @@ ___const.DatabaseReady.compare:
 	db	"HDDATV10", 0
 
 	section	.rodata,"a",@progbits
-	private	_.str.26
-_.str.26:
+	private	_.str.27
+_.str.27:
 	db	"DB Failure! Please report:", 0
 
 	section	.rodata,"a",@progbits
-	private	_.str.27
-_.str.27:
+	private	_.str.28
+_.str.28:
 	db	"HD Picture Viewer", 0
 
 	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
