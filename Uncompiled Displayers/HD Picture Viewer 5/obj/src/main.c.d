@@ -1,4 +1,4 @@
-obj/src/main.c.bc: src\main.c \
+obj/src/main.c.src: src\main.c \
   C:\Users\Brian\Downloads\Executable\CEdev10-Windows\CEdev\include\tice.h \
   C:\Users\Brian\Downloads\Executable\CEdev10-Windows\CEdev\include\sys\basicusb.h \
   C:\Users\Brian\Downloads\Executable\CEdev10-Windows\CEdev\include\stdbool.h \
