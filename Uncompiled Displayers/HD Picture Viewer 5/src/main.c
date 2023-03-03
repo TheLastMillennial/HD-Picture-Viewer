@@ -119,7 +119,7 @@ void DisplayHomeScreen(uint24_t pics){
 
     //kb_key_t key = kb_Data[7];
     bool prev, next, 
-    deletePic, resetPic,
+    deletePic, resetPic, redrawPic,
     zoomIn, zoomOut,
     panUp, panDown, panLeft, panRight;
 
@@ -153,21 +153,22 @@ void DisplayHomeScreen(uint24_t pics){
         kb_Scan();
         //checks if up or down arrow key were pressed
         //key = kb_Data[7];
-        next         = kb_Data[1] & kb_Graph;
-        prev         = kb_Data[1] & kb_Yequ;
-	    resetPic = kb_Data[1] & kb_Window;
-        deletePic= kb_Data[1] & kb_Del;
+        next       = kb_Data[1] & kb_Graph;
+        prev       = kb_Data[1] & kb_Yequ;
+	    resetPic   = kb_Data[1] & kb_Window;
+        deletePic  = kb_Data[1] & kb_Del;
+		redrawPic   = kb_Data[6] & kb_Enter;
         zoomIn     = kb_Data[6] & kb_Add;
         zoomOut    = kb_Data[6] & kb_Sub;
-        panUp        = kb_Data[7] & kb_Up;
+        panUp      = kb_Data[7] & kb_Up;
         panDown    = kb_Data[7] & kb_Down;
         panLeft    = kb_Data[7] & kb_Left;
-        panRight = kb_Data[7] & kb_Right;
+        panRight   = kb_Data[7] & kb_Right;
 
         //if any key was pressed
         if(kb_AnyKey()){
             //dbg_sprintf(dbgout,"\nKey Pressed");
-
+			
             if (panLeft){
                 xOffset++;
                 DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
@@ -184,6 +185,7 @@ void DisplayHomeScreen(uint24_t pics){
                 yOffset++;
                 DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
             }
+			
 	    
 			//if Window key was pressed, reset zoom and pan
 			if (resetPic){
@@ -193,7 +195,7 @@ void DisplayHomeScreen(uint24_t pics){
 				yOffset = 0;
 				imageErr=DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
 				if(imageErr!=0){
-					PrintCenteredX("Error resetting image.",130);
+					PrintCenteredX("Error resetting picture.",130);
 					PrintCenteredX("Press any key to quit.",140);
 					while (!os_GetCSC());
 					ti_Close(database);
@@ -202,6 +204,20 @@ void DisplayHomeScreen(uint24_t pics){
 					return;
 				}
 			}
+			//if Window key was pressed, reset zoom and pan
+			if (redrawPic){
+				imageErr=DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset);
+				if(imageErr!=0){
+					PrintCenteredX("Error redrawing picture.",130);
+					PrintCenteredX("Press any key to quit.",140);
+					while (!os_GetCSC());
+					ti_Close(database);
+					free(picNames);
+					gfx_End();
+					return;
+				}
+			}
+			
 			//if plus key was pressed, zoom in by double
 			if (zoomIn){
 				if(imageErr!=0){dbg_sprintf(dbgout,"\npre-zoomIn error");}
@@ -409,6 +425,7 @@ void DisplayHomeScreen(uint24_t pics){
 						PrintCenteredX("Error showing prev picture.",130);
 						PrintCenteredX("Press any key to quit.",140);
 						while (!os_GetCSC());
+						while (!os_GetCSC());
 						ti_Close(database);
 						free(picNames);
 						gfx_End();
@@ -568,15 +585,15 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
     //memory where each unsized image will be stored
     srcImg = gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT);
     if (!srcImg){
+		dbg_sprintf(dbgout,"ERR: Failed to allocate src memory!");
         PrintCenteredX("ERR: Failed to allocate src memory!",130);
-        while(!os_GetCSC());
         return 1;
     }
     //allocates memory for resized image (according to scale)
     outputImg = gfx_MallocSprite(newWidthHeight/scaleDen,newWidthHeight/scaleDen);
     if (!outputImg){
+		dbg_sprintf(dbgout,"ERR: Failed to allocate output memory!");
         PrintCenteredX("ERR: Failed to allocate output memory!",130);
-        while(!os_GetCSC());
 		free(srcImg);
         return 1;
     }
@@ -658,6 +675,13 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 	//dbg_sprintf(dbgout,"\nxS: %d",xSquare);
         //this for loop outputs pic bottom to top
         for(int24_t ySquare=yEnd;ySquare>yStart;--ySquare){
+			//a key interrupted output. Quit immediately
+			if(os_GetCSC()){
+				//free up source and output memory
+				free(srcImg);
+				free(outputImg);
+				return 0;
+			}
             //combines the separate parts into one name to search for
             sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
             //dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
