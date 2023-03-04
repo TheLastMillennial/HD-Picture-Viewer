@@ -678,7 +678,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
     //the +1 is to prevent underflow which would cause an infinite loop
     //this for loop outputs pic right to left, top to bottom
     int24_t xStart=leftMostSquare-1, xEnd=rightMostSquare-1;
-    int24_t yStart =topMostSquare-1,    yEnd =bottomMostSquare-1;
+    int24_t yStart =topMostSquare-1, yEnd=bottomMostSquare-1;
     
     for(int24_t xSquare=xEnd;xSquare>xStart;--xSquare){
 		//dbg_sprintf(dbgout,"\nxS: %d",xSquare);
@@ -712,8 +712,15 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
                 //resizes it to outputImg size
                 gfx_ScaleSprite(srcImg,outputImg);
 
-				//outputs square
-                gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
+				//displays square
+				//if we are displaying an edge image, clip the square. Otherwise don't clip for extra speed.
+				if(xSquare==xEnd || ySquare==yEnd){
+					gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
+				}
+				else{
+					gfx_Sprite_NoClip(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
+				}
+				
 			}else{
                 //square does not exist
                 dbg_sprintf(dbgout,"\nERR: Square doesn't exist!");
