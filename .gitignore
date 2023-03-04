@@ -3,3 +3,6 @@ Uncompiled Displayers/HD Picture Viewer 5/obj/*
 *.map
 *.debug
 *.bin
+*.debug
+*.map
+*.bin

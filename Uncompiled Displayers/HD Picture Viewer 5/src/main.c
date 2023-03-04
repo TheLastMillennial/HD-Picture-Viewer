@@ -579,20 +579,29 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
     ceilDiv(x, y) := (x + y - 1) / y;
     [MateoC] huh I didn't know about roundDiv
     */
-
+	
     dbg_sprintf(dbgout,"\n newWH: %d \n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d",newWidthHeight,scaleNum,scaleDen, xOffset, yOffset);
 
-    //memory where each unsized image will be stored
+	//memory where each unsized image will be stored
     srcImg = gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT);
     if (!srcImg){
-		dbg_sprintf(dbgout,"ERR: Failed to allocate src memory!");
+		dbg_sprintf(dbgout,"\nERR: Failed to allocate src memory!");
         PrintCenteredX("ERR: Failed to allocate src memory!",130);
         return 1;
     }
-    //allocates memory for resized image (according to scale)
-    outputImg = gfx_MallocSprite(newWidthHeight/scaleDen,newWidthHeight/scaleDen);
+	//scales the suqare width and height to the final output dimensions
+	uint24_t newSquareDim = (newWidthHeight/scaleDen);
+	//ensure the resized square will fit within the dimensions of the screen.
+	if (newSquareDim>LCD_HEIGHT){
+		dbg_sprintf(dbgout,"\nERR: Square will be too large: %d",newSquareDim);
+        PrintCenteredX("ERR: Output picture too large!",130);
+		free(srcImg);
+        return 1;
+	}
+    //allocates memory for resized image
+    outputImg = gfx_MallocSprite(newSquareDim,newSquareDim);
     if (!outputImg){
-		dbg_sprintf(dbgout,"ERR: Failed to allocate output memory!");
+		dbg_sprintf(dbgout,"\nERR: Failed to allocate output memory!");
         PrintCenteredX("ERR: Failed to allocate output memory!",130);
 		free(srcImg);
         return 1;
@@ -672,9 +681,10 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
     int24_t yStart =topMostSquare-1,    yEnd =bottomMostSquare-1;
     
     for(int24_t xSquare=xEnd;xSquare>xStart;--xSquare){
-	//dbg_sprintf(dbgout,"\nxS: %d",xSquare);
+		//dbg_sprintf(dbgout,"\nxS: %d",xSquare);
         //this for loop outputs pic bottom to top
         for(int24_t ySquare=yEnd;ySquare>yStart;--ySquare){
+			//dbg_sprintf(dbgout,"\nyS: %d",ySquare);
 			//a key interrupted output. Quit immediately
 			if(os_GetCSC()){
 				//free up source and output memory
@@ -686,25 +696,25 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
             sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
             //dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
             /*
-	    * This opens the variable with the name that was just assembled.
+			* This opens the variable with the name that was just assembled.
             * It then gets the pointer to that and stores it in a graphics variable
             */
             squareSlot = ti_Open(searchName,"r");
             //checks if the square exists
             if (squareSlot){
-		//square exists, load it
+				//square exists, load it
                 //seeks past header
                 ti_Seek(16,SEEK_CUR,squareSlot);
                 //store the original image into srcImg
                 //srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
 		
-		zx0_Decompress(srcImg, ti_GetDataPtr(squareSlot));
+				zx0_Decompress(srcImg, ti_GetDataPtr(squareSlot));
                 //resizes it to outputImg size
                 gfx_ScaleSprite(srcImg,outputImg);
 
-		//outputs square
+				//outputs square
                 gfx_Sprite(outputImg,(xSquare+xOffset)*(newWidthHeight/scaleDen), (ySquare-yOffset)*(newWidthHeight/scaleDen));
-	    }else{
+			}else{
                 //square does not exist
                 dbg_sprintf(dbgout,"\nERR: Square doesn't exist!");
                 dbg_sprintf(dbgout,"\n %s",searchName);
