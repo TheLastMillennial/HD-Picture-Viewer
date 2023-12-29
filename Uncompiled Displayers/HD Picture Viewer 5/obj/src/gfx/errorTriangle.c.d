@@ -1,1 +1,1 @@
-obj/src/gfx/errorTriangle.c.src: src\gfx\errorTriangle.c
+obj/src/gfx/errorTriangle.c.bc: src\gfx\errorTriangle.c
