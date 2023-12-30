@@ -21,12 +21,13 @@
 
 
 /* globals */
-#define BYTES_PER_IMAGE_NAME 9 //8 for image name, 1 for null terminator
+#define VERSION "2.0.0-beta"
 //Max images is this because max combinations of appvars goes up to 936.
 // Two characters for appvar identifier. 
 // First character can be alphabetic (26 options). Second character can be alphanumeric (36 options). 
 // 26*36=936 
 #define MAX_IMAGES 936 
+#define BYTES_PER_IMAGE_NAME 9 //8 for image name, 1 for null terminator
 #define TASKS_TO_FINISH 2
 #define X_MARGIN 8
 #define Y_MARGIN 38
@@ -51,12 +52,14 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 void DeleteImage(uint24_t picName);
 void NoImagesFound();
 void PrintCentered(const char* str);
-void PrintCenteredX(const char* str, uint8_t y);
+void PrintCenteredX(const char* str, uint24_t y);
 void PrintCenteredY(const char* str, uint8_t x);
-void PrintNames(uint24_t start, const char* picNames, const uint24_t numOfPics);
 void PrintText(const int8_t xpos, const int8_t ypos, const char* text);
+void PrintNames(uint24_t start, const char* picNames, const uint24_t numOfPics);
+void DisplayMenu(uint24_t startName, const char* picNames, const uint24_t numOfPics);
 uint24_t RebuildDB(uint8_t progress);
 void SplashScreen();
+void displayWatermark();
 void SetLoadingBarProgress(uint24_t progress, uint24_t t);
 
 /* Main function, called first */
@@ -64,10 +67,9 @@ int main(void)
 {
 	uint8_t ready{ 0 }, tasksFinished{ 0 };
 	uint24_t picsDetected{ 0 };
-	/* Clear the homescreen */
-	//os_ClrHome();
+	
 	gfx_Begin();
-	//ti_CloseAll();
+	gfx_SetTextTransparentColor(254);
 	SplashScreen();
 
 	SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
@@ -123,15 +125,6 @@ void DisplayHomeScreen(uint24_t pics) {
 		zoomIn, zoomOut,
 		panUp, panDown, panLeft, panRight;
 
-
-	//makes the screen black and sets text gray
-	gfx_FillScreen(PALETTE_BLACK);
-	gfx_SetTextFGColor(XLIBC_GREY);
-	gfx_SetTextBGColor(PALETTE_BLACK);
-	gfx_SetColor(PALETTE_WHITE);
-	gfx_VertLine(140, 20, 200);
-
-
 	//seeks to the first image name
 	ti_Seek(8, SEEK_SET, database);
 	//loops through every picture that was detected and store the image name to picNames
@@ -145,9 +138,8 @@ void DisplayHomeScreen(uint24_t pics) {
 	uint8_t imageErr{ 0 };
 	
 	/* main menu */
-	gfx_SetTextXY(10, 10);
-	PrintNames(startName, picNames, pics);
-
+	gfx_FillScreen(PALETTE_BLACK);
+	DisplayMenu(startName, picNames, pics);
 	//thumbnail
 	DrawImage(startName, 180, 120, 0, 0, false);
 
@@ -180,26 +172,21 @@ void DisplayHomeScreen(uint24_t pics) {
 
 		//if any key was pressed
 		if (kb_AnyKey()) {
-			if (menuQuit)
-			{
+			if (menuQuit){
 				//If we're viewing an image, exit to menu. If we're already on menu, quit program.
-				if (fullScreenImage)
-				{
+				if (fullScreenImage){
 					fullScreenImage = false;
 					resetPic=true;
 					redrawPic=true;
 					errorID = 1;
 					gfx_FillScreen(PALETTE_BLACK);
-				}
-				else
-				{
+				}else{
 					quitProgram = true;
 					break; 
 				}
 			}
 			
-			if (menuEnter)
-			{
+			if (menuEnter){
 				fullScreenImage = true;
 				resetPic=true;
 				redrawPic = true;
@@ -369,45 +356,45 @@ void DisplayHomeScreen(uint24_t pics) {
 				}
 
 				//re construct the GUI
-				gfx_SetTextXY(10, 10);
-				PrintNames(startName, picNames, pics);
 				//display the next non-deleted image
-				DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset, true);
-
+				resetPic=true;
+				redrawPic = true;
+				
 				//todo: change to different image
 			}
 
 			/* increases the name to start on and redraws the text */
-			if (next || menuDown) {
+			if (next || (menuDown &&  !fullScreenImage)) {
 				startName++;
 				//make sure user can't scroll down too far
-				if (startName > (pics - 1))//If there's more than 4 images, then handle things normally
-					startName = pics - 1;
-				if (startName > pics - 1 && pics - 1 > 0) //makes sure user can't scroll too far when there's only 1 image detected
-					startName = pics;
-				if (startName > pics - 2 && pics - 2 > 0) //makes sure user can't scroll too far when there's only 2 images detected
-					startName = pics - 1;
-				if (startName > pics - 3 && pics - 3 > 0) //makes sure user can't scroll too far when there's only 3 images detected
-					startName = pics - 2;
-				PrintNames(startName, picNames, pics);
+				if (startName > pics-1)
+				{
+					startName = pics-1;
+				}
 
+				PrintNames(startName, picNames, pics);
 				resetPic = fullScreenImage;
-				redrawPic = true;
+					redrawPic = true;
+				//slows next scrolling speed
+				delay(150);
 				errorID = 8; //if an error is thrown, then we've scrolled bast the safety barrier somehow.
-				
 			}
 
 			/* decreases the name to start on and redraws the text */
-			if (prev || menuUp) {
+			if (prev || (menuUp && !fullScreenImage)) {
 				startName--;
 				/*checks if startName underflowed from 0 to 16 million or something.
 				* Whatever the number, it shouldn't be less than the max number of images possible*/
 				if (startName > MAX_IMAGES)
+				{
 					startName = 0;
-				PrintNames(startName, picNames, pics);
-				
+				}
+
 				resetPic = fullScreenImage;
 				redrawPic = true;
+				PrintNames(startName, picNames, pics);
+				//slows next scrolling speed
+				delay(150);
 				errorID = 9; //if an error is thrown, then we've scrolled past the safety barrier somehow.
 			}
 			
@@ -431,12 +418,15 @@ void DisplayHomeScreen(uint24_t pics) {
 			
 			if (redrawPic) {
 				if(!fullScreenImage)
-					PrintNames(startName, picNames, pics);
+				{
+					DisplayMenu(startName, picNames, pics);
+					//PrintNames(startName, picNames, pics);
+				}
 				imageErr = DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset, fullScreenImage);
 				if (imageErr != 0) {
-					PrintCenteredX("Error: ", 130);
+					PrintCenteredX("Error: ", 150);
 					gfx_PrintUInt(errorID,3);
-					PrintCenteredX("Press any key to quit.", 140);
+					PrintCenteredX("Press any key to quit.", 160);
 					while (!os_GetCSC());
 					ti_Close(database);
 					free(picNames);
@@ -571,7 +561,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 		dbg_sprintf(dbgout, "\nPath 2 ");
 	}
 	if (scaleNum == 0 || scaleDen == 0) {
-		PrintCenteredX("ERR: Cannot zoom out!", 130);
+		//PrintCenteredX("ERR: Cannot zoom out!", 130);
 		//PrintCenteredX("Press [+] twice to zoom in",145);
 		dbg_sprintf(dbgout, "\nERR: Cant zoom out\n scaleNum:%d\n scaleDen:%d", scaleNum, scaleDen);
 		//while(!os_GetCSC());
@@ -601,7 +591,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 	gfx_sprite_t* srcImg{ gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT) };
 	if (!srcImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate src memory!");
-		PrintCenteredX("ERR: Failed to allocate src memory!", 130);
+		//PrintCenteredX("ERR: Failed to allocate src memory!", 130);
 		return 1;
 	}
 	//scales the suqare width and height to the final output dimensions
@@ -609,7 +599,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 	//ensure the resized square will fit within the dimensions of the screen.
 	if (newSquareDim > LCD_HEIGHT) {
 		dbg_sprintf(dbgout, "\nERR: Square will be too large: %d", newSquareDim);
-		PrintCenteredX("ERR: Output picture too large!", 130);
+		//PrintCenteredX("ERR: Output picture too large!", 130);
 		free(srcImg);
 		return 1;
 	}
@@ -617,7 +607,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 	gfx_sprite_t* outputImg{ gfx_MallocSprite(newSquareDim,newSquareDim) };
 	if (!outputImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate output memory!");
-		PrintCenteredX("ERR: Failed to allocate output memory!", 130);
+		//PrintCenteredX("ERR: Failed to allocate output memory!", 130);
 		free(srcImg);
 		return 1;
 	}
@@ -701,16 +691,19 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 	for (int24_t xSquare{ xEnd };xSquare > xStart;--xSquare) {
 		//this for loop outputs pic bottom to top
 		for (int24_t ySquare{ yEnd };ySquare > yStart;--ySquare) {
-			
 			//a key interrupted output. Quit immediately
-			if (os_GetCSC()) {
-				//free up source and output memory
+
+			if(os_GetCSC())
+			{
+					
 				if(refreshWholeScreen)
 					PrintCenteredX("Halted. Press [enter].",130);
+				//free up source and output memory
 				free(srcImg);
 				free(outputImg);
 				return 0;
 			}
+			
 			//combines the separate parts into one name to search for
 			sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
 			//dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
@@ -915,14 +908,17 @@ void SplashScreen() {
 
 /* This UI keeps the user selection in the middle of the screen. */
 void PrintNames(uint24_t startName, const char* picNames, const uint24_t numOfPics) {
-	uint24_t Yoffset{ 0 }, y{ 0 };
+	int24_t  yPxlPos{ 0 };
 
 	//clears old text and sets prev for new text
 	gfx_SetTextScale(2, 2);
 	gfx_SetColor(PALETTE_BLACK);
 	gfx_FillRectangle_NoClip(0, 0, 140, 240);
 	gfx_SetColor(PALETTE_WHITE);
-
+	gfx_SetTextFGColor(PALETTE_WHITE);
+	gfx_SetTextBGColor(PALETTE_BLACK);
+	
+	
 	//re-draws UI lines
 	gfx_HorizLine_NoClip(0, 120, 6);
 	gfx_HorizLine_NoClip(136, 120, 5);
@@ -931,31 +927,57 @@ void PrintNames(uint24_t startName, const char* picNames, const uint24_t numOfPi
 	gfx_VertLine_NoClip(6, 110, 20);
 	gfx_VertLine_NoClip(136, 110, 21);
 
-	/*if the selected start name is under 4, that means we need to start drawing
-	* farther down the screen for the text to go in the right spot */
-	if (startName < 4) {
-		Yoffset = 75 - startName * Y_SPACING;
-		startName = 0;
+	
+	//display selected image name in center of screen
+	yPxlPos = Y_MARGIN+75;
+	
+	gfx_PrintStringXY(&picNames[startName * BYTES_PER_IMAGE_NAME], X_MARGIN, yPxlPos);
+
+	
+	/* Draw image names below selected name.
+	* Iterates until out of pics or about to draw off the screen */
+	if(startName < numOfPics){
+		for (uint24_t curName{ startName+1 }; (curName <= numOfPics) && (yPxlPos < 210); curName++) {
+			//calculates where the text should be drawn
+			yPxlPos += Y_SPACING;
+
+			//Prints out the correct name
+			gfx_PrintStringXY(&picNames[curName * BYTES_PER_IMAGE_NAME], X_MARGIN, yPxlPos);
+		}
 	}
-	else {
-		startName -= 4;
+	//
+	if (startName > 0)
+	{
+		yPxlPos = Y_MARGIN+75;
+		for (uint24_t curName { startName-1}; (curName >= 0) && (yPxlPos > 15); curName--) {
+			//calculates where the text should be drawn
+			yPxlPos -= Y_SPACING;
+
+			//Prints out the correct name
+			gfx_PrintStringXY(&picNames[curName * BYTES_PER_IMAGE_NAME], X_MARGIN, yPxlPos);
+		}
 	}
-	uint24_t curName{ startName };
+	
+}
 
+void DisplayMenu(uint24_t startName, const char* picNames, const uint24_t numOfPics)
+{
+	gfx_SetColor(PALETTE_WHITE);
+	gfx_VertLine(140, 20, 200);
+	displayWatermark();
+	PrintNames(startName, picNames, numOfPics);//todo: this can probably be optimized
+	displayWatermark();
+	
 
-	/* draw the text on the screen. Starts displaying the name at element start
-	* then iterates until out of pics or about to draw off the screen */
-	for (uint24_t i{ 0 };i < numOfPics && y < 180;i++) {
-		//calculates where the text should be drawn
-		y = i * Y_SPACING + Y_MARGIN + Yoffset;
+}
 
-		//Prints out the correct name
-		gfx_PrintStringXY(&picNames[curName++ * BYTES_PER_IMAGE_NAME], X_MARGIN, y);
-		//while(!os_GetCSC());
-
-	}
-	//slows next scrolling speed
-	delay(150);
+void displayWatermark()
+{
+	gfx_SetTextScale(1, 1);
+	gfx_SetTextFGColor(PALETTE_WHITE);
+	gfx_SetTextBGColor(PALETTE_BLACK);
+	gfx_PrintStringXY("HD Picture Viewer", 2,2);
+	gfx_PrintStringXY(VERSION, 2,231);
 }
 
 /* Prints a screen centered string */
@@ -964,7 +986,7 @@ void PrintCentered(const char* str)
 	gfx_PrintStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2, (LCD_HEIGHT - 8) / 2);
 }
 /* Prints a X centered string */
-void PrintCenteredX(const char* str, const uint8_t y)
+void PrintCenteredX(const char* str, const uint24_t y)
 {
 	gfx_PrintStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2, y);
 }
