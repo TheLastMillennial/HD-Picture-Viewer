@@ -331,6 +331,7 @@ void DisplayHomeScreen(uint24_t pics) {
 				PrintCenteredX("Deleting Picture...", 120);
 
 				//delete the palette and all squares
+				DeleteImage(startName);
 				PrintCenteredX("Picture deleted.", 130);
 				PrintCenteredX("Press any key.", 140);
 				while (!os_GetCSC());
@@ -429,6 +430,8 @@ void DisplayHomeScreen(uint24_t pics) {
 			
 			
 			if (redrawPic) {
+				if(!fullScreenImage)
+					PrintNames(startName, picNames, pics);
 				imageErr = DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset, fullScreenImage);
 				if (imageErr != 0) {
 					PrintCenteredX("Error: ", 130);

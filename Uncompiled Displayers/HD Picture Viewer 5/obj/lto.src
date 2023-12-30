@@ -438,16 +438,16 @@ BB4_3:
 	section	.text,"ax",@progbits
 	public	__Z17DisplayHomeScreenj
 __Z17DisplayHomeScreenj:
-	ld	hl, -81
+	ld	hl, -79
 	call	__frameset
 	ld	hl, (ix + 6)
 	ld	bc, 9
 	xor	a, a
-	ld	(ix - 3), a
+	ld	(ix - 52), a
 	call	__imulu
 	push	hl
 	call	_malloc
-	ld	(ix - 6), hl
+	ld	(ix - 3), hl
 	pop	hl
 	ld	hl, _.str.1
 	push	hl
@@ -455,7 +455,7 @@ __Z17DisplayHomeScreenj:
 	push	hl
 	call	_ti_Open
 	ld	l, a
-	ld	(ix - 9), hl
+	ld	(ix - 6), hl
 	pop	hl
 	pop	hl
 	or	a, a
@@ -487,7 +487,7 @@ __Z17DisplayHomeScreenj:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, (ix - 9)
+	ld	hl, (ix - 6)
 	push	hl
 	or	a, a
 	sbc	hl, hl
@@ -498,7 +498,7 @@ __Z17DisplayHomeScreenj:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	iy, (ix - 6)
+	ld	iy, (ix - 3)
 	or	a, a
 	sbc	hl, hl
 	ex	de, hl
@@ -507,31 +507,31 @@ BB5_1:
 	or	a, a
 	sbc	hl, de
 	jr	c, BB5_3
-	ld	hl, (ix - 9)
+	ld	hl, (ix - 6)
 	push	hl
 	ld	hl, 1
 	push	hl
 	ld	hl, 8
 	push	hl
 	push	iy
-	ld	(ix - 12), iy
-	ld	(ix - 15), de
+	ld	(ix - 9), iy
+	ld	(ix - 12), de
 	call	_ti_Read
 	pop	hl
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	iy, (ix - 12)
+	ld	iy, (ix - 9)
 	ld	(iy + 8), 0
-	ld	hl, (ix - 9)
+	ld	hl, (ix - 6)
 	push	hl
 	ld	hl, 1
 	push	hl
 	ld	hl, 8
 	push	hl
 	call	_ti_Seek
-	ld	de, (ix - 15)
-	ld	iy, (ix - 12)
+	ld	de, (ix - 12)
+	ld	iy, (ix - 9)
 	pop	hl
 	pop	hl
 	pop	hl
@@ -547,7 +547,7 @@ BB5_3:
 	pop	hl
 	ld	hl, (ix + 6)
 	push	hl
-	ld	hl, (ix - 6)
+	ld	hl, (ix - 3)
 	push	hl
 	or	a, a
 	sbc	hl, hl
@@ -578,29 +578,29 @@ BB5_3:
 	push	de
 	pop	hl
 	dec	hl
-	ld	(ix - 75), hl
+	ld	(ix - 73), hl
 	push	de
 	pop	hl
 	push	de
 	pop	bc
 	ld	de, -2
 	add	hl, de
-	ld	(ix - 72), hl
+	ld	(ix - 70), hl
 	push	bc
 	pop	hl
 	dec	de
 	add	hl, de
-	ld	(ix - 78), hl
+	ld	(ix - 76), hl
 	or	a, a
 	sbc	hl, hl
-	ld	(ix - 12), hl
-	ld	(ix - 21), hl
+	ld	(ix - 9), hl
+	ld	(ix - 18), hl
 	ex	de, hl
 	ld	hl, 120
-	ld	(ix - 24), hl
+	ld	(ix - 51), hl
 	ld	hl, 160
-	ld	(ix - 18), hl
-	ld	(ix - 15), de
+	ld	(ix - 15), hl
+	ld	(ix - 12), de
 BB5_4:
 	call	_kb_Scan
 	ld	hl, -720868
@@ -608,51 +608,46 @@ BB5_4:
 	pop	iy
 	ld	l, (iy)
 	ld	h, (iy + 1)
-	ld	(ix - 54), hl
+	ld	(ix - 48), hl
 	ld	l, (iy)
 	ld	h, (iy + 1)
 	lea	bc, iy
-	ld	(ix - 27), hl
+	ld	(ix - 21), hl
 	ld	hl, -720866
 	ld	e, (hl)
 	inc	hl
 	ld	d, (hl)
 	dec	hl
-	ld	(ix - 69), de
+	ld	(ix - 67), de
 	ld	e, (hl)
 	inc	hl
 	ld	d, (hl)
 	dec	hl
-	ld	(ix - 51), de
+	ld	(ix - 45), de
 	ld	iy, -720878
 	ld	e, (iy)
 	ld	d, (iy + 1)
-	ld	(ix - 45), de
+	ld	(ix - 39), de
 	ld	e, (iy)
 	ld	d, (iy + 1)
-	ld	(ix - 66), de
+	ld	(ix - 64), de
 	ld	e, (iy)
 	ld	d, (iy + 1)
-	ld	(ix - 30), de
+	ld	(ix - 24), de
 	ld	e, (iy)
 	ld	d, (iy + 1)
-	ld	(ix - 63), de
+	ld	(ix - 61), de
 	push	bc
 	pop	iy
 	ld	e, (iy)
 	ld	d, (iy + 1)
-	ld	(ix - 33), de
+	ld	(ix - 27), de
 	ld	e, (iy)
 	ld	d, (iy + 1)
-	ld	(ix - 57), de
+	ld	(ix - 55), de
 	ld	e, (iy)
 	ld	d, (iy + 1)
-	ld	(ix - 60), de
-	ld	e, (hl)
-	inc	hl
-	ld	d, (hl)
-	dec	hl
-	ld	(ix - 48), de
+	ld	(ix - 58), de
 	ld	e, (hl)
 	inc	hl
 	ld	d, (hl)
@@ -662,7 +657,12 @@ BB5_4:
 	inc	hl
 	ld	d, (hl)
 	dec	hl
-	ld	(ix - 39), de
+	ld	(ix - 36), de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	dec	hl
+	ld	(ix - 33), de
 	push	de
 	ld	e, (hl)
 	inc	hl
@@ -670,78 +670,74 @@ BB5_4:
 	ld	l, e
 	ld	h, d
 	pop	de
-	ld	(ix - 36), hl
+	ld	(ix - 30), hl
 	call	_kb_AnyKey
 	or	a, a
 	jp	z, BB5_4
-	ld	hl, (ix - 54)
+	ld	hl, (ix - 48)
 	ld.sis	bc, 1
 	call	__sand
-	ld	(ix - 54), hl
-	ld	hl, (ix - 51)
-	call	__sand
-	ld	(ix - 81), hl
+	ld	(ix - 48), hl
 	ld	hl, (ix - 45)
 	call	__sand
-	ld	(ix - 51), hl
-	ld	hl, (ix - 48)
+	ld	(ix - 79), hl
+	ld	hl, (ix - 39)
+	call	__sand
+	ld	(ix - 45), hl
+	ld	hl, (ix - 42)
 	ld	a, l
 	and	a, 8
-	ld	iyl, a
-	ld	hl, (ix - 42)
-	call	__sand
-	ld	(ix - 42), hl
-	ld	hl, (ix - 39)
-	ld	a, l
-	and	a, 2
 	ld	(ix - 39), a
 	ld	hl, (ix - 36)
+	call	__sand
+	ld	(ix - 36), hl
+	ld	hl, (ix - 33)
+	ld	a, l
+	and	a, 2
+	ld	(ix - 33), a
+	ld	hl, (ix - 30)
 	ld	a, l
 	and	a, 4
 	ld	c, a
-	ld	hl, (ix - 33)
+	ld	hl, (ix - 27)
 	ld	a, l
 	and	a, 1
 	ld	l, a
-	ld	de, (ix - 30)
+	ld	de, (ix - 24)
 	ld	a, e
 	ld	b, 3
 	call	__bshru
 	and	a, 1
-	ld	de, (ix - 27)
+	ld	iy, (ix - 21)
+	ld	e, iyl
 	bit	6, e
-	push	af
-	ld	a, iyl
-	ld	(ix - 45), a
-	pop	af
 	jr	z, BB5_8
+	ld	hl, (ix - 48)
 	ld	a, (__ZZ17DisplayHomeScreenjE15fullScreenImage)
 	bit	0, a
 	ld	hl, 0
-	jp	z, BB5_87
+	jp	z, BB5_83
 	xor	a, a
 	ld	(__ZZ17DisplayHomeScreenjE15fullScreenImage), a
 	push	hl
-	ld	(ix - 27), c
+	ld	(ix - 21), c
 	call	_gfx_FillScreen
-	ld	c, (ix - 27)
+	ld	c, (ix - 21)
 	pop	hl
 	ld	a, 1
 	ld	e, a
 	ld	l, e
-	ld	(ix - 3), e
+	ld	(ix - 52), e
 BB5_8:
-	ld	de, (ix - 54)
+	ld	de, (ix - 48)
 	bit	0, e
 	jr	nz, BB5_10
-	ld	(ix - 36), a
-	ld	(ix - 33), l
+	ld	(ix - 30), a
+	ld	(ix - 27), l
 	ld	a, (__ZZ17DisplayHomeScreenjE15fullScreenImage)
 	bit	0, a
-	ld	b, (ix - 3)
+	ld	b, (ix - 52)
 	ld	l, -1
-	ld	iy, (ix - 21)
-	ld	e, (ix - 39)
 	jr	nz, BB5_11
 	jp	BB5_33
 BB5_10:
@@ -750,64 +746,65 @@ BB5_10:
 	inc	a
 	ld	b, a
 	dec	a
-	ld	(ix - 36), a
-	ld	(ix - 33), a
+	ld	(ix - 30), a
+	ld	(ix - 27), a
 	ld	l, -1
-	ld	iy, (ix - 21)
-	ld	e, (ix - 39)
 BB5_11:
-	ld	(ix - 27), c
+	ld	(ix - 21), c
 	ld	a, c
 	or	a, a
 	ld	h, l
 	jr	z, BB5_13
 	ld	h, 0
 BB5_13:
-	ld	(ix - 3), b
-	ld	a, e
+	ld	a, (ix - 33)
 	or	a, a
 	ld	c, l
 	jr	z, BB5_15
 	ld	c, 0
 BB5_15:
-	ld	a, (ix - 45)
+	ld	a, (ix - 39)
 	or	a, a
-	ld	b, l
 	jr	z, BB5_17
-	ld	b, 0
+	ld	l, 0
 BB5_17:
-	ld	a, e
+	ld	a, (ix - 33)
 	or	a, a
 	ld	de, 1
 	jr	nz, BB5_19
 	ld	de, 0
 BB5_19:
+	ld	iy, (ix - 18)
 	add	iy, de
 	bit	0, c
 	jr	nz, BB5_21
 	ld	a, 3
-	ld	(ix - 3), a
+	ld	b, a
 BB5_21:
-	ld	a, (ix - 27)
+	ld	a, (ix - 21)
 	or	a, a
 	ld	de, -1
 	jr	nz, BB5_23
 	ld	de, 0
 BB5_23:
 	add	iy, de
+	ld	(ix - 18), iy
 	bit	0, h
 	jr	nz, BB5_25
 	ld	a, 4
-	ld	(ix - 3), a
+	ld	b, a
 BB5_25:
-	ld	a, b
+	ex	de, hl
+	ld	iyl, e
+	ex	de, hl
+	ld	a, l
 	and	a, h
 	and	a, c
 	bit	0, a
-	ld	l, (ix - 45)
+	ld	l, (ix - 39)
 	jr	nz, BB5_27
 	ld	a, 1
-	ld	(ix - 33), a
+	ld	(ix - 27), a
 BB5_27:
 	ld	a, l
 	or	a, a
@@ -815,60 +812,59 @@ BB5_27:
 	jr	nz, BB5_29
 	ld	de, 0
 BB5_29:
-	ld	hl, (ix - 12)
+	ld	hl, (ix - 9)
 	add	hl, de
-	ld	(ix - 12), hl
-	bit	0, b
-	ld	b, (ix - 3)
+	ld	(ix - 9), hl
+	ld	a, iyl
+	bit	0, a
 	jr	nz, BB5_31
 	ld	a, 5
 	ld	b, a
 BB5_31:
-	ld	hl, (ix - 42)
+	ld	hl, (ix - 36)
 	bit	0, l
 	jr	z, BB5_33
-	ld	hl, (ix - 12)
+	ld	hl, (ix - 9)
 	inc	hl
-	ld	(ix - 12), hl
+	ld	(ix - 9), hl
 	ld	a, 1
-	ld	(ix - 33), a
+	ld	(ix - 27), a
 	ld	a, 6
 	ld	b, a
 BB5_33:
-	ld	hl, (ix - 18)
-	ld	de, (ix - 57)
+	ld	hl, (ix - 15)
+	ld	de, (ix - 55)
 	ld	a, e
 	bit	1, a
-	ld	(ix - 21), iy
-	ld	(ix - 3), b
+	ld	(ix - 52), b
 	jr	nz, BB5_35
-	ld	de, (ix - 24)
-	ld	(ix - 30), de
-	ld	(ix - 27), hl
+	ld	de, (ix - 51)
+	ld	(ix - 24), de
+	ld	(ix - 21), hl
 	jr	BB5_37
 BB5_35:
-	ld	(ix - 18), hl
+	ld	(ix - 15), hl
 	ld	c, 1
 	call	__ishl
 	push	hl
 	pop	de
-	ld	hl, (ix - 24)
+	ld	hl, (ix - 51)
 	call	__ishl
 	push	hl
 	pop	bc
 	ld	hl, 1
 	push	hl
+	ld	hl, (ix - 9)
+	push	hl
+	ld	hl, (ix - 18)
+	push	hl
+	ld	(ix - 24), bc
+	push	bc
+	ld	(ix - 21), de
+	push	de
 	ld	hl, (ix - 12)
 	push	hl
-	push	iy
-	ld	(ix - 30), bc
-	push	bc
-	ld	(ix - 27), de
-	push	de
-	ld	hl, (ix - 15)
-	push	hl
 	call	__Z9DrawImagejjjiib
-	ld	iy, (ix - 21)
 	pop	hl
 	pop	hl
 	pop	hl
@@ -877,28 +873,28 @@ BB5_35:
 	pop	hl
 	or	a, a
 	jr	z, BB5_37
-	ld	hl, (ix - 18)
+	ld	hl, (ix - 15)
 	ld	bc, 8388607
 	call	__iand
 	push	hl
 	pop	de
-	ld	hl, (ix - 24)
+	ld	hl, (ix - 51)
 	call	__iand
 	push	hl
 	pop	bc
 	ld	hl, 1
 	push	hl
+	ld	hl, (ix - 9)
+	push	hl
+	ld	hl, (ix - 18)
+	push	hl
+	ld	(ix - 24), bc
+	push	bc
+	ld	(ix - 21), de
+	push	de
 	ld	hl, (ix - 12)
 	push	hl
-	push	iy
-	ld	(ix - 30), bc
-	push	bc
-	ld	(ix - 27), de
-	push	de
-	ld	hl, (ix - 15)
-	push	hl
 	call	__Z9DrawImagejjjiib
-	ld	iy, (ix - 21)
 	pop	hl
 	pop	hl
 	pop	hl
@@ -906,26 +902,27 @@ BB5_35:
 	pop	hl
 	pop	hl
 	or	a, a
-	jp	nz, BB5_90
+	jp	nz, BB5_86
 BB5_37:
-	ld	hl, (ix - 60)
+	ld	hl, (ix - 58)
 	ld	a, l
 	bit	2, a
 	jr	nz, BB5_39
-	ld	hl, (ix - 30)
-	ld	de, (ix - 27)
-	ld	(ix - 18), de
+	ld	de, (ix - 24)
+	ld	hl, (ix - 21)
 	jp	BB5_44
 BB5_39:
-	ld	bc, (ix - 27)
+	ld	bc, (ix - 21)
 	push	bc
 	pop	hl
 	ld	de, 2
 	or	a, a
 	sbc	hl, de
-	ld	(ix - 27), bc
+	ld	iy, (ix - 24)
+	ld	(ix - 21), bc
+	ld	(ix - 24), iy
 	jr	c, BB5_41
-	ld	hl, (ix - 30)
+	lea	hl, iy
 	ld	de, 2
 	or	a, a
 	sbc	hl, de
@@ -933,13 +930,13 @@ BB5_39:
 BB5_41:
 	ld	hl, 1
 	push	hl
-	ld	hl, (ix - 12)
+	ld	hl, (ix - 9)
+	push	hl
+	ld	hl, (ix - 18)
 	push	hl
 	push	iy
-	ld	hl, (ix - 30)
-	push	hl
 	push	bc
-	ld	hl, (ix - 15)
+	ld	hl, (ix - 12)
 	push	hl
 	call	__Z9DrawImagejjjiib
 	pop	hl
@@ -949,84 +946,81 @@ BB5_41:
 	pop	hl
 	pop	hl
 	or	a, a
-	ld	hl, (ix - 30)
-	ld	de, (ix - 27)
-	ld	(ix - 18), de
-	jp	nz, BB5_88
-	jr	BB5_44
+	ld	de, (ix - 24)
+	ld	hl, (ix - 21)
+	jp	nz, BB5_84
+	jp	BB5_44
 BB5_42:
 	push	bc
 	pop	hl
 	ld	c, 1
 	call	__ishru
-	push	hl
-	pop	de
-	ld	hl, (ix - 30)
+	ld	(ix - 15), hl
+	lea	hl, iy
 	call	__ishru
 	push	hl
-	pop	bc
-	ld	(ix - 24), bc
+	pop	de
+	ld	(ix - 51), de
 	ld	hl, 1
 	push	hl
-	ld	hl, (ix - 12)
+	ld	hl, (ix - 9)
 	push	hl
-	push	iy
-	push	bc
-	ld	(ix - 18), de
+	ld	hl, (ix - 18)
+	push	hl
 	push	de
 	ld	hl, (ix - 15)
 	push	hl
+	ld	hl, (ix - 12)
+	push	hl
 	call	__Z9DrawImagejjjiib
+	ld	de, (ix - 51)
 	pop	hl
 	pop	hl
 	pop	hl
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, (ix - 24)
+	ld	hl, (ix - 15)
 	or	a, a
 	jr	z, BB5_44
-	ld	hl, (ix - 27)
+	ld	hl, (ix - 21)
 	ld	bc, -2
+	call	__iand
+	ld	(ix - 15), hl
+	ld	hl, (ix - 24)
 	call	__iand
 	push	hl
 	pop	de
-	ld	hl, (ix - 30)
-	call	__iand
-	push	hl
-	pop	bc
-	ld	(ix - 24), bc
+	ld	(ix - 51), de
 	ld	hl, 1
 	push	hl
-	ld	hl, (ix - 12)
+	ld	hl, (ix - 9)
 	push	hl
-	ld	hl, (ix - 21)
+	ld	hl, (ix - 18)
 	push	hl
-	push	bc
-	ld	(ix - 18), de
 	push	de
 	ld	hl, (ix - 15)
 	push	hl
+	ld	hl, (ix - 12)
+	push	hl
 	call	__Z9DrawImagejjjiib
+	ld	de, (ix - 51)
 	pop	hl
 	pop	hl
 	pop	hl
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, (ix - 24)
+	ld	hl, (ix - 15)
 	or	a, a
-	jp	nz, BB5_94
+	jp	nz, BB5_90
 BB5_44:
-	ld	(ix - 24), hl
-	ld	hl, (ix - 63)
-	ld	a, l
+	ld	(ix - 51), de
+	ld	de, (ix - 61)
+	ld	a, e
 	bit	7, a
-	jr	nz, BB5_46
-	ld	c, -1
-	ld	b, (ix - 33)
-	jp	BB5_56
-BB5_46:
+	ld	(ix - 15), hl
+	jp	z, BB5_55
 	ld	hl, 39
 	push	hl
 	call	_gfx_SetDefaultPalette
@@ -1052,6 +1046,10 @@ BB5_46:
 	call	__Z14PrintCenteredXPKch
 	pop	hl
 	pop	hl
+	ld	hl, (ix - 12)
+	push	hl
+	call	__Z11DeleteImagej
+	pop	hl
 	ld	hl, -126
 	push	hl
 	ld	hl, _.str.7
@@ -1066,11 +1064,11 @@ BB5_46:
 	call	__Z14PrintCenteredXPKch
 	pop	hl
 	pop	hl
-BB5_47:
+BB5_46:
 	call	_os_GetCSC
 	or	a, a
-	jr	z, BB5_47
-	ld	hl, (ix - 6)
+	jr	z, BB5_46
+	ld	hl, (ix - 3)
 	push	hl
 	call	_free
 	pop	hl
@@ -1091,15 +1089,15 @@ BB5_47:
 	add	hl, bc
 	or	a, a
 	sbc	hl, bc
-	ld	(ix - 27), hl
-	jr	nz, BB5_51
-BB5_49:
+	ld	(ix - 21), hl
+	jr	nz, BB5_50
+BB5_48:
 	call	_os_GetCSC
 	or	a, a
-	jr	z, BB5_49
+	jr	z, BB5_48
 	call	_gfx_End
-	jp	BB5_55
-BB5_51:
+	jp	BB5_54
+BB5_50:
 	ld	de, -75
 	push	de
 	call	_gfx_SetTextFGColor
@@ -1109,14 +1107,14 @@ BB5_51:
 	push	hl
 	call	_gfx_SetTextBGColor
 	pop	hl
-	ld	hl, (ix - 27)
+	ld	hl, (ix - 21)
 	ld	bc, 9
 	call	__imulu
 	push	hl
 	call	_malloc
-	ld	(ix - 6), hl
+	ld	(ix - 3), hl
 	pop	hl
-	ld	hl, (ix - 9)
+	ld	hl, (ix - 6)
 	push	hl
 	or	a, a
 	sbc	hl, hl
@@ -1127,45 +1125,45 @@ BB5_51:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	iy, (ix - 6)
+	ld	iy, (ix - 3)
 	ld	de, 0
-BB5_52:
+BB5_51:
 	ld	hl, (ix + 6)
 	or	a, a
 	sbc	hl, de
-	jr	c, BB5_54
-	ld	hl, (ix - 9)
+	jr	c, BB5_53
+	ld	hl, (ix - 6)
 	push	hl
 	ld	hl, 1
 	push	hl
 	ld	hl, 8
 	push	hl
 	push	iy
-	ld	(ix - 30), iy
-	ld	(ix - 39), de
+	ld	(ix - 24), iy
+	ld	(ix - 33), de
 	call	_ti_Read
 	pop	hl
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	iy, (ix - 30)
+	ld	iy, (ix - 24)
 	ld	(iy + 8), 0
-	ld	hl, (ix - 9)
+	ld	hl, (ix - 6)
 	push	hl
 	ld	hl, 1
 	push	hl
 	ld	hl, 8
 	push	hl
 	call	_ti_Seek
-	ld	de, (ix - 39)
-	ld	iy, (ix - 30)
+	ld	de, (ix - 33)
+	ld	iy, (ix - 24)
 	pop	hl
 	pop	hl
 	pop	hl
 	inc	de
 	lea	iy, iy + 9
-	jr	BB5_52
-BB5_54:
+	jr	BB5_51
+BB5_53:
 	ld	hl, 10
 	push	hl
 	push	hl
@@ -1174,9 +1172,9 @@ BB5_54:
 	pop	hl
 	ld	hl, (ix + 6)
 	push	hl
-	ld	hl, (ix - 6)
+	ld	hl, (ix - 3)
 	push	hl
-	ld	hl, (ix - 15)
+	ld	hl, (ix - 12)
 	push	hl
 	call	__Z10PrintNamesjPKcj
 	pop	hl
@@ -1184,15 +1182,15 @@ BB5_54:
 	pop	hl
 	ld	hl, 1
 	push	hl
-	ld	hl, (ix - 12)
-	push	hl
-	ld	hl, (ix - 21)
-	push	hl
-	ld	hl, (ix - 24)
+	ld	hl, (ix - 9)
 	push	hl
 	ld	hl, (ix - 18)
 	push	hl
+	ld	hl, (ix - 51)
+	push	hl
 	ld	hl, (ix - 15)
+	push	hl
+	ld	hl, (ix - 12)
 	push	hl
 	call	__Z9DrawImagejjjiib
 	pop	hl
@@ -1201,62 +1199,41 @@ BB5_54:
 	pop	hl
 	pop	hl
 	pop	hl
-BB5_55:
-	ld	hl, (ix - 27)
+BB5_54:
+	ld	hl, (ix - 21)
 	add	hl, bc
 	or	a, a
 	sbc	hl, bc
-	ld	c, -1
-	ld	b, (ix - 33)
-	jp	z, BB5_93
-BB5_56:
-	ld	hl, (ix - 51)
-	bit	0, l
-	jr	nz, BB5_58
-	ld	hl, (ix - 81)
-	bit	0, l
-	jp	z, BB5_69
-BB5_58:
 	ld	hl, (ix - 15)
+	jp	z, BB5_89
+BB5_55:
+	ld	de, (ix - 45)
+	bit	0, e
+	jr	nz, BB5_57
+	ld	de, (ix - 79)
+	bit	0, e
+	jp	z, BB5_68
+BB5_57:
+	ld	hl, (ix - 12)
 	inc	hl
 	push	hl
 	pop	iy
-	ld	de, (ix - 75)
+	ld	de, (ix - 73)
 	or	a, a
 	sbc	hl, de
-	jr	c, BB5_60
-	ld	iy, (ix - 75)
-BB5_60:
-	ld	hl, (ix - 72)
+	jr	c, BB5_59
+	ld	iy, (ix - 73)
+BB5_59:
+	ld	hl, (ix - 70)
 	add	hl, bc
 	or	a, a
 	sbc	hl, bc
-	ld	b, c
-	jr	z, BB5_62
-	ld	b, 0
-BB5_62:
-	ld	hl, (ix - 72)
-	lea	de, iy
-	or	a, a
-	sbc	hl, de
-	ccf
-	sbc	a, a
-	ld	l, a
-	ld	a, b
-	or	a, l
-	bit	0, a
-	jr	nz, BB5_64
-	ld	iy, (ix - 75)
-BB5_64:
-	ld	hl, (ix - 78)
-	add	hl, bc
-	or	a, a
-	sbc	hl, bc
-	ld	e, c
-	jr	z, BB5_66
+	ld	d, -1
+	ld	e, d
+	jr	z, BB5_61
 	ld	e, 0
-BB5_66:
-	ld	hl, (ix - 78)
+BB5_61:
+	ld	hl, (ix - 70)
 	lea	bc, iy
 	or	a, a
 	sbc	hl, bc
@@ -1266,14 +1243,35 @@ BB5_66:
 	ld	a, e
 	or	a, l
 	bit	0, a
-	jr	nz, BB5_68
-	ld	bc, (ix - 72)
-BB5_68:
+	jr	nz, BB5_63
+	ld	iy, (ix - 73)
+BB5_63:
+	ld	hl, (ix - 76)
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	ld	e, d
+	jr	z, BB5_65
+	ld	e, 0
+BB5_65:
+	ld	hl, (ix - 76)
+	lea	bc, iy
+	or	a, a
+	sbc	hl, bc
+	ccf
+	sbc	a, a
+	ld	l, a
+	ld	a, e
+	or	a, l
+	bit	0, a
+	jr	nz, BB5_67
+	ld	bc, (ix - 70)
+BB5_67:
 	ld	hl, (ix + 6)
 	push	hl
-	ld	hl, (ix - 6)
+	ld	hl, (ix - 3)
 	push	hl
-	ld	(ix - 15), bc
+	ld	(ix - 12), bc
 	push	bc
 	call	__Z10PrintNamesjPKcj
 	pop	hl
@@ -1281,24 +1279,27 @@ BB5_68:
 	pop	hl
 	ld	a, (__ZZ17DisplayHomeScreenjE15fullScreenImage)
 	and	a, 1
-	ld	(ix - 36), a
-	ld	b, 1
+	ld	h, a
+	ld	c, 1
 	ld	a, 8
-	ld	e, a
-	jr	BB5_70
+	ld	l, a
+	ld	de, (ix - 64)
+	jr	BB5_69
+BB5_68:
+	ld	l, (ix - 52)
+	ld	de, (ix - 64)
+	ld	c, (ix - 27)
+	ld	h, (ix - 30)
 BB5_69:
-	ld	e, (ix - 3)
-BB5_70:
-	ld	hl, (ix - 66)
-	ld	a, l
+	ld	a, e
 	bit	4, a
-	jr	nz, BB5_72
-	ld	hl, (ix - 69)
-	ld	a, l
+	jr	nz, BB5_71
+	ld	de, (ix - 67)
+	ld	a, e
 	bit	3, a
-	jr	z, BB5_75
-BB5_72:
-	ld	bc, (ix - 15)
+	jr	z, BB5_74
+BB5_71:
+	ld	bc, (ix - 12)
 	dec	bc
 	push	bc
 	pop	hl
@@ -1307,14 +1308,14 @@ BB5_72:
 	sbc	hl, de
 	ld	hl, 0
 	ex	de, hl
-	jr	nc, BB5_74
+	jr	nc, BB5_73
 	push	bc
 	pop	de
-BB5_74:
-	ld	(ix - 3), de
+BB5_73:
+	ld	(ix - 12), de
 	ld	hl, (ix + 6)
 	push	hl
-	ld	hl, (ix - 6)
+	ld	hl, (ix - 3)
 	push	hl
 	push	de
 	call	__Z10PrintNamesjPKcj
@@ -1323,59 +1324,75 @@ BB5_74:
 	pop	hl
 	ld	a, (__ZZ17DisplayHomeScreenjE15fullScreenImage)
 	and	a, 1
-	ld	c, a
-	ld	b, 1
-	ld	hl, (ix - 3)
+	ld	h, a
+	ld	c, 1
+	ld	iy, (ix - 12)
 	ld	a, 9
-	ld	e, a
-	jr	BB5_76
+	ld	l, a
+	jr	BB5_75
+BB5_74:
+	ld	iy, (ix - 12)
 BB5_75:
-	ld	hl, (ix - 15)
-	ld	c, (ix - 36)
-BB5_76:
-	ld	(ix - 15), hl
-	bit	0, c
-	ld	(ix - 3), e
-	jr	nz, BB5_79
-	ld	a, b
+	ld	(ix - 52), l
+	bit	0, h
+	ld	(ix - 12), iy
+	jr	nz, BB5_78
+	ld	a, c
 	and	a, 1
 	bit	0, a
 	jp	z, BB5_4
 	ld	a, (__ZZ17DisplayHomeScreenjE15fullScreenImage)
-	ld	l, a
-	ld	bc, (ix - 21)
-	ld	de, (ix - 12)
-	jr	BB5_84
-BB5_79:
+	bit	0, a
+	ld	bc, (ix - 51)
+	ld	(ix - 21), bc
+	ld	de, (ix - 15)
+	ld	(ix - 24), de
+	ld	hl, 1
+	ld	iy, (ix - 12)
+	jr	z, BB5_79
+	jr	BB5_80
+BB5_78:
 	ld	a, (__ZZ17DisplayHomeScreenjE15fullScreenImage)
 	bit	0, a
-	ld	hl, 240
-	jr	nz, BB5_81
-	ld	hl, 120
-BB5_81:
-	ld	(ix - 24), hl
-	bit	0, a
-	ld	hl, 320
-	jr	nz, BB5_83
-	ld	hl, 160
-BB5_83:
+	ld	hl, 0
+	ld	(ix - 9), hl
 	ld	(ix - 18), hl
-	ld	l, a
-	ld	de, 0
+	ld	hl, 120
+	ld	(ix - 21), hl
+	ld	hl, 160
+	ld	(ix - 24), hl
+	ld	hl, 1
+	ld	de, 240
 	push	de
 	pop	bc
-BB5_84:
+	ld	de, 320
+	jr	nz, BB5_80
+BB5_79:
+	ld	hl, (ix + 6)
 	push	hl
-	ld	(ix - 12), de
-	push	de
-	ld	(ix - 21), bc
-	push	bc
-	ld	hl, (ix - 24)
+	ld	hl, (ix - 3)
+	push	hl
+	push	iy
+	call	__Z10PrintNamesjPKcj
+	ld	iy, (ix - 12)
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (__ZZ17DisplayHomeScreenjE15fullScreenImage)
+	ld	l, a
+	ld	bc, (ix - 21)
+	ld	de, (ix - 24)
+BB5_80:
+	push	hl
+	ld	hl, (ix - 9)
 	push	hl
 	ld	hl, (ix - 18)
 	push	hl
-	ld	hl, (ix - 15)
-	push	hl
+	ld	(ix - 51), bc
+	push	bc
+	ld	(ix - 15), de
+	push	de
+	push	iy
 	call	__Z9DrawImagejjjiib
 	pop	hl
 	pop	hl
@@ -1394,7 +1411,7 @@ BB5_84:
 	pop	hl
 	or	a, a
 	sbc	hl, hl
-	ld	l, (ix - 3)
+	ld	l, (ix - 52)
 	ld	de, 3
 	push	de
 	push	hl
@@ -1408,22 +1425,22 @@ BB5_84:
 	call	__Z14PrintCenteredXPKch
 	pop	hl
 	pop	hl
-BB5_86:
+BB5_82:
 	call	_os_GetCSC
 	or	a, a
-	jr	z, BB5_86
-	jr	BB5_92
-BB5_87:
-	ld	hl, (ix - 9)
+	jr	z, BB5_82
+	jr	BB5_88
+BB5_83:
+	ld	hl, (ix - 6)
 	push	hl
 	call	_ti_Close
 	pop	hl
-	ld	hl, (ix - 6)
+	ld	hl, (ix - 3)
 	push	hl
 	call	_free
 	pop	hl
-	jr	BB5_93
-BB5_88:
+	jr	BB5_89
+BB5_84:
 	ld	hl, -126
 	push	hl
 	ld	hl, _.str.5
@@ -1438,15 +1455,48 @@ BB5_88:
 	call	__Z14PrintCenteredXPKch
 	pop	hl
 	pop	hl
-BB5_89:
+BB5_85:
 	call	_os_GetCSC
 	or	a, a
-	jr	z, BB5_89
-	jr	BB5_92
-BB5_90:
+	jr	z, BB5_85
+	jr	BB5_88
+BB5_86:
 	ld	hl, -126
 	push	hl
 	ld	hl, _.str.2
+	push	hl
+	call	__Z14PrintCenteredXPKch
+	pop	hl
+	pop	hl
+	ld	hl, -116
+	push	hl
+	ld	hl, _.str.3
+	push	hl
+	call	__Z14PrintCenteredXPKch
+	pop	hl
+	pop	hl
+BB5_87:
+	call	_os_GetCSC
+	or	a, a
+	jr	z, BB5_87
+BB5_88:
+	ld	hl, (ix - 6)
+	push	hl
+	call	_ti_Close
+	pop	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_free
+	pop	hl
+	call	_gfx_End
+BB5_89:
+	ld	sp, ix
+	pop	ix
+	ret
+BB5_90:
+	ld	hl, -126
+	push	hl
+	ld	hl, _.str.4
 	push	hl
 	call	__Z14PrintCenteredXPKch
 	pop	hl
@@ -1462,40 +1512,7 @@ BB5_91:
 	call	_os_GetCSC
 	or	a, a
 	jr	z, BB5_91
-BB5_92:
-	ld	hl, (ix - 9)
-	push	hl
-	call	_ti_Close
-	pop	hl
-	ld	hl, (ix - 6)
-	push	hl
-	call	_free
-	pop	hl
-	call	_gfx_End
-BB5_93:
-	ld	sp, ix
-	pop	ix
-	ret
-BB5_94:
-	ld	hl, -126
-	push	hl
-	ld	hl, _.str.4
-	push	hl
-	call	__Z14PrintCenteredXPKch
-	pop	hl
-	pop	hl
-	ld	hl, -116
-	push	hl
-	ld	hl, _.str.3
-	push	hl
-	call	__Z14PrintCenteredXPKch
-	pop	hl
-	pop	hl
-BB5_95:
-	call	_os_GetCSC
-	or	a, a
-	jr	z, BB5_95
-	jr	BB5_92
+	jr	BB5_88
 	section	.text,"ax",@progbits
 
 	section	.text,"ax",@progbits
@@ -2415,115 +2432,6 @@ __Z14PrintCenteredXPKch:
 	section	.text,"ax",@progbits
 
 	section	.text,"ax",@progbits
-	public	__Z13NoImagesFoundv
-__Z13NoImagesFoundv:
-	scf
-	sbc	hl, hl
-	push	hl
-	call	_gfx_SetTextBGColor
-	pop	hl
-	ld	hl, -64
-	push	hl
-	call	_gfx_SetTextFGColor
-	pop	hl
-	ld	hl, 1
-	push	hl
-	ld	hl, _.str.24
-	push	hl
-	call	__Z14PrintCenteredXPKch
-	pop	hl
-	pop	hl
-	or	a, a
-	sbc	hl, hl
-	push	hl
-	call	_gfx_SetTextFGColor
-	pop	hl
-	ld	hl, 11
-	push	hl
-	ld	hl, _.str.25
-	push	hl
-	call	__Z14PrintCenteredXPKch
-	pop	hl
-	pop	hl
-	ld	hl, 21
-	push	hl
-	ld	hl, _.str.26
-	push	hl
-	call	__Z14PrintCenteredXPKch
-	pop	hl
-	pop	hl
-	ld	hl, 31
-	push	hl
-	ld	hl, _.str.27
-	push	hl
-	call	__Z14PrintCenteredXPKch
-	pop	hl
-	pop	hl
-	ld	hl, -75
-	push	hl
-	ld	hl, _.str.28
-	push	hl
-	call	__Z14PrintCenteredXPKch
-	pop	hl
-	pop	hl
-	ld	hl, -65
-	push	hl
-	ld	hl, _.str.29
-	push	hl
-	call	__Z14PrintCenteredXPKch
-	pop	hl
-	pop	hl
-	ld	hl, -55
-	push	hl
-	ld	hl, _.str.30
-	push	hl
-	call	__Z14PrintCenteredXPKch
-	pop	hl
-	pop	hl
-	ld	hl, -45
-	push	hl
-	ld	hl, _.str.31
-	push	hl
-	call	__Z14PrintCenteredXPKch
-	pop	hl
-	pop	hl
-	ld	hl, -25
-	push	hl
-	ld	hl, _.str.3
-	push	hl
-	call	__Z14PrintCenteredXPKch
-	pop	hl
-	pop	hl
-	ret
-	section	.text,"ax",@progbits
-
-	section	.text,"ax",@progbits
-	public	__Z13PrintCenteredPKc
-__Z13PrintCenteredPKc:
-	call	__frameset0
-	ld	hl, (ix + 6)
-	push	hl
-	call	_gfx_GetStringWidth
-	push	hl
-	pop	de
-	pop	hl
-	ld	hl, 320
-	or	a, a
-	sbc	hl, de
-	ld	c, 1
-	call	__ishru
-	ld	de, 116
-	push	de
-	push	hl
-	ld	hl, (ix + 6)
-	push	hl
-	call	_gfx_PrintStringXY
-	ld	sp, ix
-	pop	ix
-	ret
-	section	.text,"ax",@progbits
-
-	section	.text,"ax",@progbits
 	public	__Z11DeleteImagej
 __Z11DeleteImagej:
 	ld	hl, -41
@@ -2671,20 +2579,20 @@ __Z11DeleteImagej:
 	lea	hl, ix - 17
 	ld	(ix - 35), hl
 	ld	iy, (ix - 29)
-BB11_1:
+BB9_1:
 	lea	hl, iy
 	ld	de, -1
 	or	a, a
 	sbc	hl, de
 	ld	de, (ix - 38)
-	jr	z, BB11_5
-BB11_2:
+	jr	z, BB9_5
+BB9_2:
 	push	de
 	pop	hl
 	ld	bc, -1
 	or	a, a
 	sbc	hl, bc
-	jr	z, BB11_4
+	jr	z, BB9_4
 	push	de
 	push	iy
 	ld	hl, (ix - 32)
@@ -2708,11 +2616,120 @@ BB11_2:
 	ld	iy, (ix - 29)
 	pop	hl
 	dec	de
-	jr	BB11_2
-BB11_4:
+	jr	BB9_2
+BB9_4:
 	dec	iy
-	jr	BB11_1
-BB11_5:
+	jr	BB9_1
+BB9_5:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	__Z13NoImagesFoundv
+__Z13NoImagesFoundv:
+	scf
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextBGColor
+	pop	hl
+	ld	hl, -64
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, 1
+	push	hl
+	ld	hl, _.str.24
+	push	hl
+	call	__Z14PrintCenteredXPKch
+	pop	hl
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, 11
+	push	hl
+	ld	hl, _.str.25
+	push	hl
+	call	__Z14PrintCenteredXPKch
+	pop	hl
+	pop	hl
+	ld	hl, 21
+	push	hl
+	ld	hl, _.str.26
+	push	hl
+	call	__Z14PrintCenteredXPKch
+	pop	hl
+	pop	hl
+	ld	hl, 31
+	push	hl
+	ld	hl, _.str.27
+	push	hl
+	call	__Z14PrintCenteredXPKch
+	pop	hl
+	pop	hl
+	ld	hl, -75
+	push	hl
+	ld	hl, _.str.28
+	push	hl
+	call	__Z14PrintCenteredXPKch
+	pop	hl
+	pop	hl
+	ld	hl, -65
+	push	hl
+	ld	hl, _.str.29
+	push	hl
+	call	__Z14PrintCenteredXPKch
+	pop	hl
+	pop	hl
+	ld	hl, -55
+	push	hl
+	ld	hl, _.str.30
+	push	hl
+	call	__Z14PrintCenteredXPKch
+	pop	hl
+	pop	hl
+	ld	hl, -45
+	push	hl
+	ld	hl, _.str.31
+	push	hl
+	call	__Z14PrintCenteredXPKch
+	pop	hl
+	pop	hl
+	ld	hl, -25
+	push	hl
+	ld	hl, _.str.3
+	push	hl
+	call	__Z14PrintCenteredXPKch
+	pop	hl
+	pop	hl
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	__Z13PrintCenteredPKc
+__Z13PrintCenteredPKc:
+	call	__frameset0
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_GetStringWidth
+	push	hl
+	pop	de
+	pop	hl
+	ld	hl, 320
+	or	a, a
+	sbc	hl, de
+	ld	c, 1
+	call	__ishru
+	ld	de, 116
+	push	de
+	push	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_PrintStringXY
 	ld	sp, ix
 	pop	ix
 	ret
@@ -2994,10 +3011,10 @@ _.str.33:
 	extern	_gfx_FillScreen
 	extern	_gfx_VertLine
 	extern	_ti_SetArchiveStatus
+	extern	__Unwind_SjLj_Unregister
 	extern	__fdiv
 	extern	__imulu
 	extern	_gfx_SetColor
-	extern	__Unwind_SjLj_Unregister
 	extern	_ti_GetDataPtr
 	extern	_gfx_PrintStringXY
 	extern	_gfx_End
