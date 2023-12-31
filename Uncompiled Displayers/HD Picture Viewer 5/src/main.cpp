@@ -35,7 +35,7 @@
 #define MAX_THUMBNAIL_WIDTH 160
 #define MAX_THUMBNAIL_HEIGHT 200
 #define THUMBNAIL_ZOOM 0
-#define ZOOM_SCALE 2
+#define ZOOM_SCALE 1.1
 #define SQUARE_WIDTH_AND_HEIGHT 80
 #define MAX_UINT 16777215
 //colors
@@ -118,10 +118,10 @@ void DisplayHomeScreen(uint24_t picsCount) {
 
 	//kb_key_t key = kb_Data[7];
 	bool menuEnter, menuQuit,
-		menuUp, menuDown,
+		menuUp, menuDown, menuHelp,
 		prev, next,
 		deletePic, resetPic, redrawPic,
-		zoomIn, zoomOut,
+		zoomIn, zoomOut, zoomMax,
 		panUp, panDown, panLeft, panRight;
 
 	//seeks to the first image name
@@ -151,6 +151,7 @@ void DisplayHomeScreen(uint24_t picsCount) {
 		//scans the keys for keypress
 		kb_Scan();
 
+		menuHelp  = kb_Data[1] & kb_Mode;
 		menuEnter = kb_Data[6] & kb_Enter;
 		menuQuit  = kb_Data[6] & kb_Clear;
 		menuUp    = kb_Data[7] & kb_Up;
@@ -160,9 +161,10 @@ void DisplayHomeScreen(uint24_t picsCount) {
 		prev      = kb_Data[1] & kb_Yequ;
 		resetPic  = kb_Data[1] & kb_Window;
 		deletePic = kb_Data[1] & kb_Del;
-		redrawPic = kb_Data[6] & kb_Enter;
+		zoomMax   = kb_Data[1] & kb_Zoom;
 		zoomIn    = kb_Data[6] & kb_Add;
 		zoomOut   = kb_Data[6] & kb_Sub;
+		redrawPic = kb_Data[6] & kb_Enter;
 		panUp     = kb_Data[7] & kb_Up;
 		panDown   = kb_Data[7] & kb_Down;
 		panLeft   = kb_Data[7] & kb_Left;
@@ -185,10 +187,45 @@ void DisplayHomeScreen(uint24_t picsCount) {
 			}
 			
 			if (menuEnter){
+				if(!fullScreenImage)
+					resetPic=true;
 				fullScreenImage = true;
-				resetPic=true;
 				redrawPic = true;
 				errorID = 2;
+			}
+			
+			if (menuHelp){
+				gfx_FillScreen(PALETTE_BLACK);
+				gfx_SetTextBGColor(PALETTE_BLACK);
+				gfx_SetTextFGColor(PALETTE_WHITE);
+				PrintCenteredX("HD Picture Viewer Help",0);
+				gfx_PrintStringXY("Keymap in Menu:",0,20);
+				gfx_PrintStringXY("Clear ______ Quit program.",10,30);
+				gfx_PrintStringXY("Enter ______ Open picture fullscreen.",10,40);
+				gfx_PrintStringXY("Up _________ Select previous.",10,50);
+				gfx_PrintStringXY("Down _______ Select next.",10,60);
+				
+				gfx_PrintStringXY("Keymap in Fullscreen:",0,80);
+				gfx_PrintStringXY("Clear ______ Quit to menu.",10,90);
+				gfx_PrintStringXY("Y= _________ Show previous.",10,100);
+				gfx_PrintStringXY("Graph ______ Show next.",10,110);
+				gfx_PrintStringXY("Arrow Keys _ Pan image.",10,120);
+				gfx_PrintStringXY("Del ________ Permenantly delete image.",10,130);
+				gfx_PrintStringXY("+ __________ Zoom in.",10,140);
+				gfx_PrintStringXY("- __________ Zoom out.",10,150);
+				gfx_PrintStringXY("Window _____ Reset image zoom.",10,160);
+				
+				gfx_PrintStringXY("Author: TheLastMillennial",10,180);
+				
+				PrintCenteredX("Press any key to return.",210);
+
+				gfx_PrintStringXY("Version:",0,230);
+				gfx_PrintStringXY(VERSION,64,230);
+				
+				while(!os_GetCSC());
+				gfx_FillScreen(PALETTE_BLACK);
+				resetPic=true;
+				redrawPic=true;
 			}
 			
 			//image panning
@@ -215,8 +252,45 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				}
 			}
 
+			//zoom in as far as possible while maintaining full quality
+			if(zoomMax && fullScreenImage)
+			{
+				//pull image full dimensions from database
+				char picDimensions[6];
+				ti_var_t database{ ti_Open("HDPICDB","r") };
+				ti_Seek(18 + (16 * startName), SEEK_CUR, database);
+				ti_Read(picDimensions, 6, 1, database);
+				ti_Close(database);
+
+				//convert string to int
+				maxAllowedWidthInPxl= (((static_cast<uint24_t>(picDimensions[0]) - '0') * 100 + (static_cast<uint24_t>(picDimensions[1]) - '0') * 10 + static_cast<uint24_t>(picDimensions[2]) - '0') + 1) * SQUARE_WIDTH_AND_HEIGHT;
+				maxAllowedHeightInPxl=(((static_cast<uint24_t>(picDimensions[3]) - '0') * 100 + (static_cast<uint24_t>(picDimensions[4]) - '0') * 10 + static_cast<uint24_t>(picDimensions[5]) - '0') + 1) * SQUARE_WIDTH_AND_HEIGHT;
+
+				imageErr = DrawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
+				//this means we can't zoom in any more. Zoom back out.
+				if (imageErr != 0) {
+					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
+					maxAllowedWidthInPxl = maxAllowedWidthInPxl / ZOOM_SCALE;
+					maxAllowedHeightInPxl = maxAllowedHeightInPxl / ZOOM_SCALE;
+					dbg_sprintf(dbgout, "\n Zoomed out\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
+					imageErr = DrawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
+					//if zooming back out didn't fix it, abort.
+					if (imageErr != 0) {
+						dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
+
+						PrintCenteredX("Error zooming in.", 130);
+						PrintCenteredX("Press any key to quit.", 140);
+						while (!os_GetCSC());
+						ti_Close(database);
+						free(picNames);
+						gfx_End();
+						return;
+					}
+				}
+			}
+			
 			//if plus key was pressed, zoom in by double
-			if (zoomIn) {
+			if (zoomIn && fullScreenImage) {
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomIn error"); }
 				//doubles zoom
 				maxAllowedWidthInPxl = maxAllowedWidthInPxl * ZOOM_SCALE;
@@ -245,7 +319,7 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				}
 			}
 			//if subtract key was pressed, zoom out by double.
-			if (zoomOut) {
+			if (zoomOut && fullScreenImage) {
 				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom Out");
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomOut error"); }
 
@@ -468,6 +542,10 @@ void DeleteImage(uint24_t picName) {
 		PrintCenteredX(palName, 120);
 		dbg_sprintf(dbgout, "\nERR: Issue deleting palette");
 	}
+	//sets up loading bar finish line
+	gfx_SetColor(PALETTE_WHITE);
+	gfx_VertLine_NoClip(260,153,7);
+	uint24_t deleteCount{0};
 	//delete every square
 	for (uint24_t xSquare = (picWidthInSquares - 1);xSquare < MAX_UINT;xSquare--) {
 		for (uint24_t ySquare = (picHeightInSquares - 1);ySquare < MAX_UINT;ySquare--) {
@@ -485,6 +563,7 @@ void DeleteImage(uint24_t picName) {
 				dbg_sprintf(dbgout, "\nERR: Issue deleting square");
 				dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
 			}
+			SetLoadingBarProgress(++deleteCount,picWidthInSquares*picHeightInSquares);
 		}
 	}
 }
@@ -566,8 +645,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	`x * (scaleNum / scaleDen)`
 	which can now be reordered to use strictly integer math as
 	`(x * scaleNum) / scaleDen`
-
-
+	
 	[jacobly] if you don't know:
 	floorDiv(x, y) := x / y;
 	roundDiv(x, y) := (x + (y / 2)) / y;
@@ -622,8 +700,10 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	dbg_sprintf(dbgout, "\n-------------------------");
 
 	gfx_SetTextFGColor(PALETTE_WHITE);
+	/*
 	if (refreshWholeScreen)
 		PrintCenteredX("Rendering...",110);
+	*/
 	
 	//Displays all the images
 	dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", picWidthInSquares, xOffset);
@@ -686,7 +766,10 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 			{
 					
 				if(refreshWholeScreen)
-					PrintCenteredX("Halted. Press [enter].",130);
+				{
+					PrintCenteredX("Rendering Halted.",130);
+					PrintCenteredX("Press [enter] to restart.",140);
+				}
 				//free up source and output memory
 				free(srcImg);
 				free(outputImg);
@@ -755,7 +838,6 @@ uint24_t RebuildDB(uint8_t progress) {
 	char* var_name, * imgInfo[16];// nameBuffer[10];
 	void* search_pos = NULL;
 	uint24_t imagesFound = 0;
-	//char myData[8]="HDPALV1" ,names[8];
 	ti_var_t database = ti_Open("HDPICDB", "w"), palette;
 	ti_Write("HDDATV10", 8, 1, database);//Rewrites the header because w overwrites everything
 
@@ -789,8 +871,9 @@ uint24_t RebuildDB(uint8_t progress) {
 	ti_SetArchiveStatus(true, database);
 	gfx_Begin();
 	SplashScreen();
-	gfx_SetTextXY(150, 130);
-	gfx_PrintUInt(imagesFound, 3);
+	//gfx_SetTextXY(150, 130);
+	dbg_sprintf(dbgout,"Pics Detected: %d",imagesFound);
+	//gfx_PrintUInt(imagesFound, 3);
 	if (imagesFound == 0) {
 		NoImagesFound();
 	}
@@ -799,19 +882,23 @@ uint24_t RebuildDB(uint8_t progress) {
 }
 
 void NoImagesFound() {
-	gfx_SetTextBGColor(PALETTE_WHITE);
+	gfx_SetTextBGColor(PALETTE_BLACK);
 	gfx_SetTextFGColor(XLIBC_RED);
-	PrintCenteredX("No Pictures Detected!", 1);
-	gfx_SetTextFGColor(PALETTE_BLACK);
-	PrintCenteredX("Convert some images and send them to your", 11);
-	PrintCenteredX("calculator using the HDpic converter!", 21);
-	PrintCenteredX("Tutorial: no pre-release tutorial!", 31);
-	PrintCenteredX("If you keep getting this error:", 181);
-	PrintCenteredX(" Go to home screen, press 2nd then +", 191);
-	PrintCenteredX(" then select 'AppVars'. ", 201);
-	PrintCenteredX(" Ensure the picture is there. ", 211);
-	PrintCenteredX("Press any key to quit.", 231);
-	return;
+	PrintCenteredX("No Pictures Detected!", 15);
+	gfx_SetTextFGColor(PALETTE_WHITE);
+	PrintCenteredX("Convert some images and send them to your", 30);
+	PrintCenteredX("calculator using the HD Pic converter!",    40);
+	PrintCenteredX("Tutorial: no pre-release tutorial!",        50);
+	
+	PrintCenteredX("If you keep getting this error:",          180);
+	PrintCenteredX(" Go to home screen.",                      190);
+	PrintCenteredX(" Press 2nd then + then select 'AppVars'. ",200);
+	PrintCenteredX(" Ensure all picture files are present. ",  210);
+	PrintCenteredX("Press any key to quit.",                   230);
+	
+	gfx_SetColor(PALETTE_WHITE);
+	gfx_HorizLine_NoClip(0,60,320);
+	gfx_HorizLine_NoClip(0,177,320);
 }
 
 //checks if the database is already created. If not, it creates it.
@@ -879,20 +966,23 @@ void SetLoadingBarProgress(uint24_t progress, const uint24_t tasks) {
 	if (progress > 200)
 		progress = 200;
 
-	gfx_SetColor(128);
-	gfx_FillRectangle_NoClip(60, 153, static_cast<uint8_t>(progress), 7);
+	gfx_SetColor(PALETTE_WHITE);
+	gfx_FillRectangle_NoClip(60, 153, progress, 7);
 
 }
 
 //creates a simple splash screen when program starts
 void SplashScreen() {
-	//sets color to grey
-	gfx_SetColor(XLIBC_GREY);
-	gfx_FillRectangle_NoClip(60, 80, LCD_WIDTH - 120, LCD_HEIGHT - 160);
-	gfx_SetTextFGColor(35);
-	gfx_SetTextBGColor(XLIBC_GREY);
+	//gfx_SetColor(PALETTE_BLACK);
+	//gfx_FillRectangle_NoClip(60, 80, LCD_WIDTH - 120, LCD_HEIGHT - 160);
+	gfx_FillScreen(PALETTE_BLACK);
+	gfx_SetColor(PALETTE_WHITE);
+	gfx_Rectangle_NoClip(60, 80, LCD_WIDTH - 120, LCD_HEIGHT - 160);
+	gfx_SetTextFGColor(PALETTE_WHITE);
+	gfx_SetTextBGColor(PALETTE_BLACK);
 	/* Print title screen */
-	PrintCentered("HD Picture Viewer");
+	PrintCenteredX(VERSION,125);
+	PrintCenteredX("HD Picture Viewer",110);
 }
 
 /* This UI keeps the user selection in the middle of the screen. */
@@ -956,7 +1046,8 @@ void DisplayWatermark()
 	gfx_SetTextFGColor(PALETTE_WHITE);
 	gfx_SetTextBGColor(PALETTE_BLACK);
 	gfx_PrintStringXY("HD Picture Viewer", 2,2);
-	gfx_PrintStringXY(VERSION, 2,231);
+	gfx_PrintStringXY(VERSION, 250,2);
+	gfx_PrintStringXY("[mode] = help", 2,232);
 }
 
 /* Prints a screen centered string */
