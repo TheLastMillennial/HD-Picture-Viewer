@@ -33,7 +33,7 @@
 #define Y_MARGIN 38
 #define Y_SPACING 25
 #define MAX_THUMBNAIL_WIDTH 160
-#define MAX_THUMBNAIL_HEIGHT 120
+#define MAX_THUMBNAIL_HEIGHT 200
 #define THUMBNAIL_ZOOM 0
 #define ZOOM_SCALE 2
 #define SQUARE_WIDTH_AND_HEIGHT 80
@@ -48,7 +48,7 @@
 /* Function Prototyptes */
 uint8_t DatabaseReady();
 void DisplayHomeScreen(uint24_t pics);
-uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t xOffset, int24_t yOffset, bool refreshWholeScreen);
+uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxAllowedHeightInPxl, int24_t xOffset, int24_t yOffset, bool refreshWholeScreen);
 void DeleteImage(uint24_t picName);
 void NoImagesFound();
 void PrintCentered(const char* str);
@@ -113,7 +113,7 @@ void DisplayHomeScreen(uint24_t picsCount) {
 	char* picNames{ static_cast<char*>(malloc(picsCount * BYTES_PER_IMAGE_NAME)) };
 	ti_var_t database{ ti_Open("HDPICDB","r") };
 	uint24_t startName{ 0 },
-		maxWidth{ MAX_THUMBNAIL_WIDTH }, maxHeight{ MAX_THUMBNAIL_HEIGHT };
+		maxAllowedWidthInPxl{ MAX_THUMBNAIL_WIDTH }, maxAllowedHeightInPxl{ MAX_THUMBNAIL_HEIGHT };
 	int24_t xOffset{ 0 }, yOffset{ 0 };
 
 	//kb_key_t key = kb_Data[7];
@@ -219,17 +219,17 @@ void DisplayHomeScreen(uint24_t picsCount) {
 			if (zoomIn) {
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomIn error"); }
 				//doubles zoom
-				maxWidth = maxWidth * ZOOM_SCALE;
-				maxHeight = maxHeight * ZOOM_SCALE;
-				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n maxWidth: %d\n maxHeight: %d ", maxWidth, maxHeight);
-				imageErr = DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset, true);
+				maxAllowedWidthInPxl = maxAllowedWidthInPxl * ZOOM_SCALE;
+				maxAllowedHeightInPxl = maxAllowedHeightInPxl * ZOOM_SCALE;
+				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
+				imageErr = DrawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
 					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
-					maxWidth = maxWidth / ZOOM_SCALE;
-					maxHeight = maxHeight / ZOOM_SCALE;
-					dbg_sprintf(dbgout, "\n Zoomed out\n maxWidth: %d\n maxHeight: %d ", maxWidth, maxHeight);
-					imageErr = DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset, true);
+					maxAllowedWidthInPxl = maxAllowedWidthInPxl / ZOOM_SCALE;
+					maxAllowedHeightInPxl = maxAllowedHeightInPxl / ZOOM_SCALE;
+					dbg_sprintf(dbgout, "\n Zoomed out\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
+					imageErr = DrawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 					//if zooming back out didn't fix it, abort.
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
@@ -249,22 +249,22 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom Out");
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomOut error"); }
 
-				//ensure we can zoom out without maxWidth or maxHeight becomeing 0
-				if (maxWidth / ZOOM_SCALE != 0 && maxHeight / ZOOM_SCALE != 0) {
+				//ensure we can zoom out without maxAllowedWidthInPxl or maxAllowedHeightInPxl becomeing 0
+				if (maxAllowedWidthInPxl / ZOOM_SCALE != 0 && maxAllowedHeightInPxl / ZOOM_SCALE != 0) {
 					//apply the zoom out to the width and height
-					maxWidth = maxWidth / ZOOM_SCALE;
-					maxHeight = maxHeight / ZOOM_SCALE;
+					maxAllowedWidthInPxl = maxAllowedWidthInPxl / ZOOM_SCALE;
+					maxAllowedHeightInPxl = maxAllowedHeightInPxl / ZOOM_SCALE;
 
-					//dbg_sprintf(dbgout, "\n maxWidth: %d\n maxHeight: %d ", maxWidth, maxHeight);
-					imageErr = DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset, true);
+					//dbg_sprintf(dbgout, "\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
+					imageErr = DrawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 					//this means we can't zoom out any more. Zoom back in.
 					if (imageErr != 0) {
 						//dbg_sprintf(dbgout, "\nCant zoom out trying zooming in...");
-						maxWidth = maxWidth * ZOOM_SCALE;
-						maxHeight = maxHeight * ZOOM_SCALE;
-						//dbg_sprintf(dbgout, "\n Zoomed in\n maxWidth: %d\n maxHeight: %d ", maxWidth, maxHeight);
+						maxAllowedWidthInPxl = maxAllowedWidthInPxl * ZOOM_SCALE;
+						maxAllowedHeightInPxl = maxAllowedHeightInPxl * ZOOM_SCALE;
+						//dbg_sprintf(dbgout, "\n Zoomed in\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
 
-						imageErr = DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset, true);
+						imageErr = DrawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 						//if zooming back in didn't fix it, abort.
 						if (imageErr != 0) {
 							dbg_sprintf(dbgout, "\nERR: Cant zoom out!!");
@@ -281,10 +281,10 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				}
 				else
 				{
-					//dbg_sprintf(dbgout, "\nmaxWidth or maxHeight too small. \n Zoom out aborted.");
-					//dbg_sprintf(dbgout, "\n maxWidth: %d\n maxHeight: %d ", maxWidth, maxHeight);
+					//dbg_sprintf(dbgout, "\nmaxWidth or maxAllowedHeightInPxl too small. \n Zoom out aborted.");
+					//dbg_sprintf(dbgout, "\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
 					//redraw the image. If it fails, I dunno why. It should be the exact same image as was previously displayed
-					imageErr = DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset, true);
+					imageErr = DrawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 					//err handler
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nERR: Issue displaying same image??");
@@ -398,13 +398,13 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				{
 					xOffset = 0;
 					yOffset = 0;
-					maxWidth = LCD_WIDTH;
-					maxHeight = LCD_HEIGHT;
+					maxAllowedWidthInPxl = LCD_WIDTH;
+					maxAllowedHeightInPxl = LCD_HEIGHT;
 				}else{
 					xOffset = 0;
 					yOffset = 0;
-					maxWidth = MAX_THUMBNAIL_WIDTH;
-					maxHeight = MAX_THUMBNAIL_HEIGHT;
+					maxAllowedWidthInPxl = MAX_THUMBNAIL_WIDTH;
+					maxAllowedHeightInPxl = MAX_THUMBNAIL_HEIGHT;
 				}
 				redrawPic = true;
 			}
@@ -414,7 +414,7 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				{
 					DisplayMenu(startName, picNames, picsCount);
 				}
-				imageErr = DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset, fullScreenImage);
+				imageErr = DrawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, fullScreenImage);
 				if (imageErr != 0) {
 					PrintCenteredX("Error: ", 150);
 					gfx_PrintUInt(errorID,3);
@@ -426,7 +426,8 @@ void DisplayHomeScreen(uint24_t picsCount) {
 					return;
 				}
 			}
-			DisplayWatermark();
+			if(!fullScreenImage)
+				DisplayWatermark();
 		}
 	} while (!quitProgram);
 
@@ -456,8 +457,8 @@ void DeleteImage(uint24_t picName) {
 	(uint24_t)imgWH[?]-'0' covers the 1's place
 	+1 accounts for 0 being the starting number
 	*/
-	uint24_t widthSquares{ ((static_cast<uint24_t>(imgWH[0]) - '0') * 100 + (static_cast<uint24_t>(imgWH[1]) - '0') * 10 + static_cast<uint24_t>(imgWH[2]) - '0') + 1 };
-	uint24_t heightSquares{ ((static_cast<uint24_t>(imgWH[3]) - '0') * 100 + (static_cast<uint24_t>(imgWH[4]) - '0') * 10 + static_cast<uint24_t>(imgWH[5]) - '0') + 1 };
+	uint24_t picWidthInSquares{ ((static_cast<uint24_t>(imgWH[0]) - '0') * 100 + (static_cast<uint24_t>(imgWH[1]) - '0') * 10 + static_cast<uint24_t>(imgWH[2]) - '0') + 1 };
+	uint24_t picHeightInSquares{ ((static_cast<uint24_t>(imgWH[3]) - '0') * 100 + (static_cast<uint24_t>(imgWH[4]) - '0') * 10 + static_cast<uint24_t>(imgWH[5]) - '0') + 1 };
 
 
 	//deletes palette
@@ -468,8 +469,8 @@ void DeleteImage(uint24_t picName) {
 		dbg_sprintf(dbgout, "\nERR: Issue deleting palette");
 	}
 	//delete every square
-	for (uint24_t xSquare = (widthSquares - 1);xSquare < MAX_UINT;xSquare--) {
-		for (uint24_t ySquare = (heightSquares - 1);ySquare < MAX_UINT;ySquare--) {
+	for (uint24_t xSquare = (picWidthInSquares - 1);xSquare < MAX_UINT;xSquare--) {
+		for (uint24_t ySquare = (picHeightInSquares - 1);ySquare < MAX_UINT;ySquare--) {
 
 			//combines the separate parts into one name to search for
 			sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
@@ -495,12 +496,12 @@ void DeleteImage(uint24_t picName) {
 * Image will automatically be resized to same aspect ratio so you just set the max width and height (4,3 will fit the screen normally)
 * If sucessful, returns 0. Otherwise returns 1
 */
-uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24_t xOffset, int24_t yOffset, bool refreshWholeScreen) {
+uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxAllowedHeightInPxl, int24_t xOffset, int24_t yOffset, bool refreshWholeScreen) {
 	dbg_sprintf(dbgout, "\n\n--IMAGE CHANGE--");
 	ti_var_t database{ ti_Open("HDPICDB","r") };
 
 	char imgWH[6], imgID[2], searchName[9], palName[9];
-	int24_t scaleNum{ 1 }, scaleDen{ 1 }, newWidthHeight;
+	int24_t scaleNum{ 1 }, scaleDen{ 1 }, newSquareWidthHeight;
 	if (refreshWholeScreen)
 	{
 		gfx_FillScreen(PALETTE_BLACK);
@@ -509,7 +510,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 	{
 		//used for thumbnails
 		gfx_SetColor(PALETTE_BLACK);
-		gfx_FillRectangle_NoClip(160, 0, 160, 240);
+		gfx_FillRectangle_NoClip(150, 0, 170, 240);
 	}
 	//seeks past header (8bytes), imgName, and unselected images
 	ti_Seek(16 + (16 * picName), SEEK_CUR, database);
@@ -530,31 +531,45 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 	(uint24_t)imgWH[?]-'0' covers the 1's place
 	+1 accounts for 0 being the starting number
 	*/
-	int24_t widthSquares{ ((static_cast<int24_t>(imgWH[0]) - '0') * 100 + (static_cast<int24_t>(imgWH[1]) - '0') * 10 + static_cast<int24_t>(imgWH[2]) - '0') + 1 };
-	int24_t heightSquares{ ((static_cast<int24_t>(imgWH[3]) - '0') * 100 + (static_cast<int24_t>(imgWH[4]) - '0') * 10 + static_cast<int24_t>(imgWH[5]) - '0') + 1 };
-	uint24_t maxWSquares{ (maxWidth / 80) }; //todo: [jacobly] I'm saying you should use numTilesAcross * 80 rather than maxWidth / 80
-	uint24_t maxHSquares{ (maxHeight / 80) };
-	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n", maxWSquares, widthSquares, maxHSquares, heightSquares);
+	int24_t picWidthInSquares{ ((static_cast<int24_t>(imgWH[0]) - '0') * 100 + (static_cast<int24_t>(imgWH[1]) - '0') * 10 + static_cast<int24_t>(imgWH[2]) - '0') + 1 };
+	int24_t picHeightInSquares{ ((static_cast<int24_t>(imgWH[3]) - '0') * 100 + (static_cast<int24_t>(imgWH[4]) - '0') * 10 + static_cast<int24_t>(imgWH[5]) - '0') + 1 };
+	uint24_t maxAllowedWidthInSquares{ (maxAllowedWidthInPxl / SQUARE_WIDTH_AND_HEIGHT) }; //todo: [jacobly] I'm saying you should use numTilesAcross * 80 rather than maxAllowedWidthInPxl / 80
+	uint24_t maxAllowedHeightInSquares{ (maxAllowedHeightInPxl / SQUARE_WIDTH_AND_HEIGHT) };
+	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n", maxAllowedWidthInSquares, picWidthInSquares, maxAllowedHeightInSquares, picHeightInSquares);
 
 	//checks if it should scale an image horizontally or vertically.
-	if (widthSquares * maxHSquares < heightSquares * maxWSquares) {
-		scaleNum = maxWSquares;
-		scaleDen = widthSquares;
+	if((picWidthInSquares * 80)/320 >= (picHeightInSquares * 80)/240)
+	{
+		scaleNum = maxAllowedWidthInSquares;
+		scaleDen = picWidthInSquares;
+		dbg_sprintf(dbgout, "\nPath 1 %d , %d", (picWidthInSquares * 80)/320, (picHeightInSquares * 80)/240);
+	}
+	else
+	{
+		scaleNum = maxAllowedHeightInSquares;
+		scaleDen = picHeightInSquares;
+		dbg_sprintf(dbgout, "\nPath 2 ");
+	}
+	
+	/*if (picWidthInSquares * maxAllowedHeightInSquares < picHeightInSquares * maxAllowedWidthInSquares) {
+		scaleNum = maxAllowedWidthInSquares;
+		scaleDen = picWidthInSquares;
 		dbg_sprintf(dbgout, "\nPath 1 ");
 	}
 	else {
-		scaleNum = maxHSquares;
-		scaleDen = heightSquares;
+		scaleNum = maxAllowedHeightInSquares;
+		scaleDen = picHeightInSquares;
 		dbg_sprintf(dbgout, "\nPath 2 ");
-	}
+	}*/
+	
+	
+	
 	if (scaleNum == 0 || scaleDen == 0) {
-		//PrintCenteredX("ERR: Cannot zoom out!", 130);
-		//PrintCenteredX("Press [+] twice to zoom in",145);
 		dbg_sprintf(dbgout, "\nERR: Cant zoom out\n scaleNum:%d\n scaleDen:%d", scaleNum, scaleDen);
 		//while(!os_GetCSC());
 		return 1;
 	}
-	newWidthHeight = SQUARE_WIDTH_AND_HEIGHT * scaleNum;
+	newSquareWidthHeight = SQUARE_WIDTH_AND_HEIGHT * scaleNum;
 
 	/*
 	[jacobly] so now whenever we want to compute
@@ -572,7 +587,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 	[MateoC] huh I didn't know about roundDiv
 	*/
 
-	dbg_sprintf(dbgout, "\n newWH: %d \n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d", newWidthHeight, scaleNum, scaleDen, xOffset, yOffset);
+	dbg_sprintf(dbgout, "\n newWH: %d \n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d", newSquareWidthHeight, scaleNum, scaleDen, xOffset, yOffset);
 
 	//memory where each unsized image will be stored
 	gfx_sprite_t* srcImg{ gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT) };
@@ -582,7 +597,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 		return 1;
 	}
 	//scales the suqare width and height to the final output dimensions
-	int24_t newSquareDim{ newWidthHeight / scaleDen };
+	int24_t newSquareDim{ newSquareWidthHeight / scaleDen };
 	//ensure the resized square will fit within the dimensions of the screen.
 	if (newSquareDim > LCD_HEIGHT) {
 		dbg_sprintf(dbgout, "\nERR: Square will be too large: %d", newSquareDim);
@@ -612,8 +627,6 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 		free(outputImg);
 		return 1;
 	}
-
-	//gfx_SetDrawBuffer();
 	ti_Seek(24, SEEK_SET, palSlot);
 	gfx_SetPalette(ti_GetDataPtr(palSlot), 512, 0);
 	ti_Close(palSlot);
@@ -625,23 +638,23 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 		PrintCenteredX("Rendering...",110);
 	
 	//Displays all the images
-	dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", widthSquares, xOffset);
-	dbg_sprintf(dbgout, "\nhS: %d\nyO: %d", heightSquares, yOffset);
+	dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", picWidthInSquares, xOffset);
+	dbg_sprintf(dbgout, "\nhS: %d\nyO: %d", picHeightInSquares, yOffset);
 
 
 	//This calculates the number of squares you can fit in the screen horizontally
 	//we know the horizontal resolution of the screen is 320px. 
-	//We can get the width of each square by doing newWidthHeight/scaleDen
+	//We can get the width of each square by doing newSquareWidthHeight/scaleDen
 	//the +1 is to account for rounding down errors. We don't want missing squares.
-	int24_t rightMostSquare{ LCD_WIDTH / (newWidthHeight / scaleDen) + 1 };
+	int24_t rightMostSquare{ LCD_WIDTH / (newSquareWidthHeight / scaleDen) + 1 };
 	//leftmost and topmost always starts at 0
 	int24_t leftMostSquare{ 0 };
 	int24_t topMostSquare = { 0 };
 	//This calculates the number of squares you can fit in the screen virtically
 	//we know the vertical resolution of the screen is 240px. 
-	//We can get the width of each square by doing newWidthHeight/scaleDen
+	//We can get the width of each square by doing newSquareWidthHeight/scaleDen
 	//the +1 is to account for rounding down errors. We don't want missing squares. (Overflow is compensated for, if neessary, below)
-	int24_t bottomMostSquare{ LCD_HEIGHT / (newWidthHeight / scaleDen) + 1 };
+	int24_t bottomMostSquare{ LCD_HEIGHT / (newSquareWidthHeight / scaleDen) + 1 };
 
 
 	/*applies offsets*/
@@ -654,12 +667,12 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 
 
 	/*make sure we don't try to display more squares than exist.*/
-	if (rightMostSquare > widthSquares)
-		rightMostSquare = widthSquares;
+	if (rightMostSquare > picWidthInSquares)
+		rightMostSquare = picWidthInSquares;
 	if (leftMostSquare < 0)
 		leftMostSquare = 0;
-	if (bottomMostSquare > heightSquares)
-		bottomMostSquare = heightSquares;
+	if (bottomMostSquare > picHeightInSquares)
+		bottomMostSquare = picHeightInSquares;
 	if (topMostSquare < 0)
 		topMostSquare = 0;
 
@@ -673,8 +686,10 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 	int24_t xStart{ leftMostSquare - 1 }, xEnd{ rightMostSquare - 1 };
 	int24_t yStart{ topMostSquare - 1 }, yEnd{ bottomMostSquare - 1 };
 
-	uint8_t thumbnailOffsetX = refreshWholeScreen ? 0 : 160;
-	uint24_t thumbnailOffsetY = refreshWholeScreen ? 0 : (yEnd * (newWidthHeight / scaleDen));
+	uint8_t thumbnailOffsetX = refreshWholeScreen ? 0 : 150;
+	
+	
+	uint24_t thumbnailOffsetY = refreshWholeScreen ? 0 : ((240-(newSquareWidthHeight))/2);
 
 	for (int24_t xSquare{ xEnd };xSquare > xStart;--xSquare) {
 		//this for loop outputs pic bottom to top
@@ -715,10 +730,10 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 				//displays square
 				//if we are displaying an edge image, clip the square. Otherwise don't clip for extra speed.
 				if (xSquare == xEnd || ySquare == yEnd) {
-					gfx_Sprite(outputImg, thumbnailOffsetX+(xSquare + xOffset) * (newWidthHeight / scaleDen), thumbnailOffsetY+(ySquare - yOffset) * (newWidthHeight / scaleDen));
+					gfx_Sprite(outputImg, thumbnailOffsetX+(xSquare + xOffset) * (newSquareWidthHeight / scaleDen), thumbnailOffsetY+(ySquare - yOffset) * (newSquareWidthHeight / scaleDen));
 				}
 				else {
-					gfx_Sprite_NoClip(outputImg, thumbnailOffsetX+(xSquare + xOffset) * (newWidthHeight / scaleDen), thumbnailOffsetY+(ySquare - yOffset) * (newWidthHeight / scaleDen));
+					gfx_Sprite_NoClip(outputImg, thumbnailOffsetX+(xSquare + xOffset) * (newSquareWidthHeight / scaleDen), thumbnailOffsetY+(ySquare - yOffset) * (newSquareWidthHeight / scaleDen));
 				}
 
 			}
@@ -726,13 +741,13 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 				//square does not exist, display error image
 				dbg_sprintf(dbgout, "\nERR: Square doesn't exist!");
 				dbg_sprintf(dbgout, "\n %s", searchName);
-				//dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \newWidthHeight: %d \nscaleDen: %d",xSquare,newWidthHeight,scaleDen);
+				//dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \newSquareWidthHeight: %d \nscaleDen: %d",xSquare,newSquareWidthHeight,scaleDen);
 				zx7_Decompress(srcImg, errorTriangle_compressed);
 				//resizes it to outputImg size
 				gfx_ScaleSprite(srcImg, outputImg);
 				//displays the output image
-				//dbg_sprintf(dbgout,"\nxSquare: %d \newWidthHeight: %d \nscaleDen: %d\n",xSquare,newWidthHeight,scaleDen);
-				gfx_Sprite_NoClip(outputImg, (xSquare + xOffset) * (newWidthHeight / scaleDen), (ySquare - yOffset) * (newWidthHeight / scaleDen));
+				//dbg_sprintf(dbgout,"\nxSquare: %d \newSquareWidthHeight: %d \nscaleDen: %d\n",xSquare,newSquareWidthHeight,scaleDen);
+				gfx_Sprite_NoClip(outputImg, (xSquare + xOffset) * (newSquareWidthHeight / scaleDen), (ySquare - yOffset) * (newSquareWidthHeight / scaleDen));
 				//while(!os_GetCSC());
 				continue;
 			}

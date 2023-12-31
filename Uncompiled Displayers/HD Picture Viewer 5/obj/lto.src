@@ -1750,7 +1750,7 @@ __Z9DrawImagejjjiib:
 	pop	hl
 	bit	0, (ix + 21)
 	jr	z, BB7_2
-	ld	hl, 160
+	ld	hl, 150
 	ld	(ix - 50), hl
 	or	a, a
 	sbc	hl, hl
@@ -1765,10 +1765,12 @@ BB7_2:
 	pop	hl
 	ld	hl, -16
 	push	hl
-	ld	hl, 160
+	ld	hl, 170
 	push	hl
-	ld	de, 0
-	push	de
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	ld	hl, 150
 	ld	(ix - 50), hl
 	push	hl
 	call	_gfx_FillRectangle_NoClip
@@ -2136,20 +2138,17 @@ BB7_28:
 	or	a, a
 	sbc	hl, bc
 	call	pe, __setflag
-	push	bc
-	pop	hl
 	jp	m, BB7_30
-	push	hl
+	push	bc
 	pop	iy
 BB7_30:
-	ld	de, (ix + 18)
-	push	de
+	ld	bc, (ix + 18)
+	push	bc
 	pop	hl
-	ld	bc, 1
 	or	a, a
-	sbc	hl, bc
+	sbc	hl, de
 	call	pe, __setflag
-	ld	(ix - 41), de
+	ld	(ix - 41), bc
 	jp	p, BB7_32
 	or	a, a
 	sbc	hl, hl
@@ -2158,32 +2157,35 @@ BB7_32:
 	lea	hl, iy
 	dec	hl
 	ld	(ix - 35), hl
-	ld	bc, (ix - 38)
-	call	__imulu
 	bit	0, (ix + 21)
-	ld	de, 0
+	ld	hl, 0
 	jr	nz, BB7_34
-	ex	de, hl
+	ld	bc, -80
+	ld	hl, (ix - 38)
+	call	__imulu
+	ld	bc, (ix - 35)
+	call	__imulu
+	ld	de, 240
+	add	hl, de
+	ld	bc, 2
+	call	__idivs
 BB7_34:
-	ld	(ix - 56), de
-	lea	hl, ix - 17
-	ld	(ix - 65), hl
+	ld	(ix - 56), hl
+	lea	de, ix - 17
+	ld	(ix - 65), de
 	ld	de, (ix - 44)
 	dec	de
 	dec	iyl
 	ld	a, iyl
-	ld	hl, (ix + 18)
-	push	hl
-	pop	bc
+	ld	bc, (ix + 18)
 	sub	a, c
-	ld	h, a
+	ld	b, a
 	ld	iy, (ix - 38)
-	ex	de, hl
-	ld	e, iyl
-	ex	de, hl
-	mlt	hl
-	ld	(ix - 44), hl
+	ld	c, iyl
+	mlt	bc
+	ld	(ix - 44), bc
 	ld	hl, (ix - 35)
+	ld	bc, (ix + 18)
 	or	a, a
 	sbc	hl, bc
 	push	hl
@@ -2192,9 +2194,9 @@ BB7_34:
 	call	__imulu
 	push	hl
 	pop	bc
-	ld	hl, (ix - 56)
-	add	hl, bc
-	ld	(ix - 59), hl
+	ld	iy, (ix - 56)
+	add	iy, bc
+	ld	(ix - 59), iy
 	ld	(ix - 77), de
 	push	de
 	pop	bc
