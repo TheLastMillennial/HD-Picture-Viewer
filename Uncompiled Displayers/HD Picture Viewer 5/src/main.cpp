@@ -551,18 +551,6 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 		dbg_sprintf(dbgout, "\nPath 2 ");
 	}
 	
-	/*if (picWidthInSquares * maxAllowedHeightInSquares < picHeightInSquares * maxAllowedWidthInSquares) {
-		scaleNum = maxAllowedWidthInSquares;
-		scaleDen = picWidthInSquares;
-		dbg_sprintf(dbgout, "\nPath 1 ");
-	}
-	else {
-		scaleNum = maxAllowedHeightInSquares;
-		scaleDen = picHeightInSquares;
-		dbg_sprintf(dbgout, "\nPath 2 ");
-	}*/
-	
-	
 	
 	if (scaleNum == 0 || scaleDen == 0) {
 		dbg_sprintf(dbgout, "\nERR: Cant zoom out\n scaleNum:%d\n scaleDen:%d", scaleNum, scaleDen);
@@ -687,9 +675,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	int24_t yStart{ topMostSquare - 1 }, yEnd{ bottomMostSquare - 1 };
 
 	uint8_t thumbnailOffsetX = refreshWholeScreen ? 0 : 150;
-	
-	
-	uint24_t thumbnailOffsetY = refreshWholeScreen ? 0 : ((240-(newSquareWidthHeight))/2);
+	uint24_t thumbnailOffsetY = refreshWholeScreen ? 0 : ((240-(newSquareDim*bottomMostSquare))/2);
 
 	for (int24_t xSquare{ xEnd };xSquare > xStart;--xSquare) {
 		//this for loop outputs pic bottom to top
