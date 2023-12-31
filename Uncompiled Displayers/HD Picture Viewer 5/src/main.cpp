@@ -55,11 +55,10 @@ void PrintCentered(const char* str);
 void PrintCenteredX(const char* str, uint24_t y);
 void PrintCenteredY(const char* str, uint8_t x);
 void PrintText(const int8_t xpos, const int8_t ypos, const char* text);
-void PrintNames(uint24_t start, const char* picNames, const uint24_t numOfPics);
-void DisplayMenu(uint24_t startName, const char* picNames, const uint24_t numOfPics);
+void DisplayMenu(int24_t startName, char* picNames, const int24_t numOfPics);
 uint24_t RebuildDB(uint8_t progress);
 void SplashScreen();
-void displayWatermark();
+void DisplayWatermark();
 void SetLoadingBarProgress(uint24_t progress, uint24_t t);
 
 /* Main function, called first */
@@ -110,8 +109,8 @@ err:
 
 /* Functions */
 
-void DisplayHomeScreen(uint24_t pics) {
-	char* picNames{ static_cast<char*>(malloc(pics * BYTES_PER_IMAGE_NAME)) }; //BYTES_PER_IMAGE_NAME = 9
+void DisplayHomeScreen(uint24_t picsCount) {
+	char* picNames{ static_cast<char*>(malloc(picsCount * BYTES_PER_IMAGE_NAME)) };
 	ti_var_t database{ ti_Open("HDPICDB","r") };
 	uint24_t startName{ 0 },
 		maxWidth{ MAX_THUMBNAIL_WIDTH }, maxHeight{ MAX_THUMBNAIL_HEIGHT };
@@ -128,7 +127,7 @@ void DisplayHomeScreen(uint24_t pics) {
 	//seeks to the first image name
 	ti_Seek(8, SEEK_SET, database);
 	//loops through every picture that was detected and store the image name to picNames
-	for (uint24_t i{ 0 };i <= pics;i++) {
+	for (uint24_t i{ 0 };i <= picsCount;i++) {
 		ti_Read(&picNames[i * BYTES_PER_IMAGE_NAME], 8, 1, database);
 		picNames[i * BYTES_PER_IMAGE_NAME + BYTES_PER_IMAGE_NAME - 1] = 0;
 		ti_Seek(8, SEEK_CUR, database);
@@ -139,7 +138,7 @@ void DisplayHomeScreen(uint24_t pics) {
 	
 	/* main menu */
 	gfx_FillScreen(PALETTE_BLACK);
-	DisplayMenu(startName, picNames, pics);
+	DisplayMenu(startName, picNames, picsCount);
 	//thumbnail
 	DrawImage(startName, 180, 120, 0, 0, false);
 
@@ -168,7 +167,6 @@ void DisplayHomeScreen(uint24_t pics) {
 		panDown   = kb_Data[7] & kb_Down;
 		panLeft   = kb_Data[7] & kb_Left;
 		panRight  = kb_Data[7] & kb_Right;
-
 
 		//if any key was pressed
 		if (kb_AnyKey()) {
@@ -280,7 +278,6 @@ void DisplayHomeScreen(uint24_t pics) {
 							return;
 						}
 					}
-
 				}
 				else
 				{
@@ -300,11 +297,7 @@ void DisplayHomeScreen(uint24_t pics) {
 						gfx_End();
 						return;
 					}
-
-
 				}
-
-
 			}
 
 			//if delete key pressed, delete all appvars related to current image
@@ -315,6 +308,7 @@ void DisplayHomeScreen(uint24_t pics) {
 				gfx_FillScreen(PALETTE_BLACK);
 				gfx_SetTextFGColor(XLIBC_GREY);
 				gfx_SetTextBGColor(PALETTE_BLACK);
+				gfx_SetTextScale(1,1);
 				PrintCenteredX("Deleting Picture...", 120);
 
 				//delete the palette and all squares
@@ -325,13 +319,20 @@ void DisplayHomeScreen(uint24_t pics) {
 
 				//picture names will change. Delete what we currently have
 				free(picNames);
-				//set color for potential splash screen
+				picNames = nullptr;
+				startName = 0;
+				
+				//set color for splash screen
 				gfx_SetTextFGColor(XLIBC_GREY);
 				gfx_SetTextBGColor(PALETTE_BLACK);
-				//rebuild the database to account for the deleted image. Plug in 0 temporarily
-				uint24_t picsDetected{ RebuildDB(0) };
+				
+				//rebuild the database to account for the deleted image. 
+				ti_Close(database);
+				picsCount = RebuildDB(0);
+				database = ti_Open("HDPICDB", "r");
+
 				//check if all images were deleted. If so, just quit.
-				if (picsDetected == 0) {
+				if (picsCount == 0) {
 					//we pause because RebuildDB will show a warning screen we want the user to see
 					while (!os_GetCSC());
 					gfx_End();
@@ -342,39 +343,34 @@ void DisplayHomeScreen(uint24_t pics) {
 				gfx_SetTextFGColor(XLIBC_GREY);
 				gfx_SetTextBGColor(PALETTE_BLACK);
 				//re-allocate memory for the picture names
-				picNames = static_cast<char*>(malloc(picsDetected * BYTES_PER_IMAGE_NAME));
+				picNames = static_cast<char*>(malloc(picsCount * BYTES_PER_IMAGE_NAME));
 
-				//re-open the database since we closed everything earlier
-				//database = ti_Open("HDPICDB","r");
 				//seeks to the first image name
 				ti_Seek(8, SEEK_SET, database);
 				//loops through every picture that was detected and store the image name to picNames
-				for (uint24_t i{ 0 };i <= pics;i++) {
+				for (uint24_t i{ 0 };i <= picsCount;i++) {
 					ti_Read(&picNames[i * BYTES_PER_IMAGE_NAME], 8, 1, database);
 					picNames[i * BYTES_PER_IMAGE_NAME + BYTES_PER_IMAGE_NAME - 1] = 0;
 					ti_Seek(8, SEEK_CUR, database);
 				}
 
 				//re construct the GUI
-				//display the next non-deleted image
+				gfx_FillScreen(PALETTE_BLACK);
 				resetPic=true;
 				redrawPic = true;
-				
-				//todo: change to different image
 			}
 
 			/* increases the name to start on and redraws the text */
 			if (next || (menuDown &&  !fullScreenImage)) {
 				startName++;
 				//make sure user can't scroll down too far
-				if (startName > pics-1)
+				if (startName > picsCount-1)
 				{
-					startName = pics-1;
+					startName = picsCount-1;
 				}
 
-				PrintNames(startName, picNames, pics);
 				resetPic = fullScreenImage;
-					redrawPic = true;
+				redrawPic = true;
 				//slows next scrolling speed
 				delay(150);
 				errorID = 8; //if an error is thrown, then we've scrolled bast the safety barrier somehow.
@@ -389,10 +385,8 @@ void DisplayHomeScreen(uint24_t pics) {
 				{
 					startName = 0;
 				}
-
 				resetPic = fullScreenImage;
 				redrawPic = true;
-				PrintNames(startName, picNames, pics);
 				//slows next scrolling speed
 				delay(150);
 				errorID = 9; //if an error is thrown, then we've scrolled past the safety barrier somehow.
@@ -415,12 +409,10 @@ void DisplayHomeScreen(uint24_t pics) {
 				redrawPic = true;
 			}
 			
-			
 			if (redrawPic) {
 				if(!fullScreenImage)
 				{
-					DisplayMenu(startName, picNames, pics);
-					//PrintNames(startName, picNames, pics);
+					DisplayMenu(startName, picNames, picsCount);
 				}
 				imageErr = DrawImage(startName, maxWidth, maxHeight, xOffset, yOffset, fullScreenImage);
 				if (imageErr != 0) {
@@ -434,10 +426,9 @@ void DisplayHomeScreen(uint24_t pics) {
 					return;
 				}
 			}
-
+			DisplayWatermark();
 		}
 	} while (!quitProgram);
-
 
 	ti_Close(database);
 	free(picNames);
@@ -448,7 +439,6 @@ void DeleteImage(uint24_t picName) {
 	//open the database to figure out what image we're about to delete
 	ti_var_t database{ ti_Open("HDPICDB","r") };
 	char imgWH[6], imgID[2], searchName[9], palName[9];
-
 
 	//seeks past header (8bytes), imgName, and unselected images
 	ti_Seek(16 + (16 * picName), SEEK_CUR, database);
@@ -479,7 +469,6 @@ void DeleteImage(uint24_t picName) {
 	}
 	//delete every square
 	for (uint24_t xSquare = (widthSquares - 1);xSquare < MAX_UINT;xSquare--) {
-		//dbg_sprintf(dbgout,"\nxS: %d",xSquare);
 		for (uint24_t ySquare = (heightSquares - 1);ySquare < MAX_UINT;ySquare--) {
 
 			//combines the separate parts into one name to search for
@@ -533,8 +522,6 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 
 	//Converts the width/height from a char array into two integers by converting char into decimal value
 	//then subtracting 48 to get the actuall number.
-	gfx_SetTextScale(1, 1);
-	//gfx_PrintStringXY(imgWH,170,10);
 	dbg_sprintf(dbgout, "\nimgHeader: %s \n", imgWH);
 
 	/*converts the char numbers from the header appvar into uint numbers
@@ -633,6 +620,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxWidth, uint24_t maxHeight, int24
 
 	dbg_sprintf(dbgout, "\n-------------------------");
 
+	gfx_SetTextFGColor(PALETTE_WHITE);
 	if (refreshWholeScreen)
 		PrintCenteredX("Rendering...",110);
 	
@@ -907,8 +895,11 @@ void SplashScreen() {
 }
 
 /* This UI keeps the user selection in the middle of the screen. */
-void PrintNames(uint24_t startName, const char* picNames, const uint24_t numOfPics) {
-	int24_t  yPxlPos{ 0 };
+void DisplayMenu(int24_t startName, char* picNames, const int24_t numOfPics) {
+	gfx_SetColor(PALETTE_WHITE);
+	gfx_VertLine(140, 20, 200);
+	
+	int24_t yPxlPos{ 0 };
 
 	//clears old text and sets prev for new text
 	gfx_SetTextScale(2, 2);
@@ -918,7 +909,6 @@ void PrintNames(uint24_t startName, const char* picNames, const uint24_t numOfPi
 	gfx_SetTextFGColor(PALETTE_WHITE);
 	gfx_SetTextBGColor(PALETTE_BLACK);
 	
-	
 	//re-draws UI lines
 	gfx_HorizLine_NoClip(0, 120, 6);
 	gfx_HorizLine_NoClip(136, 120, 5);
@@ -927,29 +917,12 @@ void PrintNames(uint24_t startName, const char* picNames, const uint24_t numOfPi
 	gfx_VertLine_NoClip(6, 110, 20);
 	gfx_VertLine_NoClip(136, 110, 21);
 
-	
-	//display selected image name in center of screen
-	yPxlPos = Y_MARGIN+75;
-	
-	gfx_PrintStringXY(&picNames[startName * BYTES_PER_IMAGE_NAME], X_MARGIN, yPxlPos);
-
-	
-	/* Draw image names below selected name.
-	* Iterates until out of pics or about to draw off the screen */
-	if(startName < numOfPics){
-		for (uint24_t curName{ startName+1 }; (curName <= numOfPics) && (yPxlPos < 210); curName++) {
-			//calculates where the text should be drawn
-			yPxlPos += Y_SPACING;
-
-			//Prints out the correct name
-			gfx_PrintStringXY(&picNames[curName * BYTES_PER_IMAGE_NAME], X_MARGIN, yPxlPos);
-		}
-	}
-	//
-	if (startName > 0)
-	{
+	/* draw image names above selected name */
+	dbg_sprintf(dbgout,"startName %d",startName);
+	if (startName > 0){
 		yPxlPos = Y_MARGIN+75;
-		for (uint24_t curName { startName-1}; (curName >= 0) && (yPxlPos > 15); curName--) {
+		for (int24_t curName { startName-1}; (curName >= 0) && (yPxlPos > 15); curName--) {
+
 			//calculates where the text should be drawn
 			yPxlPos -= Y_SPACING;
 
@@ -958,20 +931,25 @@ void PrintNames(uint24_t startName, const char* picNames, const uint24_t numOfPi
 		}
 	}
 	
-}
-
-void DisplayMenu(uint24_t startName, const char* picNames, const uint24_t numOfPics)
-{
-	gfx_SetColor(PALETTE_WHITE);
-	gfx_VertLine(140, 20, 200);
-	displayWatermark();
-	PrintNames(startName, picNames, numOfPics);//todo: this can probably be optimized
-	displayWatermark();
+	//display selected image name in center of screen
+	yPxlPos = Y_MARGIN+75;
+	gfx_PrintStringXY(&picNames[startName * BYTES_PER_IMAGE_NAME], X_MARGIN, yPxlPos);
 	
+	/* Draw image names below selected name.
+	* Iterates until out of pics or about to draw off the screen */
+	if(startName+1 < numOfPics){
+		for (int24_t curName{ startName+1 }; (curName <= numOfPics) && (yPxlPos < 210); curName++) {
+			//calculates where the text should be drawn
+			yPxlPos += Y_SPACING;
 
+			//Prints out the correct name
+			gfx_PrintStringXY(&picNames[curName * BYTES_PER_IMAGE_NAME], X_MARGIN, yPxlPos);
+		}
+	}
+	DisplayWatermark();
 }
 
-void displayWatermark()
+void DisplayWatermark()
 {
 	gfx_SetTextScale(1, 1);
 	gfx_SetTextFGColor(PALETTE_WHITE);
