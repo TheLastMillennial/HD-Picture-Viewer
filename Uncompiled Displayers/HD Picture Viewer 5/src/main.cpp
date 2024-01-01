@@ -22,6 +22,7 @@
 
 /* globals */
 #define VERSION "2.0.0-beta"
+#define YEAR "2024"
 //Max images is this because max combinations of appvars goes up to 936.
 // Two characters for appvar identifier. 
 // First character can be alphabetic (26 options). Second character can be alphanumeric (36 options). 
@@ -209,18 +210,20 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				gfx_PrintStringXY("Clear ______ Quit to menu.",10,90);
 				gfx_PrintStringXY("Y= _________ Show previous.",10,100);
 				gfx_PrintStringXY("Graph ______ Show next.",10,110);
-				gfx_PrintStringXY("Arrow Keys _ Pan image.",10,120);
-				gfx_PrintStringXY("Del ________ Permenantly delete image.",10,130);
+				gfx_PrintStringXY("Arrow Keys _ Pan picture.",10,120);
+				gfx_PrintStringXY("Del ________ Permenantly delete picture.",10,130);
 				gfx_PrintStringXY("+ __________ Zoom in.",10,140);
 				gfx_PrintStringXY("- __________ Zoom out.",10,150);
-				gfx_PrintStringXY("Window _____ Reset image zoom.",10,160);
+				gfx_PrintStringXY("Zoom _______ Maximum zoom.", 10, 160);
+				gfx_PrintStringXY("Window _____ Default zoom.",10,170);
 				
-				gfx_PrintStringXY("Author: TheLastMillennial",10,180);
+				gfx_PrintStringXY("Author: TheLastMillennial",10,190);
 				
 				PrintCenteredX("Press any key to return.",210);
 
 				gfx_PrintStringXY("Version:",0,230);
 				gfx_PrintStringXY(VERSION,64,230);
+				gfx_PrintStringXY(YEAR, 288, 230);
 				
 				while(!os_GetCSC());
 				gfx_FillScreen(PALETTE_BLACK);
