@@ -22,6 +22,7 @@
 
 /* globals */
 #define VERSION "2.0.0-beta"
+#define TUTORIAL_LINK "None"
 #define YEAR "2024"
 //Max images is this because max combinations of appvars goes up to 936.
 // Two characters for appvar identifier. 
@@ -217,10 +218,12 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				gfx_PrintStringXY("Zoom _______ Maximum zoom.", 10, 160);
 				gfx_PrintStringXY("Window _____ Default zoom.",10,170);
 				
-				gfx_PrintStringXY("Author: TheLastMillennial",10,190);
+				PrintCenteredX("Press any key to return.",190);
 				
-				PrintCenteredX("Press any key to return.",210);
-
+				gfx_PrintStringXY("Author:",0,210);
+				gfx_PrintStringXY("TheLastMillennial",64,210);
+				gfx_PrintStringXY("Tutorial: ",0,220);
+				gfx_PrintStringXY(TUTORIAL_LINK,64,220);
 				gfx_PrintStringXY("Version:",0,230);
 				gfx_PrintStringXY(VERSION,64,230);
 				gfx_PrintStringXY(YEAR, 288, 230);
@@ -889,7 +892,7 @@ void NoImagesFound() {
 	gfx_SetTextFGColor(PALETTE_WHITE);
 	PrintCenteredX("Convert some images and send them to your", 30);
 	PrintCenteredX("calculator using the HD Pic converter!",    40);
-	PrintCenteredX("Tutorial: no pre-release tutorial!",        50);
+	PrintCenteredX("Tutorial: no pre-release tutorial!",        50);//todo: change to link constant
 	
 	PrintCenteredX("If you keep getting this error:",          180);
 	PrintCenteredX(" Go to home screen.",                      190);

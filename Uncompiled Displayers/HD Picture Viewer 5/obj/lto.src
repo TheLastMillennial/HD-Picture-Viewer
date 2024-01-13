@@ -96,14 +96,14 @@ __Z12SplashScreenv:
 	pop	hl
 	ld	hl, 125
 	push	hl
-	ld	hl, _.str.21
+	ld	hl, _.str.24
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 110
 	push	hl
-	ld	hl, _.str.50
+	ld	hl, _.str.53
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -202,7 +202,7 @@ BB3_1:
 	bit	0, (ix - 27)
 	ld	a, 2
 	jp	nz, BB3_5
-	ld	hl, _.str.38
+	ld	hl, _.str.41
 	push	hl
 	ld	hl, _.str
 	push	hl
@@ -264,7 +264,7 @@ BB3_1:
 	pop	hl
 	ld	hl, 180
 	push	hl
-	ld	hl, _.str.49
+	ld	hl, _.str.52
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -297,7 +297,7 @@ __Z9RebuildDBh:
 	call	__frameset
 	ld	de, 0
 	ld	iy, _.str
-	ld	bc, _.str.38
+	ld	bc, _.str.41
 	or	a, a
 	sbc	hl, hl
 	ld	(ix - 54), hl
@@ -327,7 +327,7 @@ __Z9RebuildDBh:
 BB4_1:
 	ld	hl, 21
 	push	hl
-	ld	hl, _.str.40
+	ld	hl, _.str.43
 	push	hl
 	pea	ix - 51
 	call	_ti_DetectVar
@@ -923,9 +923,17 @@ BB5_15:
 	pop	hl
 	ld	hl, 190
 	push	hl
-	ld	hl, 10
-	push	hl
 	ld	hl, _.str.18
+	push	hl
+	call	__Z14PrintCenteredXPKcj
+	pop	hl
+	pop	hl
+	ld	hl, 210
+	push	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	ld	hl, _.str.19
 	push	hl
 	call	_gfx_PrintStringXY
 	pop	hl
@@ -933,9 +941,33 @@ BB5_15:
 	pop	hl
 	ld	hl, 210
 	push	hl
-	ld	hl, _.str.19
+	ld	hl, 64
 	push	hl
-	call	__Z14PrintCenteredXPKcj
+	ld	hl, _.str.20
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 220
+	push	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	ld	hl, _.str.21
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 220
+	push	hl
+	ld	hl, 64
+	push	hl
+	ld	hl, _.str.22
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
 	pop	hl
 	pop	hl
 	ld	hl, 230
@@ -943,7 +975,7 @@ BB5_15:
 	or	a, a
 	sbc	hl, hl
 	push	hl
-	ld	hl, _.str.20
+	ld	hl, _.str.23
 	push	hl
 	call	_gfx_PrintStringXY
 	pop	hl
@@ -953,7 +985,7 @@ BB5_15:
 	push	hl
 	ld	hl, 64
 	push	hl
-	ld	hl, _.str.21
+	ld	hl, _.str.24
 	push	hl
 	call	_gfx_PrintStringXY
 	pop	hl
@@ -963,7 +995,7 @@ BB5_15:
 	push	hl
 	ld	hl, 288
 	push	hl
-	ld	hl, _.str.22
+	ld	hl, _.str.25
 	push	hl
 	call	_gfx_PrintStringXY
 	pop	hl
@@ -1513,7 +1545,7 @@ BB5_67:
 	pop	hl
 	ld	hl, 120
 	push	hl
-	ld	hl, _.str.27
+	ld	hl, _.str.30
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -1524,14 +1556,14 @@ BB5_67:
 	pop	hl
 	ld	hl, 130
 	push	hl
-	ld	hl, _.str.28
+	ld	hl, _.str.31
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 140
 	push	hl
-	ld	hl, _.str.29
+	ld	hl, _.str.32
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -1885,14 +1917,14 @@ BB5_103:
 	jp	z, BB5_65
 	ld	hl, 130
 	push	hl
-	ld	hl, _.str.25
+	ld	hl, _.str.28
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 140
 	push	hl
-	ld	hl, _.str.24
+	ld	hl, _.str.27
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -1919,7 +1951,7 @@ BB5_107:
 BB5_108:
 	ld	hl, 150
 	push	hl
-	ld	hl, _.str.30
+	ld	hl, _.str.33
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -1935,7 +1967,7 @@ BB5_108:
 	pop	hl
 	ld	hl, 160
 	push	hl
-	ld	hl, _.str.24
+	ld	hl, _.str.27
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -1948,14 +1980,14 @@ BB5_109:
 BB5_110:
 	ld	hl, 130
 	push	hl
-	ld	hl, _.str.26
+	ld	hl, _.str.29
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 140
 	push	hl
-	ld	hl, _.str.24
+	ld	hl, _.str.27
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -1968,14 +2000,14 @@ BB5_111:
 BB5_112:
 	ld	hl, 130
 	push	hl
-	ld	hl, _.str.23
+	ld	hl, _.str.26
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 140
 	push	hl
-	ld	hl, _.str.24
+	ld	hl, _.str.27
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -1989,14 +2021,14 @@ BB5_113:
 BB5_115:
 	ld	hl, 130
 	push	hl
-	ld	hl, _.str.23
+	ld	hl, _.str.26
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 140
 	push	hl
-	ld	hl, _.str.24
+	ld	hl, _.str.27
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -2549,7 +2581,7 @@ BB7_16:
 	jr	BB7_22
 BB7_18:
 	ld	(ix - 50), hl
-	ld	hl, _.str.31
+	ld	hl, _.str.34
 	lea	bc, ix - 26
 	ld	(ix - 47), bc
 	ld	de, (ix - 32)
@@ -2579,21 +2611,21 @@ BB7_18:
 	pop	hl
 	ld	hl, 120
 	push	hl
-	ld	hl, _.str.33
+	ld	hl, _.str.36
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 130
 	push	hl
-	ld	hl, _.str.34
+	ld	hl, _.str.37
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 140
 	push	hl
-	ld	hl, _.str.35
+	ld	hl, _.str.38
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -2810,7 +2842,7 @@ BB7_39:
 	push	hl
 	ld	hl, (ix - 32)
 	push	hl
-	ld	hl, _.str.32
+	ld	hl, _.str.35
 	push	hl
 	ld	hl, (ix - 65)
 	push	hl
@@ -2951,14 +2983,14 @@ BB7_51:
 	jr	z, BB7_53
 	ld	hl, 130
 	push	hl
-	ld	hl, _.str.36
+	ld	hl, _.str.39
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 140
 	push	hl
-	ld	hl, _.str.37
+	ld	hl, _.str.40
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -3140,7 +3172,7 @@ __Z11DeleteImagej:
 	ld	(ix - 47), iy
 	ld	hl, (ix - 32)
 	push	hl
-	ld	hl, _.str.31
+	ld	hl, _.str.34
 	push	hl
 	ld	hl, (ix - 35)
 	push	hl
@@ -3204,7 +3236,7 @@ BB9_4:
 	push	iy
 	ld	hl, (ix - 32)
 	push	hl
-	ld	hl, _.str.32
+	ld	hl, _.str.35
 	push	hl
 	ld	hl, (ix - 35)
 	push	hl
@@ -3264,7 +3296,7 @@ __Z16DisplayWatermarkv:
 	ld	hl, 2
 	push	hl
 	push	hl
-	ld	hl, _.str.50
+	ld	hl, _.str.53
 	push	hl
 	call	_gfx_PrintStringXY
 	pop	hl
@@ -3274,7 +3306,7 @@ __Z16DisplayWatermarkv:
 	push	hl
 	ld	hl, 2
 	push	hl
-	ld	hl, _.str.51
+	ld	hl, _.str.54
 	push	hl
 	call	_gfx_PrintStringXY
 	pop	hl
@@ -3297,7 +3329,7 @@ __Z13NoImagesFoundv:
 	pop	hl
 	ld	hl, 15
 	push	hl
-	ld	hl, _.str.41
+	ld	hl, _.str.44
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -3309,56 +3341,56 @@ __Z13NoImagesFoundv:
 	pop	hl
 	ld	hl, 30
 	push	hl
-	ld	hl, _.str.42
+	ld	hl, _.str.45
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 40
 	push	hl
-	ld	hl, _.str.43
+	ld	hl, _.str.46
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 50
 	push	hl
-	ld	hl, _.str.44
+	ld	hl, _.str.47
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 180
 	push	hl
-	ld	hl, _.str.45
+	ld	hl, _.str.48
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 190
 	push	hl
-	ld	hl, _.str.46
+	ld	hl, _.str.49
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 200
 	push	hl
-	ld	hl, _.str.47
+	ld	hl, _.str.50
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 210
 	push	hl
-	ld	hl, _.str.48
+	ld	hl, _.str.51
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
 	ld	hl, 230
 	push	hl
-	ld	hl, _.str.24
+	ld	hl, _.str.27
 	push	hl
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
@@ -3561,101 +3593,116 @@ _.str.17:
 	section	.rodata,"a",@progbits
 	private	_.str.18
 _.str.18:
-	db	"Author: TheLastMillennial", 0
+	db	"Press any key to return.", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.19
 _.str.19:
-	db	"Press any key to return.", 0
+	db	"Author:", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.20
 _.str.20:
-	db	"Version:", 0
+	db	"TheLastMillennial", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.21
 _.str.21:
-	db	"2.0.0-beta", 0
+	db	"Tutorial: ", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.22
 _.str.22:
-	db	"2024", 0
+	db	"None", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.23
 _.str.23:
-	db	"Error zooming in.", 0
+	db	"Version:", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.24
 _.str.24:
-	db	"Press any key to quit.", 0
+	db	"2.0.0-beta", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.25
 _.str.25:
-	db	"Error zooming out.", 0
+	db	"2024", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.26
 _.str.26:
-	db	"Error with zoom.", 0
+	db	"Error zooming in.", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.27
 _.str.27:
-	db	"Deleting Picture...", 0
+	db	"Press any key to quit.", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.28
 _.str.28:
-	db	"Picture deleted.", 0
+	db	"Error zooming out.", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.29
 _.str.29:
-	db	"Press any key.", 0
+	db	"Error with zoom.", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.30
 _.str.30:
-	db	"Error: ", 0
+	db	"Deleting Picture...", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.31
 _.str.31:
-	db	"HP%.2s0000", 0
+	db	"Picture deleted.", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.32
 _.str.32:
-	db	"%.2s%03u%03u", 0
+	db	"Press any key.", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.33
 _.str.33:
-	db	"ERR: Palette does not exist!", 0
+	db	"Error: ", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.34
 _.str.34:
-	db	"Image may have recently been deleted.", 0
+	db	"HP%.2s0000", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.35
 _.str.35:
-	db	"Try restarting the program.", 0
+	db	"%.2s%03u%03u", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.36
 _.str.36:
-	db	"Rendering Halted.", 0
+	db	"ERR: Palette does not exist!", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.37
 _.str.37:
+	db	"Image may have recently been deleted.", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.38
+_.str.38:
+	db	"Try restarting the program.", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.39
+_.str.39:
+	db	"Rendering Halted.", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.40
+_.str.40:
 	db	"Press [enter] to restart.", 0
 
 	section	.data,"aw",@progbits
@@ -3664,53 +3711,53 @@ _errorTriangle_compressed:
 	db	"P P‘", 0, 0, "P", 0, "K)šO", 0, "h", 0, "ÕO", 0, "", 0, 0, "˜£O", 0, " ", 0, "ÙOãEà#gO", 13, "€Oá	à#cOàO‡g;€O¸	ØOøMø", 13, "vOçYà", 13, "xOþ/ÖOx=-¾Oaà", 0, "wOž;àiO‚c", 0, "9Oà9æ8O%eà", 0, "oOž7à]O‚žg", 0, "¸Of5X~3XOd»!˜áOò©‡ÊÅÛO", 0, "îO>àQoO¸`OŽM", 10, "àQ;`OŸ— œ³àsO¸", 0, "eOƒØS¸CàO8", 0, "GÍM>O", 0, ""
 
 	section	.rodata,"a",@progbits
-	private	_.str.38
-_.str.38:
-	db	"w", 0
-
-	section	.rodata,"a",@progbits
-	private	_.str.40
-_.str.40:
-	db	"HDPALV10", 0
-
-	section	.rodata,"a",@progbits
 	private	_.str.41
 _.str.41:
-	db	"No Pictures Detected!", 0
-
-	section	.rodata,"a",@progbits
-	private	_.str.42
-_.str.42:
-	db	"Convert some images and send them to your", 0
+	db	"w", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.43
 _.str.43:
-	db	"calculator using the HD Pic converter!", 0
+	db	"HDPALV10", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.44
 _.str.44:
-	db	"Tutorial: no pre-release tutorial!", 0
+	db	"No Pictures Detected!", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.45
 _.str.45:
-	db	"If you keep getting this error:", 0
+	db	"Convert some images and send them to your", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.46
 _.str.46:
-	db	" Go to home screen.", 0
+	db	"calculator using the HD Pic converter!", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.47
 _.str.47:
-	db	" Press 2nd then + then select 'AppVars'. ", 0
+	db	"Tutorial: no pre-release tutorial!", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.48
 _.str.48:
+	db	"If you keep getting this error:", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.49
+_.str.49:
+	db	" Go to home screen.", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.50
+_.str.50:
+	db	" Press 2nd then + then select 'AppVars'. ", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.51
+_.str.51:
 	db	" Ensure all picture files are present. ", 0
 
 	section	.rodata,"a",@progbits
@@ -3719,18 +3766,18 @@ ___const._Z13DatabaseReadyv.compare:
 	db	"HDDATV10", 0
 
 	section	.rodata,"a",@progbits
-	private	_.str.49
-_.str.49:
+	private	_.str.52
+_.str.52:
 	db	"DB Failure! Please report:", 0
 
 	section	.rodata,"a",@progbits
-	private	_.str.50
-_.str.50:
+	private	_.str.53
+_.str.53:
 	db	"HD Picture Viewer", 0
 
 	section	.rodata,"a",@progbits
-	private	_.str.51
-_.str.51:
+	private	_.str.54
+_.str.54:
 	db	"[mode] = help", 0
 
 	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 5f8512f22751066573aa48ac848a6d2195838ac3)"
@@ -3750,8 +3797,8 @@ _.str.51:
 	extern	__ftoul
 	extern	__ishl
 	extern	_ti_Read
-	extern	__idivs
 	extern	__setflag
+	extern	__idivs
 	extern	__iand
 	extern	_gfx_AllocSprite
 	extern	_os_PutStrFull
@@ -3759,10 +3806,10 @@ _.str.51:
 	extern	_gfx_PrintUInt
 	extern	_gfx_Sprite
 	extern	_zx7_Decompress
-	extern	_gfx_SetDefaultPalette
 	extern	__ineg
-	extern	_gfx_HorizLine_NoClip
+	extern	_gfx_SetDefaultPalette
 	extern	_os_GetCSC
+	extern	_gfx_HorizLine_NoClip
 	extern	_gfx_Sprite_NoClip
 	extern	_free
 	extern	_gfx_ScaleSprite
@@ -3786,11 +3833,11 @@ _.str.51:
 	extern	_ti_SetArchiveStatus
 	extern	_gfx_VertLine
 	extern	__Unwind_SjLj_Unregister
+	extern	__sdivs
 	extern	__iremu
 	extern	__fdiv
 	extern	__imulu
 	extern	_gfx_SetColor
-	extern	__sdivs
 	extern	_ti_GetDataPtr
 	extern	_gfx_PrintStringXY
 	extern	_gfx_End
