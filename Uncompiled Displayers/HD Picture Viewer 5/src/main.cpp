@@ -117,7 +117,6 @@ void DisplayHomeScreen(uint24_t picsCount) {
 		maxAllowedWidthInPxl{ MAX_THUMBNAIL_WIDTH }, maxAllowedHeightInPxl{ MAX_THUMBNAIL_HEIGHT };
 	int24_t xOffset{ 0 }, yOffset{ 0 };
 
-	//kb_key_t key = kb_Data[7];
 	bool menuEnter, menuQuit,
 		menuUp, menuDown, menuHelp,
 		prev, next,
@@ -181,6 +180,7 @@ void DisplayHomeScreen(uint24_t picsCount) {
 					redrawPic=true;
 					errorID = 1;
 					gfx_FillScreen(PALETTE_BLACK);
+					while(kb_AnyKey()!=0); //wait for key lift
 				}else{
 					quitProgram = true;
 					break; 
@@ -225,7 +225,8 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				gfx_PrintStringXY(VERSION,64,230);
 				gfx_PrintStringXY(YEAR, 288, 230);
 				
-				while(!os_GetCSC());
+				while(kb_AnyKey()!=0); //wait for key lift
+				while(!os_GetCSC()); //wait for key press
 				gfx_FillScreen(PALETTE_BLACK);
 				resetPic=true;
 				redrawPic=true;
@@ -448,9 +449,7 @@ void DisplayHomeScreen(uint24_t picsCount) {
 
 				resetPic = fullScreenImage;
 				redrawPic = true;
-				//slows next scrolling speed
-				delay(150);
-				errorID = 8; //if an error is thrown, then we've scrolled bast the safety barrier somehow.
+				errorID = 8; //if an error is thrown, then we've scrolled past the safety barrier somehow.
 			}
 
 			/* decreases the name to start on and redraws the text */
@@ -464,8 +463,6 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				}
 				resetPic = fullScreenImage;
 				redrawPic = true;
-				//slows next scrolling speed
-				delay(150);
 				errorID = 9; //if an error is thrown, then we've scrolled past the safety barrier somehow.
 			}
 			
@@ -491,6 +488,7 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				{
 					DisplayMenu(startName, picNames, picsCount);
 				}
+				while(kb_AnyKey()!=0); //wait for key lift
 				imageErr = DrawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, fullScreenImage);
 				if (imageErr != 0) {
 					PrintCenteredX("Error: ", 150);
@@ -836,7 +834,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 }
 
 
-/* Rebuilds the database of images on the calculator*/
+/* Rebuilds the database of images on the calculator */
 uint24_t RebuildDB(uint8_t progress) {
 	char* var_name, * imgInfo[16];// nameBuffer[10];
 	void* search_pos = NULL;
