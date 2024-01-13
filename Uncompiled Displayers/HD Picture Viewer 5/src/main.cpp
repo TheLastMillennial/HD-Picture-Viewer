@@ -211,7 +211,7 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				gfx_PrintStringXY("Y= _________ Show previous.",10,100);
 				gfx_PrintStringXY("Graph ______ Show next.",10,110);
 				gfx_PrintStringXY("Arrow Keys _ Pan picture.",10,120);
-				gfx_PrintStringXY("Del ________ Permenantly delete picture.",10,130);
+				gfx_PrintStringXY("Del ________ Permanently delete picture.",10,130);
 				gfx_PrintStringXY("+ __________ Zoom in.",10,140);
 				gfx_PrintStringXY("- __________ Zoom out.",10,150);
 				gfx_PrintStringXY("Zoom _______ Maximum zoom.", 10, 160);
@@ -1047,7 +1047,6 @@ void DisplayWatermark()
 	gfx_SetTextFGColor(PALETTE_WHITE);
 	gfx_SetTextBGColor(PALETTE_BLACK);
 	gfx_PrintStringXY("HD Picture Viewer", 2,2);
-	gfx_PrintStringXY(VERSION, 250,2);
 	gfx_PrintStringXY("[mode] = help", 2,232);
 }
 

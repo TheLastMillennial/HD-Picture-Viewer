@@ -3270,16 +3270,6 @@ __Z16DisplayWatermarkv:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, 2
-	push	hl
-	ld	hl, 250
-	push	hl
-	ld	hl, _.str.21
-	push	hl
-	call	_gfx_PrintStringXY
-	pop	hl
-	pop	hl
-	pop	hl
 	ld	hl, 232
 	push	hl
 	ld	hl, 2
@@ -3546,7 +3536,7 @@ _.str.12:
 	section	.rodata,"a",@progbits
 	private	_.str.13
 _.str.13:
-	db	"Del ________ Permenantly delete picture.", 0
+	db	"Del ________ Permanently delete picture.", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.14
