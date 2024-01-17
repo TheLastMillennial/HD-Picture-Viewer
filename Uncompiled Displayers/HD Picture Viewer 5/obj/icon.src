@@ -23,5 +23,5 @@ ___icon:
 	db	$1D, $1D, $1D, $1D, $1D, $1D, $1D, $1D, $1D, $1D, $1D, $1D, $1D, $1D, $1D, $1D
 	public ___description
 ___description:
-	db	"High Definition Picture Viewer 5 Dev              By TLM", 0
+	db	"High Definition Picture Viewer 5                 By TLM", 0
 ___prgm_init:

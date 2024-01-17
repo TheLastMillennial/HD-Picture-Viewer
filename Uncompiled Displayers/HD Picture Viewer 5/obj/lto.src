@@ -928,7 +928,7 @@ BB5_15:
 	call	__Z14PrintCenteredXPKcj
 	pop	hl
 	pop	hl
-	ld	hl, 210
+	ld	hl, 220
 	push	hl
 	or	a, a
 	sbc	hl, hl
@@ -939,7 +939,7 @@ BB5_15:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, 210
+	ld	hl, 220
 	push	hl
 	ld	hl, 64
 	push	hl
@@ -949,7 +949,7 @@ BB5_15:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, 220
+	ld	hl, 210
 	push	hl
 	or	a, a
 	sbc	hl, hl
@@ -960,7 +960,7 @@ BB5_15:
 	pop	hl
 	pop	hl
 	pop	hl
-	ld	hl, 220
+	ld	hl, 210
 	push	hl
 	ld	hl, 64
 	push	hl
@@ -3613,7 +3613,7 @@ _.str.21:
 	section	.rodata,"a",@progbits
 	private	_.str.22
 _.str.22:
-	db	"None", 0
+	db	"https://youtu.be/uixL9t5ZTJs", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.23
@@ -3738,7 +3738,7 @@ _.str.46:
 	section	.rodata,"a",@progbits
 	private	_.str.47
 _.str.47:
-	db	"Tutorial: no pre-release tutorial!", 0
+	db	"Tutorial: https://youtu.be/uixL9t5ZTJs", 0
 
 	section	.rodata,"a",@progbits
 	private	_.str.48
@@ -3782,7 +3782,7 @@ _.str.54:
 
 	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 5f8512f22751066573aa48ac848a6d2195838ac3)"
 	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 5f8512f22751066573aa48ac848a6d2195838ac3)"
-	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
+	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 5f8512f22751066573aa48ac848a6d2195838ac3)"
 	extern	_gfx_SetTextTransparentColor
 	extern	__Unwind_SjLj_Register
 	extern	_malloc
