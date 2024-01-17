@@ -6,3 +6,4 @@ obj/*
 *.map
 *.d
 *.bc
+*.lnk
