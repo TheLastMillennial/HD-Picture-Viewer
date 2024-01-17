@@ -1,10 +1,8 @@
-Uncompiled Displayers/HD Picture Viewer 5/Shortcuts/
-Uncompiled Displayers/HD Picture Viewer 5/obj/*
+obj/*
 *.map
 *.debug
 *.bin
 *.debug
 *.map
-*.bin
 *.d
 *.bc
