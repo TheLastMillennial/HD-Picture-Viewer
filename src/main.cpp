@@ -1,7 +1,7 @@
 /*HD Picture Viewer
 * By TheLastMillennial
 * https://github.com/TheLastMillennial/HD-Picture-Viewer
-* Build With:    ./make debug --directory="path/to/HD-Picture-Viewer/Uncompiled Displayers/HD Picture Viewer 5"
+* Build With:    ./make debug --directory="path/to/HD-Picture-Viewer"
 */
 
 #include <tice.h>
@@ -21,9 +21,18 @@
 
 
 /* globals */
-#define VERSION "2.0.0-beta"
-#define TUTORIAL_LINK "https://youtu.be/uixL9t5ZTJs"
+#define VERSION "2.0.1 from Github Bin Folder"
 #define YEAR "2024"
+#define TUTORIAL_LINK "https://youtu.be/uixL9t5ZTJs"
+
+/* Valid list of locations this file can be uploaded to:
+* Github Bin Folder
+* Github.com
+* Cemetech.net
+* tiplanet.org
+* ticalc.org
+*/
+
 //Max images is this because max combinations of appvars goes up to 936.
 // Two characters for appvar identifier. 
 // First character can be alphabetic (26 options). Second character can be alphanumeric (36 options). 
@@ -57,6 +66,7 @@ void PrintCentered(const char* str);
 void PrintCenteredX(const char* str, uint24_t y);
 void PrintCenteredY(const char* str, uint8_t x);
 void PrintText(const int8_t xpos, const int8_t ypos, const char* text);
+void PrintHelpText(const char* button, const char* help,uint24_t yPos);
 void DisplayMenu(int24_t startName, char* picNames, const int24_t numOfPics);
 uint24_t RebuildDB(uint8_t progress);
 void SplashScreen();
@@ -200,33 +210,35 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				gfx_FillScreen(PALETTE_BLACK);
 				gfx_SetTextBGColor(PALETTE_BLACK);
 				gfx_SetTextFGColor(PALETTE_WHITE);
-				PrintCenteredX("HD Picture Viewer Help",0);
-				gfx_PrintStringXY("Keymap in Menu:",0,20);
-				gfx_PrintStringXY("Clear ______ Quit program.",10,30);
-				gfx_PrintStringXY("Enter ______ Open picture fullscreen.",10,40);
-				gfx_PrintStringXY("Up _________ Select previous.",10,50);
-				gfx_PrintStringXY("Down _______ Select next.",10,60);
+				gfx_SetColor(PALETTE_WHITE);
+				PrintCenteredX("HD Picture Viewer Help",6);
+				gfx_PrintStringXY("Keymap in Menu:",1,20);
 				
-				gfx_PrintStringXY("Keymap in Fullscreen:",0,80);
-				gfx_PrintStringXY("Clear ______ Quit to menu.",10,90);
-				gfx_PrintStringXY("Y= _________ Show previous.",10,100);
-				gfx_PrintStringXY("Graph ______ Show next.",10,110);
-				gfx_PrintStringXY("Arrow Keys _ Pan picture.",10,120);
-				gfx_PrintStringXY("Del ________ Permanently delete picture.",10,130);
-				gfx_PrintStringXY("+ __________ Zoom in.",10,140);
-				gfx_PrintStringXY("- __________ Zoom out.",10,150);
-				gfx_PrintStringXY("Zoom _______ Maximum zoom.", 10, 160);
-				gfx_PrintStringXY("Window _____ Default zoom.",10,170);
+				PrintHelpText("Clear","Quit program.",30);
+				PrintHelpText("Enter","Open picture fullscreen.",40);
+				PrintHelpText("Up   ","Select previous.",50);
+				PrintHelpText("Down ","Select next.",60);
+				
+				gfx_PrintStringXY("Keymap in Fullscreen:",1,80);
+				PrintHelpText("Clear "," Quit to menu.",90);
+				PrintHelpText("Y= "," Show previous.",100);
+				PrintHelpText("Graph "," Show next.",110);
+				PrintHelpText("Arrow Keys"," Pan picture.",120);
+				PrintHelpText("Del "," Delete picture permanently.",130);
+				PrintHelpText("+ "," Zoom in.",140);
+				PrintHelpText("- "," Zoom out.",150);
+				PrintHelpText("Zoom "," Maximum zoom.", 160);
+				PrintHelpText("Window"," Default zoom.",170);
 				
 				PrintCenteredX("Press any key to return.",190);
 				
-				gfx_PrintStringXY("Author:",0,220);
+				gfx_PrintStringXY("Author:",1,220);
 				gfx_PrintStringXY("TheLastMillennial",64,220);
-				gfx_PrintStringXY("Tutorial: ",0,210);
+				gfx_PrintStringXY("Tutorial:",1,210);
 				gfx_PrintStringXY(TUTORIAL_LINK,64,210);
-				gfx_PrintStringXY("Version:",0,230);
+				gfx_PrintStringXY("Version:",1,230);
 				gfx_PrintStringXY(VERSION,64,230);
-				gfx_PrintStringXY(YEAR, 288, 230);
+				gfx_PrintStringXY(YEAR,288,230);
 				
 				while(kb_AnyKey()!=0); //wait for key lift
 				while(!os_GetCSC()); //wait for key press
@@ -1073,4 +1085,11 @@ void PrintCenteredY(const char* str, const uint8_t x)
 void PrintText(const int8_t xpos, const int8_t ypos, const char* text) {
 	os_SetCursorPos(ypos, xpos);
 	os_PutStrFull(text);
+}
+
+/* Easy way to align help with a horizontal separator */
+void PrintHelpText(const char* button, const char* help,uint24_t yPos){
+	gfx_PrintStringXY(button,10, yPos);
+	gfx_PrintStringXY(help,120,yPos);
+	gfx_HorizLine_NoClip(10,yPos+8,301);
 }

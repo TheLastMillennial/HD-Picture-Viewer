@@ -7,3 +7,4 @@ obj/*
 *.d
 *.bc
 *.lnk
+RELEASE_CHECKLIST.txt

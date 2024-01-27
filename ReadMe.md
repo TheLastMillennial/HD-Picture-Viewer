@@ -67,6 +67,10 @@ This is because not all of the files actually sent to the calculator, or they we
 ## Changelog
 *Most recent update first*
 
+### v2.0.1
+- Updated help
+- Fixed versioning
+
 ### v2.0.0
 - Added tutorial
 - Added icon
