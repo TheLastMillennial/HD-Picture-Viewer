@@ -235,8 +235,8 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				ti_Close(database);
 
 				//convert string to int
-				maxAllowedWidthInPxl= (((static_cast<uint24_t>(picDimensions[0]) - '0') * 100 + (static_cast<uint24_t>(picDimensions[1]) - '0') * 10 + static_cast<uint24_t>(picDimensions[2]) - '0') + 1) * SQUARE_WIDTH_AND_HEIGHT;
-				maxAllowedHeightInPxl=(((static_cast<uint24_t>(picDimensions[3]) - '0') * 100 + (static_cast<uint24_t>(picDimensions[4]) - '0') * 10 + static_cast<uint24_t>(picDimensions[5]) - '0') + 1) * SQUARE_WIDTH_AND_HEIGHT;
+				maxAllowedWidthInPxl= (((static_cast<uint24_t>(picDimensions[0]) - '0') * 100 + (static_cast<uint24_t>(picDimensions[1]) - '0') * 10 + static_cast<uint24_t>(picDimensions[2]) - '0') + 1) * SUBIMG_WIDTH_AND_HEIGHT;
+				maxAllowedHeightInPxl=(((static_cast<uint24_t>(picDimensions[3]) - '0') * 100 + (static_cast<uint24_t>(picDimensions[4]) - '0') * 10 + static_cast<uint24_t>(picDimensions[5]) - '0') + 1) * SUBIMG_WIDTH_AND_HEIGHT;
 
 				imageErr = DrawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 				//this means we can't zoom in any more. Zoom back out.
@@ -295,7 +295,7 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom Out");
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomOut error"); }
 
-				//ensure we can zoom out without maxAllowedWidthInPxl or maxAllowedHeightInPxl becomeing 0
+				//ensure we can zoom out without maxAllowedWidthInPxl or maxAllowedHeightInPxl becoming 0
 				if (maxAllowedWidthInPxl / ZOOM_SCALE != 0 && maxAllowedHeightInPxl / ZOOM_SCALE != 0) {
 					//apply the zoom out to the width and height
 					maxAllowedWidthInPxl = maxAllowedWidthInPxl / ZOOM_SCALE;
@@ -357,7 +357,7 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				gfx_SetTextScale(1,1);
 				PrintCenteredX("Deleting Picture...", 120);
 
-				//delete the palette and all squares
+				//delete the palette and all subimages
 				DeleteImage(startName);
 				PrintCenteredX("Picture deleted.", 130);
 				PrintCenteredX("Press any key.", 140);
@@ -482,7 +482,7 @@ void DisplayHomeScreen(uint24_t picsCount) {
 void DeleteImage(uint24_t picName) {
 	//open the database to figure out what image we're about to delete
 	ti_var_t database{ ti_Open("HDPICDB","r") };
-	char imgWH[6], imgID[2], searchName[9], palName[9];
+	char imgWH[6], imgID[2], picAppvarToFind[9], palName[9];
 
 	//seeks past header (8bytes), imgName, and unselected images
 	ti_Seek(16 + (16 * picName), SEEK_CUR, database);
@@ -500,8 +500,8 @@ void DeleteImage(uint24_t picName) {
 	(uint24_t)imgWH[?]-'0' covers the 1's place
 	+1 accounts for 0 being the starting number
 	*/
-	uint24_t picWidthInSquares{ ((static_cast<uint24_t>(imgWH[0]) - '0') * 100 + (static_cast<uint24_t>(imgWH[1]) - '0') * 10 + static_cast<uint24_t>(imgWH[2]) - '0') + 1 };
-	uint24_t picHeightInSquares{ ((static_cast<uint24_t>(imgWH[3]) - '0') * 100 + (static_cast<uint24_t>(imgWH[4]) - '0') * 10 + static_cast<uint24_t>(imgWH[5]) - '0') + 1 };
+	uint24_t picWidthInSubimages{ ((static_cast<uint24_t>(imgWH[0]) - '0') * 100 + (static_cast<uint24_t>(imgWH[1]) - '0') * 10 + static_cast<uint24_t>(imgWH[2]) - '0') + 1 };
+	uint24_t picHeightInSubimages{ ((static_cast<uint24_t>(imgWH[3]) - '0') * 100 + (static_cast<uint24_t>(imgWH[4]) - '0') * 10 + static_cast<uint24_t>(imgWH[5]) - '0') + 1 };
 
 
 	//deletes palette
@@ -518,24 +518,24 @@ void DeleteImage(uint24_t picName) {
 
 	LoadingBar& loadingBar = LoadingBar::getInstance();
 
-	//delete every square
-	for (uint24_t xSquare = (picWidthInSquares - 1);xSquare < MAX_UINT;xSquare--) {
-		for (uint24_t ySquare = (picHeightInSquares - 1);ySquare < MAX_UINT;ySquare--) {
+	//delete every subimage
+	for (uint24_t xSubimage = (picWidthInSubimages - 1);xSubimage < MAX_UINT; xSubimage--) {
+		for (uint24_t ySubimage = (picHeightInSubimages - 1);ySubimage < MAX_UINT; ySubimage--) {
 
 			//combines the separate parts into one name to search for
-			sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
+			sprintf(picAppvarToFind, "%.2s%03u%03u", imgID, xSubimage, ySubimage);
 
 			/*This opens the variable with the name that was just assembled.
 			* It then gets the pointer to that and stores it in a graphics variable
 			*/
-			delSuccess = ti_Delete(searchName);
-			//checks if the square does not exist
+			delSuccess = ti_Delete(picAppvarToFind);
+			//checks if the subimage does not exist
 			if (delSuccess == 0) {
-				//square does not exist
-				dbg_sprintf(dbgout, "\nERR: Issue deleting square");
-				dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
+				//subimage does not exist
+				dbg_sprintf(dbgout, "\nERR: Issue deleting subimage");
+				dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSubimage, ySubimage);
 			}
-			loadingBar.SetLoadingBarProgress(++deleteCount,picWidthInSquares*picHeightInSquares);
+			loadingBar.SetLoadingBarProgress(++deleteCount,picWidthInSubimages*picHeightInSubimages);
 		}
 	}
 }
@@ -545,14 +545,14 @@ void DeleteImage(uint24_t picName) {
 * If x=-1 then make image horizontally centered in the screen.
 * If y=-1 then make image vertically centered on the screen.
 * Image will automatically be resized to same aspect ratio so you just set the max width and height (4,3 will fit the screen normally)
-* If sucessful, returns 0. Otherwise returns 1
+* If successful, returns 0. Otherwise returns 1
 */
 uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxAllowedHeightInPxl, int24_t xOffset, int24_t yOffset, bool refreshWholeScreen) {
 	dbg_sprintf(dbgout, "\n\n--IMAGE CHANGE--");
 	ti_var_t database{ ti_Open("HDPICDB","r") };
 
-	char imgWH[6], imgID[2], searchName[9], palName[9];
-	int24_t scaleNum{ 1 }, scaleDen{ 1 }, newSquareWidthHeight;
+	char imgWH[6], picID[2], picAppvarToFind[9], palName[9];
+	int24_t scaleNum{ 1 }, scaleDen{ 1 }, newSubimgWidthHeight;
 	if (refreshWholeScreen)
 	{
 		gfx_FillScreen(PALETTE_BLACK);
@@ -566,14 +566,14 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	//seeks past header (8bytes), imgName, and unselected images
 	ti_Seek(16 + (16 * picName), SEEK_CUR, database);
 	//reads the image letter ID (2 bytes)
-	ti_Read(imgID, 2, 1, database);
+	ti_Read(picID, 2, 1, database);
 	//reads the image width/height (6 bytes)
 	ti_Read(imgWH, 6, 1, database);
 	//closes database
 	ti_Close(database);
 
 	//Converts the width/height from a char array into two integers by converting char into decimal value
-	//then subtracting 48 to get the actuall number.
+	//then subtracting 48 to get the actual number.
 	dbg_sprintf(dbgout, "\nimgHeader: %s \n", imgWH);
 
 	/*converts the char numbers from the header appvar into uint numbers
@@ -582,23 +582,23 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	(uint24_t)imgWH[?]-'0' covers the 1's place
 	+1 accounts for 0 being the starting number
 	*/
-	int24_t picWidthInSquares{ ((static_cast<int24_t>(imgWH[0]) - '0') * 100 + (static_cast<int24_t>(imgWH[1]) - '0') * 10 + static_cast<int24_t>(imgWH[2]) - '0') + 1 };
-	int24_t picHeightInSquares{ ((static_cast<int24_t>(imgWH[3]) - '0') * 100 + (static_cast<int24_t>(imgWH[4]) - '0') * 10 + static_cast<int24_t>(imgWH[5]) - '0') + 1 };
-	uint24_t maxAllowedWidthInSquares{ (maxAllowedWidthInPxl / SQUARE_WIDTH_AND_HEIGHT) }; //todo: [jacobly] I'm saying you should use numTilesAcross * 80 rather than maxAllowedWidthInPxl / 80
-	uint24_t maxAllowedHeightInSquares{ (maxAllowedHeightInPxl / SQUARE_WIDTH_AND_HEIGHT) };
-	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n", maxAllowedWidthInSquares, picWidthInSquares, maxAllowedHeightInSquares, picHeightInSquares);
+	int24_t picWidthInSubimages{ ((static_cast<int24_t>(imgWH[0]) - '0') * 100 + (static_cast<int24_t>(imgWH[1]) - '0') * 10 + static_cast<int24_t>(imgWH[2]) - '0') + 1 };
+	int24_t picHeightInSubimages{ ((static_cast<int24_t>(imgWH[3]) - '0') * 100 + (static_cast<int24_t>(imgWH[4]) - '0') * 10 + static_cast<int24_t>(imgWH[5]) - '0') + 1 };
+	uint24_t maxAllowedWidthInSubimages{ (maxAllowedWidthInPxl / SUBIMG_WIDTH_AND_HEIGHT) }; //todo: [jacobly] I'm saying you should use numTilesAcross * 80 rather than maxAllowedWidthInPxl / 80
+	uint24_t maxAllowedHeightInSubimages{ (maxAllowedHeightInPxl / SUBIMG_WIDTH_AND_HEIGHT) };
+	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n", maxAllowedWidthInSubimages, picWidthInSubimages, maxAllowedHeightInSubimages, picHeightInSubimages);
 
 	//checks if it should scale an image horizontally or vertically.
-	if((picWidthInSquares * 80)/320 >= (picHeightInSquares * 80)/240)
+	if((picWidthInSubimages * 80)/320 >= (picHeightInSubimages * 80)/240)
 	{
-		scaleNum = maxAllowedWidthInSquares;
-		scaleDen = picWidthInSquares;
-		dbg_sprintf(dbgout, "\nPath 1 %d , %d", (picWidthInSquares * 80)/320, (picHeightInSquares * 80)/240);
+		scaleNum = maxAllowedWidthInSubimages;
+		scaleDen = picWidthInSubimages;
+		dbg_sprintf(dbgout, "\nPath 1 %d , %d", (picWidthInSubimages * 80)/320, (picHeightInSubimages * 80)/240);
 	}
 	else
 	{
-		scaleNum = maxAllowedHeightInSquares;
-		scaleDen = picHeightInSquares;
+		scaleNum = maxAllowedHeightInSubimages;
+		scaleDen = picHeightInSubimages;
 		dbg_sprintf(dbgout, "\nPath 2 ");
 	}
 	
@@ -608,7 +608,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 		//while(!os_GetCSC());
 		return 1;
 	}
-	newSquareWidthHeight = SQUARE_WIDTH_AND_HEIGHT * scaleNum;
+	newSubimgWidthHeight = SUBIMG_WIDTH_AND_HEIGHT * scaleNum;
 
 	/*
 	[jacobly] so now whenever we want to compute
@@ -625,26 +625,26 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	[MateoC] huh I didn't know about roundDiv
 	*/
 
-	dbg_sprintf(dbgout, "\n newWH: %d \n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d", newSquareWidthHeight, scaleNum, scaleDen, xOffset, yOffset);
+	dbg_sprintf(dbgout, "\n newWH: %d \n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d", newSubimgWidthHeight, scaleNum, scaleDen, xOffset, yOffset);
 
 	//memory where each unsized image will be stored
-	gfx_sprite_t* srcImg{ gfx_MallocSprite(SQUARE_WIDTH_AND_HEIGHT, SQUARE_WIDTH_AND_HEIGHT) };
+	gfx_sprite_t* srcImg{ gfx_MallocSprite(SUBIMG_WIDTH_AND_HEIGHT, SUBIMG_WIDTH_AND_HEIGHT) };
 	if (!srcImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate src memory!");
 		//PrintCenteredX("ERR: Failed to allocate src memory!", 130);
 		return 1;
 	}
-	//scales the suqare width and height to the final output dimensions
-	int24_t newSquareDim{ newSquareWidthHeight / scaleDen };
-	//ensure the resized square will fit within the dimensions of the screen.
-	if (newSquareDim > LCD_HEIGHT) {
-		dbg_sprintf(dbgout, "\nERR: Square will be too large: %d", newSquareDim);
+	//scales the subimage width and height to the final output dimensions
+	int24_t newSubimgDim{ newSubimgWidthHeight / scaleDen };
+	//ensure the resized subimage will fit within the dimensions of the screen.
+	if (newSubimgDim > LCD_HEIGHT) {
+		dbg_sprintf(dbgout, "\nERR: Subimage will be too large: %d", newSubimgDim);
 		//PrintCenteredX("ERR: Output picture too large!", 130);
 		free(srcImg);
 		return 1;
 	}
 	//allocates memory for resized image
-	gfx_sprite_t* outputImg{ gfx_MallocSprite(newSquareDim,newSquareDim) };
+	gfx_sprite_t* outputImg{ gfx_MallocSprite(newSubimgDim,newSubimgDim) };
 	if (!outputImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate output memory!");
 		//PrintCenteredX("ERR: Failed to allocate output memory!", 130);
@@ -653,7 +653,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	}
 
 	//sets correct palettes
-	sprintf(palName, "HP%.2s0000", imgID);
+	sprintf(palName, "HP%.2s0000", picID);
 	ti_var_t palSlot{ ti_Open(palName,"r") };
 	if (!palSlot) {
 		PrintCenteredX(palName, 110);
@@ -678,60 +678,69 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	*/
 	
 	//Displays all the images
-	dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", picWidthInSquares, xOffset);
-	dbg_sprintf(dbgout, "\nhS: %d\nyO: %d", picHeightInSquares, yOffset);
+	dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", picWidthInSubimages, xOffset);
+	dbg_sprintf(dbgout, "\nhS: %d\nyO: %d", picHeightInSubimages, yOffset);
 
 
-	//This calculates the number of squares you can fit in the screen horizontally
+	//This calculates the number of subimages you can fit in the screen horizontally
 	//we know the horizontal resolution of the screen is 320px. 
-	//We can get the width of each square by doing newSquareWidthHeight/scaleDen
-	//the +1 is to account for rounding down errors. We don't want missing squares.
-	int24_t rightMostSquare{ LCD_WIDTH / (newSquareWidthHeight / scaleDen) + 1 };
+	//We can get the width of each subimage by doing newSubimgWidthHeight/scaleDen
+	//the +1 is to account for rounding down errors. We don't want missing subimages.
+	int24_t rightMostSubimg{ LCD_WIDTH / (newSubimgWidthHeight / scaleDen) + 1 };
 	//leftmost and topmost always starts at 0
-	int24_t leftMostSquare{ 0 };
-	int24_t topMostSquare = { 0 };
-	//This calculates the number of squares you can fit in the screen virtically
+	int24_t leftMostSubimg{ 0 };
+	int24_t topMostSubimg { 0 };
+	//This calculates the number of subimages you can fit in the screen vertically
 	//we know the vertical resolution of the screen is 240px. 
-	//We can get the width of each square by doing newSquareWidthHeight/scaleDen
-	//the +1 is to account for rounding down errors. We don't want missing squares. (Overflow is compensated for, if neessary, below)
-	int24_t bottomMostSquare{ LCD_HEIGHT / (newSquareWidthHeight / scaleDen) + 1 };
+	//We can get the width of each subimages by doing newSubimgWidthHeight/scaleDen
+	//the +1 is to account for rounding down errors. We don't want missing subimages. (Overflow is compensated for, if necessary, below)
+	int24_t bottomMostSubimg{ LCD_HEIGHT / (newSubimgWidthHeight / scaleDen) + 1 };
 
 
-	/*applies offsets*/
-	//if we're panning horizontally, shift the rightmost and leftmost squares (xOffset is negative in this case)
-	rightMostSquare -= xOffset;
-	leftMostSquare -= xOffset;
-	//if we're panning vertically, shift the topmost and bottomost squares (yOffset is negative in this case)
-	bottomMostSquare += yOffset;
-	topMostSquare += yOffset;
+	/* Apply pan offsets */
+	//if we're panning horizontally, shift the rightmost and leftmost subimages (xOffset is negative in this case)
+	rightMostSubimg -= xOffset;
+	leftMostSubimg -= xOffset;
+	//if we're panning vertically, shift the topmost and bottommost subimages (yOffset is negative in this case)
+	bottomMostSubimg += yOffset;
+	topMostSubimg += yOffset;
 
 
-	/*make sure we don't try to display more squares than exist.*/
-	if (rightMostSquare > picWidthInSquares)
-		rightMostSquare = picWidthInSquares;
-	if (leftMostSquare < 0)
-		leftMostSquare = 0;
-	if (bottomMostSquare > picHeightInSquares)
-		bottomMostSquare = picHeightInSquares;
-	if (topMostSquare < 0)
-		topMostSquare = 0;
+	/* Ensure we don't try to display more subimages than exist */
+	if (rightMostSubimg > picWidthInSubimages)
+		rightMostSubimg = picWidthInSubimages;
+	if (leftMostSubimg < 0)
+		leftMostSubimg = 0;
+	if (bottomMostSubimg > picHeightInSubimages)
+		bottomMostSubimg = picHeightInSubimages;
+	if (topMostSubimg < 0)
+		topMostSubimg = 0;
 
-	dbg_sprintf(dbgout, "\nrightMost %d\nLeftMost %d", rightMostSquare, leftMostSquare);
-	dbg_sprintf(dbgout, "\ntopMost %d\nbottomMost %d", topMostSquare, bottomMostSquare);
+	dbg_sprintf(dbgout, "\nrightMost %d\nLeftMost %d", rightMostSubimg, leftMostSubimg);
+	dbg_sprintf(dbgout, "\ntopMost %d\nbottomMost %d", topMostSubimg, bottomMostSubimg);
 
-	/*Loop to display images*/
+	/* Display final image */
+
 	//the -1 is to account for both the
 	//the +1 is to prevent underflow which would cause an infinite loop
 	//this for loop outputs pic right to left, top to bottom
-	int24_t xStart{ leftMostSquare - 1 }, xEnd{ rightMostSquare - 1 };
-	int24_t yStart{ topMostSquare - 1 }, yEnd{ bottomMostSquare - 1 };
+	const int24_t xFirstID{ (leftMostSubimg) - 1 }, xLastID{(rightMostSubimg) - 1 };
+	const int24_t yFirstID{ (topMostSubimg) - 1 }, yLastID{ (bottomMostSubimg) - 1 };
 
-	uint8_t thumbnailOffsetX = refreshWholeScreen ? 0 : 150;
-	uint24_t thumbnailOffsetY = refreshWholeScreen ? 0 : ((240-(newSquareDim*bottomMostSquare))/2);
+	const uint8_t thumbnailOffsetX = refreshWholeScreen ? 0 : 150;
+	const uint24_t thumbnailOffsetY = refreshWholeScreen ? 0 : ((240-(newSubimgDim*bottomMostSubimg))/2);
 
-	for (int24_t xSquare{ xEnd };xSquare > xStart;--xSquare) {
+	dbg_sprintf(dbgout, "\nxFirstID %d \nxLastID %d", xFirstID, xLastID);
+
+
+	// Loop through all subimages to create full image
+	for (int24_t xSubimgID{ xLastID };xSubimgID > xFirstID;--xSubimgID) {
+		const uint24_t subimgPxlPosX{ static_cast<uint24_t>(thumbnailOffsetX) + static_cast<uint24_t>((xSubimgID + xOffset) * (newSubimgWidthHeight / scaleDen)) };
+
 		//this for loop outputs pic bottom to top
-		for (int24_t ySquare{ yEnd };ySquare > yStart;--ySquare) {
+		for (int24_t ySubimgID{ yLastID };ySubimgID > yFirstID;--ySubimgID) {
+			const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - yOffset) * (newSubimgWidthHeight / scaleDen)) };
+
 			//a key interrupted output. Quit immediately
 
 			if(os_GetCSC())
@@ -749,52 +758,52 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 			}
 			
 			//combines the separate parts into one name to search for
-			sprintf(searchName, "%.2s%03u%03u", imgID, xSquare, ySquare);
-			//dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
+			sprintf(picAppvarToFind, "%.2s%03u%03u", picID, xSubimgID, ySubimgID);
+			dbg_sprintf(dbgout, "\n%.2s%03u%03u", picID, xSubimgID, ySubimgID);
 			/*
 			* This opens the variable with the name that was just assembled.
 			* It then gets the pointer to that and stores it in a graphics variable
 			*/
-			const ti_var_t squareSlot{ ti_Open(searchName,"r") };
-			//checks if the square exists
-			if (squareSlot) {
-				//square exists, load it
+			const ti_var_t subimgSlot{ ti_Open(picAppvarToFind,"r") };
+			//checks if the subimage exists
+			if (subimgSlot) {
+				//subimage exists, load it
 				//seeks past header
-				ti_Seek(16, SEEK_CUR, squareSlot);
+				ti_Seek(16, SEEK_CUR, subimgSlot);
 				//store the original image into srcImg
-				//srcImg = (gfx_sprite_t*)ti_GetDataPtr(squareSlot);
+				//srcImg = (gfx_sprite_t*)ti_GetDataPtr(subimgSlot);
 
-				zx0_Decompress(srcImg, ti_GetDataPtr(squareSlot));
+				zx0_Decompress(srcImg, ti_GetDataPtr(subimgSlot));
 				//resizes it to outputImg size
 				gfx_ScaleSprite(srcImg, outputImg);
 
-				//displays square
-				//if we are displaying an edge image, clip the square. Otherwise don't clip for extra speed.
-				if (xSquare == xEnd || ySquare == yEnd) {
-					gfx_Sprite(outputImg, thumbnailOffsetX+(xSquare + xOffset) * (newSquareWidthHeight / scaleDen), thumbnailOffsetY+(ySquare - yOffset) * (newSquareWidthHeight / scaleDen));
+				//displays subimage
+				//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
+				if (xSubimgID == xLastID || ySubimgID == yLastID) {
+					gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY );
 				}
 				else {
-					gfx_Sprite_NoClip(outputImg, thumbnailOffsetX+(xSquare + xOffset) * (newSquareWidthHeight / scaleDen), thumbnailOffsetY+(ySquare - yOffset) * (newSquareWidthHeight / scaleDen));
+					gfx_Sprite_NoClip(outputImg, subimgPxlPosX, subimgPxlPosY);
 				}
 
 			}
 			else {
-				//square does not exist, display error image
-				dbg_sprintf(dbgout, "\nERR: Square doesn't exist!");
-				dbg_sprintf(dbgout, "\n %s", searchName);
-				//dbg_sprintf(dbgout,"\nERR: \nxSquare: %d \newSquareWidthHeight: %d \nscaleDen: %d",xSquare,newSquareWidthHeight,scaleDen);
+				//subimage does not exist, display error image
+				dbg_sprintf(dbgout, "\nERR: Subimage doesn't exist!");
+				dbg_sprintf(dbgout, "\n %s", picAppvarToFind);
+				//dbg_sprintf(dbgout,"\nERR: \nxsubimage: %d \newSubimgWidthHeight: %d \nscaleDen: %d",xSubimage,newSubimgWidthHeight,scaleDen);
 				zx7_Decompress(srcImg, errorTriangle_compressed);
 				//resizes it to outputImg size
 				gfx_ScaleSprite(srcImg, outputImg);
 				//displays the output image
-				//dbg_sprintf(dbgout,"\nxSquare: %d \newSquareWidthHeight: %d \nscaleDen: %d\n",xSquare,newSquareWidthHeight,scaleDen);
-				gfx_Sprite_NoClip(outputImg, (xSquare + xOffset) * (newSquareWidthHeight / scaleDen), (ySquare - yOffset) * (newSquareWidthHeight / scaleDen));
+				//dbg_sprintf(dbgout,"\nxsubimage: %d \newSubimgWidthHeight: %d \nscaleDen: %d\n",xSubimage,newSubimgWidthHeight,scaleDen);
+				gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
 				//while(!os_GetCSC());
 				continue;
 			}
 
 			//cleans up
-			ti_Close(squareSlot);
+			ti_Close(subimgSlot);
 
 		}
 	}
@@ -809,7 +818,7 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 uint24_t RebuildDB(uint8_t progress) {
 	char* var_name, * imgInfo[16];// nameBuffer[10];
 	void* search_pos = NULL;
-	uint24_t imagesFound = 0;
+	uint24_t imagesFound{ 0 };
 	ti_var_t database = ti_Open("HDPICDB", "w"), palette;
 	ti_Write("HDDATV10", 8, 1, database);//Rewrites the header because w overwrites everything
 
@@ -820,9 +829,9 @@ uint24_t RebuildDB(uint8_t progress) {
 
 	/*
 	* Searches for palettes. This is a lot easier than searching for every single
-	* image square because there's is guarunteed to only be one palette per image.
-	* The palette containts all the useful information such as the image size and
-	* the two letter ID for each appvar. This makes it easy to find every square via a loop.
+	* subimage because there is guaranteed to only be one palette per image.
+	* The palette contains all the useful information such as the image size and
+	* the two letter ID for each appvar. This makes it easy to find every subimage via a loop.
 	*/
 	while ((var_name = ti_DetectVar(&search_pos, "HDPALV10", OS_TYPE_APPVAR)) != NULL) {
 		//sets progress of how many images were found
@@ -844,10 +853,9 @@ uint24_t RebuildDB(uint8_t progress) {
 	gfx_End();
 	ti_SetArchiveStatus(true, database);
 	gfx_Begin();
+
 	SplashScreen();
-	//gfx_SetTextXY(150, 130);
 	dbg_sprintf(dbgout,"Pics Detected: %d",imagesFound);
-	//gfx_PrintUInt(imagesFound, 3);
 	if (imagesFound == 0) {
 		NoImagesFound();
 	}
@@ -893,7 +901,7 @@ uint8_t DatabaseReady() {
 		ready = 2;
 	else {
 		//if file doesn't already exist, create it.
-		//creates the database appvar and writes the header. Checks if wrote successfuly
+		//creates the database appvar and writes the header. Checks if wrote successfully
 		database = ti_Open("HDPICDB", "w");
 		if (!database)
 			ready = 3;

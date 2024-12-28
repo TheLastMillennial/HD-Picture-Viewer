@@ -27,7 +27,7 @@
 #define MAX_THUMBNAIL_HEIGHT 200
 #define THUMBNAIL_ZOOM 0
 #define ZOOM_SCALE 1.1
-#define SQUARE_WIDTH_AND_HEIGHT 80
+#define SUBIMG_WIDTH_AND_HEIGHT 80
 #define MAX_UINT 16777215
 //colors
 #define XLIBC_GREY 181 //the best grey xlibc has to offer
