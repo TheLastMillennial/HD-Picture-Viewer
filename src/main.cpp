@@ -17,61 +17,12 @@
 #include <debug.h>
 #include <math.h>
 #include <compression.h>
+#include "main.h"
+#include "loadingBarHandler.h"
 #include "gfx/errorgfx.h"
+#include "globals.h"
 
 
-/* globals */
-#define VERSION "2.0.1 from Github Bin Folder"
-#define YEAR "2024"
-#define TUTORIAL_LINK "https://youtu.be/uixL9t5ZTJs"
-
-/* Valid list of locations this file can be uploaded to:
-* Github Bin Folder
-* Github.com
-* Cemetech.net
-* tiplanet.org
-* ticalc.org
-*/
-
-//Max images is this because max combinations of appvars goes up to 936.
-// Two characters for appvar identifier. 
-// First character can be alphabetic (26 options). Second character can be alphanumeric (36 options). 
-// 26*36=936 
-#define MAX_IMAGES 936 
-#define BYTES_PER_IMAGE_NAME 9 //8 for image name, 1 for null terminator
-#define TASKS_TO_FINISH 2
-#define X_MARGIN 8
-#define Y_MARGIN 38
-#define Y_SPACING 25
-#define MAX_THUMBNAIL_WIDTH 160
-#define MAX_THUMBNAIL_HEIGHT 200
-#define THUMBNAIL_ZOOM 0
-#define ZOOM_SCALE 1.1
-#define SQUARE_WIDTH_AND_HEIGHT 80
-#define MAX_UINT 16777215
-//colors
-#define XLIBC_GREY 181 //the best grey xlibc has to offer
-#define XLIBC_RED 192 //xlibc red
-#define PALETTE_BLACK 0 //the xlibc palette and all hdpic generated palettes will have black as 0
-#define PALETTE_WHITE 255 //the xlibc palette and all hdpic generated palettes will have white as 255
-
-
-/* Function Prototyptes */
-uint8_t DatabaseReady();
-void DisplayHomeScreen(uint24_t pics);
-uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxAllowedHeightInPxl, int24_t xOffset, int24_t yOffset, bool refreshWholeScreen);
-void DeleteImage(uint24_t picName);
-void NoImagesFound();
-void PrintCentered(const char* str);
-void PrintCenteredX(const char* str, uint24_t y);
-void PrintCenteredY(const char* str, uint8_t x);
-void PrintText(const int8_t xpos, const int8_t ypos, const char* text);
-void PrintHelpText(const char* button, const char* help,uint24_t yPos);
-void DisplayMenu(int24_t startName, char* picNames, const int24_t numOfPics);
-uint24_t RebuildDB(uint8_t progress);
-void SplashScreen();
-void DisplayWatermark();
-void SetLoadingBarProgress(uint24_t progress, uint24_t t);
 
 /* Main function, called first */
 int main(void)
@@ -83,7 +34,9 @@ int main(void)
 	gfx_SetTextTransparentColor(254);
 	SplashScreen();
 
-	SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
+	LoadingBar& loadingBar = LoadingBar::getInstance();
+
+	loadingBar.SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
 	//checks if the database exists and is ready 0 failure; 1 created; 2 exists
 	ready = DatabaseReady();
 
@@ -96,7 +49,7 @@ int main(void)
 
 	if (picsDetected > 0)
 	{
-		SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
+		loadingBar.SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
 		//display the list of images
 		DisplayHomeScreen(picsDetected);
 		//quit
@@ -562,6 +515,9 @@ void DeleteImage(uint24_t picName) {
 	gfx_SetColor(PALETTE_WHITE);
 	gfx_VertLine_NoClip(260,153,7);
 	uint24_t deleteCount{0};
+
+	LoadingBar& loadingBar = LoadingBar::getInstance();
+
 	//delete every square
 	for (uint24_t xSquare = (picWidthInSquares - 1);xSquare < MAX_UINT;xSquare--) {
 		for (uint24_t ySquare = (picHeightInSquares - 1);ySquare < MAX_UINT;ySquare--) {
@@ -579,7 +535,7 @@ void DeleteImage(uint24_t picName) {
 				dbg_sprintf(dbgout, "\nERR: Issue deleting square");
 				dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSquare, ySquare);
 			}
-			SetLoadingBarProgress(++deleteCount,picWidthInSquares*picHeightInSquares);
+			loadingBar.SetLoadingBarProgress(++deleteCount,picWidthInSquares*picHeightInSquares);
 		}
 	}
 }
@@ -857,8 +813,10 @@ uint24_t RebuildDB(uint8_t progress) {
 	ti_var_t database = ti_Open("HDPICDB", "w"), palette;
 	ti_Write("HDDATV10", 8, 1, database);//Rewrites the header because w overwrites everything
 
-	//resets splash screen for new loading SetLoadingBarProgress
+	//resets splash screen for new loading loadingBar.SetLoadingBarProgress
 	SplashScreen();
+
+	LoadingBar& loadingBar = LoadingBar::getInstance();
 
 	/*
 	* Searches for palettes. This is a lot easier than searching for every single
@@ -868,7 +826,7 @@ uint24_t RebuildDB(uint8_t progress) {
 	*/
 	while ((var_name = ti_DetectVar(&search_pos, "HDPALV10", OS_TYPE_APPVAR)) != NULL) {
 		//sets progress of how many images were found
-		SetLoadingBarProgress(++imagesFound, MAX_IMAGES);
+		loadingBar.SetLoadingBarProgress(++imagesFound, MAX_IMAGES);
 		//finds the name, letter ID, and size of entire image this palette belongs to.
 		palette = ti_Open(var_name, "r");
 		//seeks past useless info
@@ -893,7 +851,7 @@ uint24_t RebuildDB(uint8_t progress) {
 	if (imagesFound == 0) {
 		NoImagesFound();
 	}
-	SetLoadingBarProgress(++progress, TASKS_TO_FINISH);
+	loadingBar.SetLoadingBarProgress(++progress, TASKS_TO_FINISH);
 	return imagesFound;
 }
 
@@ -975,17 +933,7 @@ uint8_t DatabaseReady() {
 
 }
 
-//makes a loading bar and fills it in depending on progress made / tasks left
-void SetLoadingBarProgress(uint24_t progress, const uint24_t tasks) {
-	progress = ((double)progress / (double)tasks) * 200.0;
-	//ensures loading bar doesn't go past max point
-	if (progress > 200)
-		progress = 200;
 
-	gfx_SetColor(PALETTE_WHITE);
-	gfx_FillRectangle_NoClip(60, 153, progress, 7);
-
-}
 
 //creates a simple splash screen when program starts
 void SplashScreen() {
