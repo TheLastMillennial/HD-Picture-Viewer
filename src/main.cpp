@@ -18,10 +18,10 @@
 #include "globals.h"
 #include "guiUtils.h"
 #include "gfx/errorgfx.h"
-#include "list.h"
+#include "vector.h"
 
 
-List <imageData> allImages;
+Vector <imageData> allImages;
 
 int main(void)
 {
@@ -95,7 +95,7 @@ void drawHomeScreen(uint24_t picsCount) {
 	
 	/* main menu */
 	gfx_FillScreen(PALETTE_BLACK);
-	drawMenu(startName, picNames, picsCount);
+	drawMenu(startName, picsCount);
 	//thumbnail
 	drawImage(startName, 180, 120, 0, 0, false);
 
@@ -389,7 +389,7 @@ void drawHomeScreen(uint24_t picsCount) {
 			/* Y= or up. Decreases the name to start on and redraws the text */
 			if (prev || (menuUp && !fullScreenImage)) {
 				startName--;
-				// Checks if startName underflowed. startName shouldn't be more than the max number of images possible.
+				// Checks if selectedName underflowed. selectedName shouldn't be more than the max number of images possible.
 				if (startName > MAX_IMAGES)
 				{
 					startName = 0;
@@ -420,7 +420,7 @@ void drawHomeScreen(uint24_t picsCount) {
 			if (redrawPic) {
 				if(!fullScreenImage)
 				{
-					drawMenu(startName, picNames, picsCount);
+					drawMenu(startName, picsCount);
 				}
 				while(kb_AnyKey()!=0); //wait for key lift
 				imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, fullScreenImage);
@@ -506,7 +506,7 @@ void deleteImage(uint24_t picName) {
 	}
 }
 
-/* Draws the image stored in database at position startName.
+/* Draws the image stored in database at position selectedName.
 * Draws the image at location x,y starting at top left corner.
 * If x=-1 then make image horizontally centered in the screen.
 * If y=-1 then make image vertically centered on the screen.
@@ -724,7 +724,7 @@ uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 			
 			//combines the separate parts into one name to search for
 			sprintf(picAppvarToFind, "%.2s%03u%03u", picID, xSubimgID, ySubimgID);
-			dbg_sprintf(dbgout, "\n%.2s%03u%03u", picID, xSubimgID, ySubimgID);
+			//dbg_sprintf(dbgout, "\n%.2s%03u%03u", picID, xSubimgID, ySubimgID);
 			/*
 			* This opens the variable with the name that was just assembled.
 			* It then gets the pointer to that and stores it in a graphics variable
@@ -799,6 +799,16 @@ uint24_t rebuildDB() {
 	* the two letter ID for each appvar. This makes it easy to find every subimage via a loop.
 	*/
 
+	while ((var_name = ti_DetectVar(&search_pos, "HDPALV10", OS_TYPE_APPVAR)) != NULL)
+	{
+		imagesFound++;
+		loadingBar.increment();
+	}
+
+	allImages.reserve(imagesFound);
+	search_pos = NULL;
+
+	loadingBar.resetLoadingBar(imagesFound);
 	while ((var_name = ti_DetectVar(&search_pos, "HDPALV10", OS_TYPE_APPVAR)) != NULL) {
 		constexpr uint8_t ID_SIZE{ 2 };
 		constexpr uint8_t HORIZ_VERT_SIZE{ 3 };
@@ -806,10 +816,10 @@ uint24_t rebuildDB() {
 		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
 		constexpr uint8_t HEADER_SIZE{ 16 };
 		
+		loadingBar.increment();
+
 		imageData imgData;
 		//sets progress of how many images were found
-		imagesFound++;
-		loadingBar.increment();
 		//finds the name, letter ID, and size of entire image this palette belongs to.
 		palette = ti_Open(var_name, "r");
 		//seeks past HDPALV10
@@ -826,6 +836,10 @@ uint24_t rebuildDB() {
 		std::strncpy(imgData.imgName, charArrImgInfo, IMAGE_NAME_SIZE);
 		std::strncpy(imgData.ID, charArrImgInfo + IMAGE_NAME_SIZE, ID_SIZE);
 
+		imgData.imgName[8] = '\0';
+		imgData.palletName[8] = '\0';
+		imgData.ID[2] = '\0';
+
 		// Get width of whole image. Then convert the number from a char representation to a int24_t
 		char buffer[3];
 		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE, HORIZ_VERT_SIZE );
@@ -833,7 +847,9 @@ uint24_t rebuildDB() {
 		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE, HORIZ_VERT_SIZE);
 		imgData.numOfSubImagesVertical = (((static_cast<int24_t>(buffer[0]) - '0') * 100 + (static_cast<int24_t>(buffer[1]) - '0') * 10 + static_cast<int24_t>(buffer[2]) - '0') + 1);
 
-		dbg_sprintf(dbgout,"\nimgName: %.8s\npalletName: %.8s\nID: %.2s\nsubImgHoriz: %d\nsubImgVert: %d\n", imgData.imgName, imgData.palletName, imgData.ID, imgData.numOfSubImagesHorizontal, imgData.numOfSubImagesVertical);
+		dbg_sprintf(dbgout,"\nPicture found:\n imgName: %.8s\n palletName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n", imgData.imgName, imgData.palletName, imgData.ID, imgData.numOfSubImagesHorizontal, imgData.numOfSubImagesVertical);
+
+		allImages.push_back(imgData);
 
 		//Writes the important info to the database
 		ti_Write(imgInfo, HEADER_SIZE, 1, database);
@@ -850,7 +866,7 @@ uint24_t rebuildDB() {
 	gfx_Begin();
 
 	drawSplashScreen();
-	dbg_sprintf(dbgout,"Pics Detected: %d",imagesFound);
+	dbg_sprintf(dbgout,"\nPics Detected: %d",imagesFound);
 	loadingBar.increment();
 	return imagesFound;
 }
@@ -914,11 +930,11 @@ uint8_t isDatabaseReady() {
 }
 
 /* This UI keeps the user selection in the middle of the screen. */
-void drawMenu(int24_t startName, char* picNames, const int24_t numOfPics) {
+void drawMenu(uint24_t selectedName, const uint24_t numOfPics) {
 	gfx_SetColor(PALETTE_WHITE);
 	gfx_VertLine(140, 20, 200);
 	
-	int24_t yPxlPos{ 0 };
+	uint24_t yPxlPos{ 0 };
 
 	//clears old text and sets prev for new text
 	gfx_SetTextScale(2, 2);
@@ -937,41 +953,39 @@ void drawMenu(int24_t startName, char* picNames, const int24_t numOfPics) {
 	gfx_VertLine_NoClip(136, 110, 21);
 
 	/* draw image names above selected name */
-	dbg_sprintf(dbgout,"startName %d",startName);
-	if (startName > 0){
-		yPxlPos = Y_MARGIN+75;
-		for (int24_t curName { startName-1}; (curName >= 0) && (yPxlPos > 15); curName--) {
-
+	dbg_sprintf(dbgout,"\nselectedName %d",selectedName);
+	if (selectedName > 0){
+		yPxlPos = Y_MARGIN+75; 
+		for (uint24_t curImg { selectedName-1 }; (curImg < MAX_UINT) && (yPxlPos > 15); curImg--) {
 			//calculates where the text should be drawn
 			yPxlPos -= Y_SPACING;
 
+			dbg_sprintf(dbgout, "\ncurImg: %d", curImg);
 			//Prints out the correct name
-			gfx_PrintStringXY(&picNames[curName * BYTES_PER_IMAGE_NAME], X_MARGIN, yPxlPos);
+			gfx_PrintStringXY(allImages[curImg].imgName, X_MARGIN, yPxlPos);
 		}
 	}
 	
 	//display selected image name in center of screen
 	yPxlPos = Y_MARGIN+75;
-	gfx_PrintStringXY(&picNames[startName * BYTES_PER_IMAGE_NAME], X_MARGIN, yPxlPos);
+	gfx_PrintStringXY(allImages[selectedName].imgName, X_MARGIN, yPxlPos);
 	
 	/* Draw image names below selected name.
 	* Iterates until out of pics or about to draw off the screen */
-	if(startName+1 < numOfPics){
-		for (int24_t curName{ startName+1 }; (curName <= numOfPics) && (yPxlPos < 210); curName++) {
+	if(selectedName+1 < numOfPics){
+		for (uint24_t curName{ selectedName+1 }; (curName < numOfPics) && (yPxlPos < 210); curName++) {
 			//calculates where the text should be drawn
 			yPxlPos += Y_SPACING;
 
 			//Prints out the correct name
-			gfx_PrintStringXY(&picNames[curName * BYTES_PER_IMAGE_NAME], X_MARGIN, yPxlPos);
+			gfx_PrintStringXY(allImages[curName].imgName, X_MARGIN, yPxlPos);
 		}
 	}
 	drawWatermark();
 }
 
 // divide and round up if necessary
-// x cannot be 0
 int24_t ceilDiv(int24_t x, int24_t y)
 {
-	
-	return 1 + ((x - 1) / y);
+	return (x + y - 1) / y;
 }

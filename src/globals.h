@@ -41,9 +41,9 @@
 
 struct imageData
 {
-	char imgName[8];
-	char palletName[8];
-	char ID[2];
+	char imgName[9];
+	char palletName[9];
+	char ID[3];
 	double zoomScale{ 1.0 };
 	int24_t xOffset{ 0 };
 	int24_t yOffset{ 0 };

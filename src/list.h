@@ -1,3 +1,7 @@
+#pragma once
+
+/* A limited list implementation */
+
 #include <debug.h>
 // Define a Node structure
 template <typename T>
@@ -33,6 +37,15 @@ public:
     // Destructor to free memory
     ~List() {
         clear();
+    }
+
+    Node<T> get(uint24_t index)
+    {
+        Node<T>* head
+        for (int i{ 0 }; i < index;i++)
+        {
+
+        }
     }
 
     // Push data to the front of the list
@@ -163,7 +176,7 @@ public:
     }
 
     // Size of the list
-    size_t get_size() const {
+    size_t size() const {
         return size;
     }
 
