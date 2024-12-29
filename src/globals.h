@@ -1,3 +1,5 @@
+#pragma once
+
 /* Global Constants */
 
 /* Valid list of locations HDPICV can be obtained from:
@@ -35,3 +37,16 @@
 #define XLIBC_RED 192 //xlibc red
 #define PALETTE_BLACK 0 //the xlibc palette and all hdpic generated palettes will have black as 0
 #define PALETTE_WHITE 255 //the xlibc palette and all hdpic generated palettes will have white as 255
+
+
+struct imageData
+{
+	char imgName[8];
+	char palletName[8];
+	char ID[2];
+	double zoomScale{ 1.0 };
+	int24_t xOffset{ 0 };
+	int24_t yOffset{ 0 };
+	int24_t numOfSubImagesHorizontal{ 0 };
+	int24_t numOfSubImagesVertical{ 0 };
+};

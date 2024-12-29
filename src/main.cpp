@@ -11,13 +11,17 @@
 #include <fileioc.h>
 #include <debug.h>
 #include <compression.h>
+#include <cstring>
 
 #include "main.h"
 #include "loadingBarHandler.h"
 #include "globals.h"
 #include "guiUtils.h"
 #include "gfx/errorgfx.h"
+#include "list.h"
 
+
+List <imageData> allImages;
 
 int main(void)
 {
@@ -546,20 +550,20 @@ uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	*/
 	int24_t picWidthInSubimages{ ((static_cast<int24_t>(imgWH[0]) - '0') * 100 + (static_cast<int24_t>(imgWH[1]) - '0') * 10 + static_cast<int24_t>(imgWH[2]) - '0') + 1 };
 	int24_t picHeightInSubimages{ ((static_cast<int24_t>(imgWH[3]) - '0') * 100 + (static_cast<int24_t>(imgWH[4]) - '0') * 10 + static_cast<int24_t>(imgWH[5]) - '0') + 1 };
-	uint24_t maxAllowedWidthInSubimages{ (maxAllowedWidthInPxl / SUBIMG_WIDTH_AND_HEIGHT) }; 
-	uint24_t maxAllowedHeightInSubimages{ (maxAllowedHeightInPxl / SUBIMG_WIDTH_AND_HEIGHT) };
-	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n", maxAllowedWidthInSubimages, picWidthInSubimages, maxAllowedHeightInSubimages, picHeightInSubimages);
+	uint24_t desiredWidthInSubimages{ (maxAllowedWidthInPxl / SUBIMG_WIDTH_AND_HEIGHT) }; 
+	uint24_t desiredHeightInSubimages{ (maxAllowedHeightInPxl / SUBIMG_WIDTH_AND_HEIGHT) };
+	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n", desiredWidthInSubimages, picWidthInSubimages, desiredHeightInSubimages, picHeightInSubimages);
 
 	//checks if it should scale an image horizontally or vertically.
 	if((picWidthInSubimages * 80)/320 >= (picHeightInSubimages * 80)/240)
 	{
-		scaleNum = maxAllowedWidthInSubimages;
+		scaleNum = desiredWidthInSubimages;
 		scaleDen = picWidthInSubimages;
 		//dbg_sprintf(dbgout, "\nWidth too wide. %d , %d", (picWidthInSubimages * 80)/320, (picHeightInSubimages * 80)/240);
 	}
 	else
 	{
-		scaleNum = maxAllowedHeightInSubimages;
+		scaleNum = desiredHeightInSubimages;
 		scaleDen = picHeightInSubimages;
 		//dbg_sprintf(dbgout, "\nHeight too tall. ");
 	}
@@ -777,7 +781,7 @@ uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 
 /* Rebuilds the database of images on the calculator */
 uint24_t rebuildDB() {
-	char* var_name, * imgInfo[16];// nameBuffer[10];
+	char* var_name, imgInfo[16];
 	void* search_pos = NULL;
 	uint24_t imagesFound{ 0 };
 	ti_var_t database = ti_Open("HDPICDB", "w"), palette;
@@ -788,29 +792,55 @@ uint24_t rebuildDB() {
 
 	LoadingBar& loadingBar = LoadingBar::getInstance();
 	loadingBar.resetLoadingBar(MAX_IMAGES);
-
 	/*
 	* Searches for palettes. This is a lot easier than searching for every single
 	* subimage because there is guaranteed to only be one palette per image.
 	* The palette contains all the useful information such as the image size and
 	* the two letter ID for each appvar. This makes it easy to find every subimage via a loop.
 	*/
-	while ((var_name = ti_DetectVar(&search_pos, "HDPALV10", OS_TYPE_APPVAR)) != NULL) {
 
+	while ((var_name = ti_DetectVar(&search_pos, "HDPALV10", OS_TYPE_APPVAR)) != NULL) {
+		constexpr uint8_t ID_SIZE{ 2 };
+		constexpr uint8_t HORIZ_VERT_SIZE{ 3 };
+		constexpr uint8_t PALETTE_NAME_SIZE{ 8 };
+		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
+		constexpr uint8_t HEADER_SIZE{ 16 };
+		
+		imageData imgData;
 		//sets progress of how many images were found
 		imagesFound++;
 		loadingBar.increment();
 		//finds the name, letter ID, and size of entire image this palette belongs to.
 		palette = ti_Open(var_name, "r");
-		//seeks past useless info
+		//seeks past HDPALV10
 		ti_Seek(8, SEEK_CUR, palette);
-		ti_Seek(16, SEEK_CUR, database);
+		//seeks past previous entry
+		ti_Seek(HEADER_SIZE, SEEK_CUR, database); 
 		//reads the important info (16 bytes)
-		ti_Read(&imgInfo, 16, 1, palette);
-		//Writes the info to the database
-		ti_Write(imgInfo, 16, 1, database);
+		//e.g. poppy___JT003002
+		ti_Read(&imgInfo, HEADER_SIZE, 1, palette);
+
+		char charArrImgInfo[16];
+		std::strncpy(charArrImgInfo, imgInfo, HEADER_SIZE);
+		std::strncpy(imgData.palletName, var_name, PALETTE_NAME_SIZE);
+		std::strncpy(imgData.imgName, charArrImgInfo, IMAGE_NAME_SIZE);
+		std::strncpy(imgData.ID, charArrImgInfo + IMAGE_NAME_SIZE, ID_SIZE);
+
+		// Get width of whole image. Then convert the number from a char representation to a int24_t
+		char buffer[3];
+		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE, HORIZ_VERT_SIZE );
+		imgData.numOfSubImagesHorizontal = (((static_cast<int24_t>(buffer[0]) - '0') * 100 + (static_cast<int24_t>(buffer[1]) - '0') * 10 + static_cast<int24_t>(buffer[2]) - '0') + 1);
+		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE, HORIZ_VERT_SIZE);
+		imgData.numOfSubImagesVertical = (((static_cast<int24_t>(buffer[0]) - '0') * 100 + (static_cast<int24_t>(buffer[1]) - '0') * 10 + static_cast<int24_t>(buffer[2]) - '0') + 1);
+
+		dbg_sprintf(dbgout,"\nimgName: %.8s\npalletName: %.8s\nID: %.2s\nsubImgHoriz: %d\nsubImgVert: %d\n", imgData.imgName, imgData.palletName, imgData.ID, imgData.numOfSubImagesHorizontal, imgData.numOfSubImagesVertical);
+
+		//Writes the important info to the database
+		ti_Write(imgInfo, HEADER_SIZE, 1, database);
 		//closes palette for next iteration
 		ti_Close(palette);
+
+
 	}
 
 	//closes the database

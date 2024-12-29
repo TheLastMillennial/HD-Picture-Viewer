@@ -1,3 +1,4 @@
+#include <debug.h>
 // Define a Node structure
 template <typename T>
 struct Node {
@@ -65,7 +66,7 @@ public:
     // Pop data from the front of the list
     void pop_front() {
         if (head == NULL) {
-            dbg_sprintf("List is empty");
+            dbg_sprintf(dbgout, "List is empty");
             return;
         }
         Node<T>* temp = head;
@@ -83,7 +84,7 @@ public:
     // Pop data from the back of the list
     void pop_back() {
         if (tail == NULL) {
-            dbg_sprintf("List is empty");
+            dbg_sprintf(dbgout, "List is empty");
             return;
         }
         Node<T>* temp = tail;
@@ -101,7 +102,7 @@ public:
     // Insert data at a specific position
     void insert(size_t index, const T& data) {
         if (index > size) {
-            dbg_sprintf("Index out of range");
+            dbg_sprintf(dbgout, "Index out of range");
             return;
         }
 
@@ -130,7 +131,7 @@ public:
     // Erase data from a specific position
     void erase(size_t index) {
         if (index >= size) {
-            dbg_sprintf("Index out of range");
+            dbg_sprintf(dbgout, "Index out of range");
             return;
         }
 
