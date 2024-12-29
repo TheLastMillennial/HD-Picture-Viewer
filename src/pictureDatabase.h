@@ -29,6 +29,11 @@ public:
         allImages.clear();
     }
 
+	uint24_t size()
+	{
+		return allImages.getSize();
+	}
+
     //pre-allocate memory for the database (optional but faster than only calling addPicture())
     void reserve(uint24_t size)
     {

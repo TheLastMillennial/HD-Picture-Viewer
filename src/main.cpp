@@ -26,28 +26,9 @@ int main(void)
 {
 	gfx_Begin();
 	gfx_SetTextTransparentColor(254);
+
 	drawSplashScreen();
-
-	LoadingBar& loadingBar = LoadingBar::getInstance();
-
-	loadingBar.resetLoadingBar(2);
-
-	//checks if the database exists and is ready 0 failure; 1 created; 2 exists
-	if (isDatabaseReady() == 0)
-	{
-		// Display error then quit.
-		dbg_sprintf(dbgout, "\nDatabase not ready");
-		PrintCentered("Database failure.");
-		while (!os_GetCSC());
-		gfx_End();
-		return 0;
-	}
-
-	loadingBar.increment();
-
-	// rebuildDB() returns how many images were found.
-	uint24_t picsDetected {rebuildDB()};
-	if (picsDetected == 0)
+	if (findPictures() == 0)
 	{
 		drawNoImagesFound();
 		while (!os_GetCSC());
@@ -56,9 +37,8 @@ int main(void)
 	}
 	else
 	{
-		loadingBar.increment();
 		//display the list of images
-		drawHomeScreen(picsDetected);
+		drawHomeScreen();
 		//quit
 		gfx_End();
 		return 0;
@@ -66,29 +46,25 @@ int main(void)
 }
 
 // Display UI to select an image
-void drawHomeScreen(uint24_t picsCount) {
-	ti_var_t database{ ti_Open("HDPICDB","r") };
+void drawHomeScreen() {
 	uint24_t startName{ 0 },
-		maxAllowedWidthInPxl{ MAX_THUMBNAIL_WIDTH }, maxAllowedHeightInPxl{ MAX_THUMBNAIL_HEIGHT };
+		desiredWidthInPxl{ MAX_THUMBNAIL_WIDTH }, desiredHeightInPxl{ MAX_THUMBNAIL_HEIGHT };
 	int24_t xOffset{ 0 }, yOffset{ 0 };
-
 	bool menuEnter, menuQuit,
 		menuUp, menuDown, menuHelp,
 		prev, next,
 		deletePic, resetPic, redrawPic,
 		zoomIn, zoomOut, zoomMax,
 		panUp, panDown, panLeft, panRight;
-
-	//seeks to the first image name
-	ti_Seek(8, SEEK_SET, database);
-
-
 	//set up variable that checks if drawImage failed
 	uint8_t imageErr{ 0 };
+	PicDatabase& picDB = PicDatabase::getInstance();
 	
 	/* main menu */
 	gfx_FillScreen(PALETTE_BLACK);
-	drawMenu(startName, picsCount);
+
+	drawMenu(startName);
+
 	//thumbnail
 	drawImage(startName, 180, 120, 0, 0, false);
 
@@ -186,24 +162,20 @@ void drawHomeScreen(uint24_t picsCount) {
 			if(zoomMax && fullScreenImage)
 			{
 				//pull image full dimensions from database
-				char picDimensions[6];
-				ti_var_t database{ ti_Open("HDPICDB","r") };
-				ti_Seek(18 + (16 * startName), SEEK_CUR, database);
-				ti_Read(picDimensions, 6, 1, database);
-				ti_Close(database);
+				PicDatabase& picDB = PicDatabase::getInstance();
 
-				//convert string to int
-				maxAllowedWidthInPxl= (((static_cast<uint24_t>(picDimensions[0]) - '0') * 100 + (static_cast<uint24_t>(picDimensions[1]) - '0') * 10 + static_cast<uint24_t>(picDimensions[2]) - '0') + 1) * SUBIMG_WIDTH_AND_HEIGHT;
-				maxAllowedHeightInPxl=(((static_cast<uint24_t>(picDimensions[3]) - '0') * 100 + (static_cast<uint24_t>(picDimensions[4]) - '0') * 10 + static_cast<uint24_t>(picDimensions[5]) - '0') + 1) * SUBIMG_WIDTH_AND_HEIGHT;
+				//convert subimg width to pixels width
+				desiredWidthInPxl = picDB.getPicture(startName).numOfSubImagesHorizontal * SUBIMG_WIDTH_AND_HEIGHT;
+				desiredHeightInPxl = picDB.getPicture(startName).numOfSubImagesVertical * SUBIMG_WIDTH_AND_HEIGHT;
 
-				imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
+				imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
 					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
-					maxAllowedWidthInPxl = maxAllowedWidthInPxl / ZOOM_SCALE;
-					maxAllowedHeightInPxl = maxAllowedHeightInPxl / ZOOM_SCALE;
-					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
-					imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
+					desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
+					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
+					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+					imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 					//if zooming back out didn't fix it, abort.
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
@@ -211,7 +183,6 @@ void drawHomeScreen(uint24_t picsCount) {
 						PrintCenteredX("Error zooming in.", 130);
 						PrintCenteredX("Press any key to quit.", 140);
 						while (!os_GetCSC());
-						ti_Close(database);
 						gfx_End();
 						return;
 					}
@@ -222,17 +193,17 @@ void drawHomeScreen(uint24_t picsCount) {
 			if (zoomIn && fullScreenImage) {
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomIn error"); }
 				//doubles zoom
-				maxAllowedWidthInPxl = maxAllowedWidthInPxl * ZOOM_SCALE;
-				maxAllowedHeightInPxl = maxAllowedHeightInPxl * ZOOM_SCALE;
+				desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
+				desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
 				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-				imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
+				imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
 					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
-					maxAllowedWidthInPxl = maxAllowedWidthInPxl / ZOOM_SCALE;
-					maxAllowedHeightInPxl = maxAllowedHeightInPxl / ZOOM_SCALE;
-					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
-					imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
+					desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
+					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
+					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+					imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 					//if zooming back out didn't fix it, abort.
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
@@ -240,7 +211,6 @@ void drawHomeScreen(uint24_t picsCount) {
 						PrintCenteredX("Error zooming in.", 130);
 						PrintCenteredX("Press any key to quit.", 140);
 						while (!os_GetCSC());
-						ti_Close(database);
 						gfx_End();
 						return;
 					}
@@ -253,21 +223,21 @@ void drawHomeScreen(uint24_t picsCount) {
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomOut error"); }
 
 				//ensure we can zoom out without desiredWidthInPxl or desiredHeightInPxl becoming 0
-				if (maxAllowedWidthInPxl / ZOOM_SCALE != 0 && maxAllowedHeightInPxl / ZOOM_SCALE != 0) {
+				if (desiredWidthInPxl / ZOOM_SCALE != 0 && desiredHeightInPxl / ZOOM_SCALE != 0) {
 					//apply the zoom out to the width and height
-					maxAllowedWidthInPxl = maxAllowedWidthInPxl / ZOOM_SCALE;
-					maxAllowedHeightInPxl = maxAllowedHeightInPxl / ZOOM_SCALE;
+					desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
+					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
 
 					//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-					imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
+					imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 					//this means we can't zoom out any more. Zoom back in.
 					if (imageErr != 0) {
 						//dbg_sprintf(dbgout, "\nCant zoom out trying zooming in...");
-						maxAllowedWidthInPxl = maxAllowedWidthInPxl * ZOOM_SCALE;
-						maxAllowedHeightInPxl = maxAllowedHeightInPxl * ZOOM_SCALE;
+						desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
+						desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
 						//dbg_sprintf(dbgout, "\n Zoomed in\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 
-						imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
+						imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 						//if zooming back in didn't fix it, abort.
 						if (imageErr != 0) {
 							dbg_sprintf(dbgout, "\nERR: Cant zoom out!!");
@@ -275,7 +245,6 @@ void drawHomeScreen(uint24_t picsCount) {
 							PrintCenteredX("Error zooming out.", 130);
 							PrintCenteredX("Press any key to quit.", 140);
 							while (!os_GetCSC());
-							ti_Close(database);
 							gfx_End();
 							return;
 						}
@@ -286,7 +255,7 @@ void drawHomeScreen(uint24_t picsCount) {
 					//dbg_sprintf(dbgout, "\nmaxWidth or desiredHeightInPxl too small. \n Zoom out aborted.");
 					//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 					//redraw the image. If it fails, I dunno why. It should be the exact same image as was previously displayed
-					imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
+					imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 					//err handler
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nERR: Issue displaying same image??");
@@ -295,7 +264,6 @@ void drawHomeScreen(uint24_t picsCount) {
 						PrintCenteredX("Press any key to quit.", 140);
 						while (kb_AnyKey() != 0); //wait for key lift
 						while (!os_GetCSC());
-						ti_Close(database);
 						gfx_End();
 						return;
 					}
@@ -330,12 +298,10 @@ void drawHomeScreen(uint24_t picsCount) {
 				gfx_SetTextBGColor(PALETTE_BLACK);
 				
 				//rebuild the database to account for the deleted image. 
-				ti_Close(database);
-				picsCount = rebuildDB();
-				database = ti_Open("HDPICDB", "r");
+				//picsCount = findPictures();
 
 				//check if all images were deleted. If so, just quit.
-				if (picsCount == 0) {
+				if (picDB.size() == 0) {
 					drawNoImagesFound();
 					while (kb_AnyKey() != 0); //wait for key lift
 					while (!os_GetCSC());
@@ -347,10 +313,6 @@ void drawHomeScreen(uint24_t picsCount) {
 				gfx_SetTextFGColor(XLIBC_GREY);
 				gfx_SetTextBGColor(PALETTE_BLACK);
 
-				//seeks to the first image name
-				ti_Seek(8, SEEK_SET, database);
-
-
 				//re construct the GUI
 				gfx_FillScreen(PALETTE_BLACK);
 				resetPic=true;
@@ -361,9 +323,9 @@ void drawHomeScreen(uint24_t picsCount) {
 			if (next || (menuDown &&  !fullScreenImage)) {
 				startName++;
 				//make sure user can't scroll down too far
-				if (startName > picsCount-1)
+				if (startName > picDB.size()-1)
 				{
-					startName = picsCount-1;
+					startName = picDB.size()-1;
 				}
 
 				resetPic = fullScreenImage;
@@ -390,13 +352,13 @@ void drawHomeScreen(uint24_t picsCount) {
 				{
 					xOffset = 0;
 					yOffset = 0;
-					maxAllowedWidthInPxl = LCD_WIDTH;
-					maxAllowedHeightInPxl = LCD_HEIGHT;
+					desiredWidthInPxl = LCD_WIDTH;
+					desiredHeightInPxl = LCD_HEIGHT;
 				}else{
 					xOffset = 0;
 					yOffset = 0;
-					maxAllowedWidthInPxl = MAX_THUMBNAIL_WIDTH;
-					maxAllowedHeightInPxl = MAX_THUMBNAIL_HEIGHT;
+					desiredWidthInPxl = MAX_THUMBNAIL_WIDTH;
+					desiredHeightInPxl = MAX_THUMBNAIL_HEIGHT;
 				}
 				redrawPic = true;
 			}
@@ -405,16 +367,15 @@ void drawHomeScreen(uint24_t picsCount) {
 			if (redrawPic) {
 				if(!fullScreenImage)
 				{
-					drawMenu(startName, picsCount);
+					drawMenu(startName);
 				}
 				while(kb_AnyKey()!=0); //wait for key lift
-				imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, fullScreenImage);
+				imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, fullScreenImage);
 				if (imageErr != 0) {
 					PrintCenteredX("Error: ", 150);
 					gfx_PrintUInt(errorID,3);
 					PrintCenteredX("Press any key to quit.", 160);
 					while (!os_GetCSC());
-					ti_Close(database);
 					gfx_End();
 					return;
 				}
@@ -424,7 +385,6 @@ void drawHomeScreen(uint24_t picsCount) {
 		}
 	} while (!quitProgram);
 
-	ti_Close(database);
 }
 
 /* Draws the image stored in database at position selectedName.
@@ -453,7 +413,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//Converts the width/height from a char array into two integers by converting char into decimal value
 	//then subtracting 48 to get the actual number.
-	dbg_sprintf(dbgout, "\nimg width in subimg: %d \nimg height in subimg: %d\n", picDB[picName].numOfSubImagesHorizontal, picDB[picName].numOfSubImagesVertical);
+	dbg_sprintf(dbgout, "\nimg width in subimg: %d \nimg height in subimg: %d\n", picDB.getPicture(picName).numOfSubImagesHorizontal, picDB.getPicture(picName).numOfSubImagesVertical);
 
 	/*converts the char numbers from the header appvar into uint numbers
 	(uint24_t)imgWH[?]-'0')*100 covers the 100's place
@@ -463,7 +423,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	*/
 	uint24_t desiredWidthInSubimages{ (desiredWidthInPxl / SUBIMG_WIDTH_AND_HEIGHT) }; 
 	uint24_t desiredHeightInSubimages{ (desiredHeightInPxl / SUBIMG_WIDTH_AND_HEIGHT) };
-	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n", desiredWidthInSubimages, picWidthInSubimages, desiredHeightInSubimages, picHeightInSubimages);
+	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n", desiredWidthInSubimages, picDB.getPicture(picName).numOfSubImagesHorizontal, desiredHeightInSubimages, picDB.getPicture(picName).numOfSubImagesVertical);
 
 	//checks if it should scale an image horizontally or vertically.
 	if((picDB.getPicture(picName).numOfSubImagesHorizontal * 80)/320 >= (picDB.getPicture(picName).numOfSubImagesVertical * 80)/240)
@@ -693,12 +653,10 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 
 /* Rebuilds the database of images on the calculator */
-uint24_t rebuildDB() {
+uint24_t findPictures() {
 	char* var_name, imgInfo[16];
 	void* search_pos = NULL;
 	uint24_t imagesFound{ 0 };
-	ti_var_t database = ti_Open("HDPICDB", "w"), palette;
-	ti_Write("HDDATV10", 8, 1, database);//Rewrites the header because w overwrites everything
 
 	//resets splash screen for new loading bar
 	drawSplashScreen();
@@ -735,11 +693,10 @@ uint24_t rebuildDB() {
 		imageData imgData;
 		//sets progress of how many images were found
 		//finds the name, letter ID, and size of entire image this palette belongs to.
+		ti_var_t  palette;
 		palette = ti_Open(var_name, "r");
 		//seeks past HDPALV10
 		ti_Seek(8, SEEK_CUR, palette);
-		//seeks past previous entry
-		ti_Seek(HEADER_SIZE, SEEK_CUR, database); 
 		//reads the important info (16 bytes)
 		//e.g. poppy___JT003002
 		ti_Read(&imgInfo, HEADER_SIZE, 1, palette);
@@ -765,19 +722,11 @@ uint24_t rebuildDB() {
 
 		picDB.addPicture(imgData);
 
-		//Writes the important info to the database
-		ti_Write(imgInfo, HEADER_SIZE, 1, database);
 		//closes palette for next iteration
 		ti_Close(palette);
 
 
 	}
-
-	//closes the database
-	ti_Close(database);
-	gfx_End();
-	ti_SetArchiveStatus(true, database);
-	gfx_Begin();
 
 	drawSplashScreen();
 	dbg_sprintf(dbgout,"\nPics Detected: %d",imagesFound);
@@ -785,66 +734,9 @@ uint24_t rebuildDB() {
 	return imagesFound;
 }
 
-//checks if the database is already created. If not, it creates it.
-uint8_t isDatabaseReady() {
-	char* var_name;
-	void* search_pos = NULL;
-	uint8_t exists{ 0 }, ready{ 0 };
-	ti_var_t database;
-	char myData[9]{ "HDDATV10" }; //remember have one more space than text you're saving for null termiation
-	char compare[9]{ "HDDATV10" };
-	//tries to find database using known header
-	//todo: why var_name = ???
-	while ((var_name = ti_DetectVar(&search_pos, myData, OS_TYPE_APPVAR)) != NULL) {
-		exists = 1;
-	}
-	//if file already exists, simply return
-	if (exists == 1)
-		ready = 2;
-	else {
-		//if file doesn't already exist, create it.
-		//creates the database appvar and writes the header. Checks if wrote successfully
-		database = ti_Open("HDPICDB", "w");
-		if (!database)
-			ready = 3;
-		if (ti_Write(&myData, 8, 1, database) != 1)
-			ready = 4;
-		if (ti_Rewind(database) == EOF)
-			ready = 5;
-		if (ti_Read(&myData, 8, 1, database) != 1)
-			ready = 6;
-		if (strcmp(myData, compare) != 0)
-			ready = 7;
-		else {
-			ready = 1;
-		}
-		ti_Close(database);
-	}
-
-
-	//checks what happened
-	if (ready == 1) {
-		dbg_sprintf(dbgout, "\nDatabase Created");
-		return 1;
-	}
-	else if (ready == 2) {
-		dbg_sprintf(dbgout, "\nDatabase Already Exists");
-		return 2;
-	}
-	else {
-		dbg_sprintf(dbgout, "\nDatabase Failed to Create: %d\n", ready);
-		gfx_SetTextFGColor(XLIBC_RED);
-		PrintCenteredX("DB Failure! Please report:", 180);
-		gfx_SetTextXY(120, 200);
-		gfx_PrintUInt(ready, 1);
-		return 0;
-	}
-
-
-}
 
 /* This UI keeps the user selection in the middle of the screen. */
-void drawMenu(uint24_t selectedName, const uint24_t numOfPics) {
+void drawMenu(uint24_t selectedName) {
 	gfx_SetColor(PALETTE_WHITE);
 	gfx_VertLine(140, 20, 200);
 	
@@ -888,8 +780,8 @@ void drawMenu(uint24_t selectedName, const uint24_t numOfPics) {
 	
 	/* Draw image names below selected name.
 	* Iterates until out of pics or about to draw off the screen */
-	if(selectedName+1 < numOfPics){
-		for (uint24_t curName{ selectedName+1 }; (curName < numOfPics) && (yPxlPos < 210); curName++) {
+	if(selectedName+1 < picDB.size()){
+		for (uint24_t curName{ selectedName+1 }; (curName < picDB.size()) && (yPxlPos < 210); curName++) {
 			//calculates where the text should be drawn
 			yPxlPos += Y_SPACING;
 
