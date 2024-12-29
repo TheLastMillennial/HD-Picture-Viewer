@@ -15,13 +15,12 @@
 
 #include "main.h"
 #include "loadingBarHandler.h"
+#include "pictureDatabase.h"
 #include "globals.h"
 #include "guiUtils.h"
 #include "gfx/errorgfx.h"
-#include "vector.h"
+#include "types/vector.h"
 
-
-Vector <imageData> allImages;
 
 int main(void)
 {
@@ -68,7 +67,6 @@ int main(void)
 
 // Display UI to select an image
 void drawHomeScreen(uint24_t picsCount) {
-	char* picNames{ static_cast<char*>(malloc(picsCount * BYTES_PER_IMAGE_NAME)) };
 	ti_var_t database{ ti_Open("HDPICDB","r") };
 	uint24_t startName{ 0 },
 		maxAllowedWidthInPxl{ MAX_THUMBNAIL_WIDTH }, maxAllowedHeightInPxl{ MAX_THUMBNAIL_HEIGHT };
@@ -83,12 +81,7 @@ void drawHomeScreen(uint24_t picsCount) {
 
 	//seeks to the first image name
 	ti_Seek(8, SEEK_SET, database);
-	//loops through every picture that was detected and store the image name to picNames
-	for (uint24_t i{ 0 };i <= picsCount;i++) {
-		ti_Read(&picNames[i * BYTES_PER_IMAGE_NAME], 8, 1, database);
-		picNames[i * BYTES_PER_IMAGE_NAME + BYTES_PER_IMAGE_NAME - 1] = 0;
-		ti_Seek(8, SEEK_CUR, database);
-	}
+
 
 	//set up variable that checks if drawImage failed
 	uint8_t imageErr{ 0 };
@@ -219,7 +212,6 @@ void drawHomeScreen(uint24_t picsCount) {
 						PrintCenteredX("Press any key to quit.", 140);
 						while (!os_GetCSC());
 						ti_Close(database);
-						free(picNames);
 						gfx_End();
 						return;
 					}
@@ -249,7 +241,6 @@ void drawHomeScreen(uint24_t picsCount) {
 						PrintCenteredX("Press any key to quit.", 140);
 						while (!os_GetCSC());
 						ti_Close(database);
-						free(picNames);
 						gfx_End();
 						return;
 					}
@@ -285,7 +276,6 @@ void drawHomeScreen(uint24_t picsCount) {
 							PrintCenteredX("Press any key to quit.", 140);
 							while (!os_GetCSC());
 							ti_Close(database);
-							free(picNames);
 							gfx_End();
 							return;
 						}
@@ -303,9 +293,9 @@ void drawHomeScreen(uint24_t picsCount) {
 
 						PrintCenteredX("Error with zoom.", 130);
 						PrintCenteredX("Press any key to quit.", 140);
+						while (kb_AnyKey() != 0); //wait for key lift
 						while (!os_GetCSC());
 						ti_Close(database);
-						free(picNames);
 						gfx_End();
 						return;
 					}
@@ -327,11 +317,10 @@ void drawHomeScreen(uint24_t picsCount) {
 				deleteImage(startName);
 				PrintCenteredX("Picture deleted.", 130);
 				PrintCenteredX("Press any key.", 140);
+				while (kb_AnyKey() != 0); //wait for key lift
 				while (!os_GetCSC());
 
 				//picture names will change. Delete what we currently have
-				free(picNames);
-				picNames = nullptr;
 				startName = 0;
 				
 				//set color for splash screen
@@ -346,6 +335,7 @@ void drawHomeScreen(uint24_t picsCount) {
 				//check if all images were deleted. If so, just quit.
 				if (picsCount == 0) {
 					drawNoImagesFound();
+					while (kb_AnyKey() != 0); //wait for key lift
 					while (!os_GetCSC());
 					gfx_End();
 					return;
@@ -354,17 +344,10 @@ void drawHomeScreen(uint24_t picsCount) {
 				//ensure text is readable
 				gfx_SetTextFGColor(XLIBC_GREY);
 				gfx_SetTextBGColor(PALETTE_BLACK);
-				//re-allocate memory for the picture names
-				picNames = static_cast<char*>(malloc(picsCount * BYTES_PER_IMAGE_NAME));
 
 				//seeks to the first image name
 				ti_Seek(8, SEEK_SET, database);
-				//loops through every picture that was detected and store the image name to picNames
-				for (uint24_t i{ 0 };i <= picsCount;i++) {
-					ti_Read(&picNames[i * BYTES_PER_IMAGE_NAME], 8, 1, database);
-					picNames[i * BYTES_PER_IMAGE_NAME + BYTES_PER_IMAGE_NAME - 1] = 0;
-					ti_Seek(8, SEEK_CUR, database);
-				}
+
 
 				//re construct the GUI
 				gfx_FillScreen(PALETTE_BLACK);
@@ -430,7 +413,6 @@ void drawHomeScreen(uint24_t picsCount) {
 					PrintCenteredX("Press any key to quit.", 160);
 					while (!os_GetCSC());
 					ti_Close(database);
-					free(picNames);
 					gfx_End();
 					return;
 				}
@@ -441,7 +423,6 @@ void drawHomeScreen(uint24_t picsCount) {
 	} while (!quitProgram);
 
 	ti_Close(database);
-	free(picNames);
 }
 
 
@@ -651,7 +632,7 @@ uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	//we know the horizontal resolution of the screen is 320px. 
 	//We can get the width of each subimage by doing newSubimgWidthHeight/scaleDen
 	//ceilDiv since we don't want missing subimages.
-	int24_t rightMostSubimg{ ceilDiv(static_cast<int24_t>( LCD_WIDTH) , (newSubimgWidthHeight / scaleDen)) };
+	int24_t rightMostSubimg{ ceilDiv(static_cast<int24_t>( LCD_WIDTH) , ceilDiv(newSubimgWidthHeight , scaleDen)) };
 	//leftmost and topmost always starts at 0
 	int24_t leftMostSubimg{ 0 };
 	int24_t topMostSubimg { 0 };
@@ -805,10 +786,11 @@ uint24_t rebuildDB() {
 		loadingBar.increment();
 	}
 
-	allImages.reserve(imagesFound);
-	search_pos = NULL;
+	PicDatabase& picDB = PicDatabase::getInstance();
+	picDB.reserve(imagesFound);
 
 	loadingBar.resetLoadingBar(imagesFound);
+	search_pos = NULL;
 	while ((var_name = ti_DetectVar(&search_pos, "HDPALV10", OS_TYPE_APPVAR)) != NULL) {
 		constexpr uint8_t ID_SIZE{ 2 };
 		constexpr uint8_t HORIZ_VERT_SIZE{ 3 };
@@ -849,7 +831,7 @@ uint24_t rebuildDB() {
 
 		dbg_sprintf(dbgout,"\nPicture found:\n imgName: %.8s\n palletName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n", imgData.imgName, imgData.palletName, imgData.ID, imgData.numOfSubImagesHorizontal, imgData.numOfSubImagesVertical);
 
-		allImages.push_back(imgData);
+		picDB.addPicture(imgData);
 
 		//Writes the important info to the database
 		ti_Write(imgInfo, HEADER_SIZE, 1, database);
@@ -952,6 +934,8 @@ void drawMenu(uint24_t selectedName, const uint24_t numOfPics) {
 	gfx_VertLine_NoClip(6, 110, 20);
 	gfx_VertLine_NoClip(136, 110, 21);
 
+	PicDatabase& picDB = PicDatabase::getInstance();
+
 	/* draw image names above selected name */
 	dbg_sprintf(dbgout,"\nselectedName %d",selectedName);
 	if (selectedName > 0){
@@ -962,13 +946,13 @@ void drawMenu(uint24_t selectedName, const uint24_t numOfPics) {
 
 			dbg_sprintf(dbgout, "\ncurImg: %d", curImg);
 			//Prints out the correct name
-			gfx_PrintStringXY(allImages[curImg].imgName, X_MARGIN, yPxlPos);
+			gfx_PrintStringXY(picDB.getPicture(curImg).imgName, X_MARGIN, yPxlPos);
 		}
 	}
 	
 	//display selected image name in center of screen
 	yPxlPos = Y_MARGIN+75;
-	gfx_PrintStringXY(allImages[selectedName].imgName, X_MARGIN, yPxlPos);
+	gfx_PrintStringXY(picDB.getPicture(selectedName).imgName, X_MARGIN, yPxlPos);
 	
 	/* Draw image names below selected name.
 	* Iterates until out of pics or about to draw off the screen */
@@ -978,7 +962,7 @@ void drawMenu(uint24_t selectedName, const uint24_t numOfPics) {
 			yPxlPos += Y_SPACING;
 
 			//Prints out the correct name
-			gfx_PrintStringXY(allImages[curName].imgName, X_MARGIN, yPxlPos);
+			gfx_PrintStringXY(picDB.getPicture(curName).imgName, X_MARGIN, yPxlPos);
 		}
 	}
 	drawWatermark();
