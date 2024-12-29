@@ -202,7 +202,7 @@ void drawHomeScreen(uint24_t picsCount) {
 					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
 					maxAllowedWidthInPxl = maxAllowedWidthInPxl / ZOOM_SCALE;
 					maxAllowedHeightInPxl = maxAllowedHeightInPxl / ZOOM_SCALE;
-					dbg_sprintf(dbgout, "\n Zoomed out\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
+					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
 					imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 					//if zooming back out didn't fix it, abort.
 					if (imageErr != 0) {
@@ -224,14 +224,14 @@ void drawHomeScreen(uint24_t picsCount) {
 				//doubles zoom
 				maxAllowedWidthInPxl = maxAllowedWidthInPxl * ZOOM_SCALE;
 				maxAllowedHeightInPxl = maxAllowedHeightInPxl * ZOOM_SCALE;
-				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
+				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 				imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
 					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
 					maxAllowedWidthInPxl = maxAllowedWidthInPxl / ZOOM_SCALE;
 					maxAllowedHeightInPxl = maxAllowedHeightInPxl / ZOOM_SCALE;
-					dbg_sprintf(dbgout, "\n Zoomed out\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
+					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
 					imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 					//if zooming back out didn't fix it, abort.
 					if (imageErr != 0) {
@@ -252,20 +252,20 @@ void drawHomeScreen(uint24_t picsCount) {
 				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom Out");
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomOut error"); }
 
-				//ensure we can zoom out without maxAllowedWidthInPxl or maxAllowedHeightInPxl becoming 0
+				//ensure we can zoom out without desiredWidthInPxl or desiredHeightInPxl becoming 0
 				if (maxAllowedWidthInPxl / ZOOM_SCALE != 0 && maxAllowedHeightInPxl / ZOOM_SCALE != 0) {
 					//apply the zoom out to the width and height
 					maxAllowedWidthInPxl = maxAllowedWidthInPxl / ZOOM_SCALE;
 					maxAllowedHeightInPxl = maxAllowedHeightInPxl / ZOOM_SCALE;
 
-					//dbg_sprintf(dbgout, "\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
+					//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 					imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 					//this means we can't zoom out any more. Zoom back in.
 					if (imageErr != 0) {
 						//dbg_sprintf(dbgout, "\nCant zoom out trying zooming in...");
 						maxAllowedWidthInPxl = maxAllowedWidthInPxl * ZOOM_SCALE;
 						maxAllowedHeightInPxl = maxAllowedHeightInPxl * ZOOM_SCALE;
-						//dbg_sprintf(dbgout, "\n Zoomed in\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
+						//dbg_sprintf(dbgout, "\n Zoomed in\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 
 						imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 						//if zooming back in didn't fix it, abort.
@@ -283,8 +283,8 @@ void drawHomeScreen(uint24_t picsCount) {
 				}
 				else
 				{
-					//dbg_sprintf(dbgout, "\nmaxWidth or maxAllowedHeightInPxl too small. \n Zoom out aborted.");
-					//dbg_sprintf(dbgout, "\n maxAllowedWidthInPxl: %d\n maxAllowedHeightInPxl: %d ", maxAllowedWidthInPxl, maxAllowedHeightInPxl);
+					//dbg_sprintf(dbgout, "\nmaxWidth or desiredHeightInPxl too small. \n Zoom out aborted.");
+					//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 					//redraw the image. If it fails, I dunno why. It should be the exact same image as was previously displayed
 					imageErr = drawImage(startName, maxAllowedWidthInPxl, maxAllowedHeightInPxl, xOffset, yOffset, true);
 					//err handler
@@ -314,7 +314,9 @@ void drawHomeScreen(uint24_t picsCount) {
 				PrintCenteredX("Deleting Picture...", 120);
 
 				//delete the palette and all subimages
-				deleteImage(startName);
+				PicDatabase& picDB = PicDatabase::getInstance();
+				picDB.deleteImage(startName);
+
 				PrintCenteredX("Picture deleted.", 130);
 				PrintCenteredX("Press any key.", 140);
 				while (kb_AnyKey() != 0); //wait for key lift
@@ -425,68 +427,6 @@ void drawHomeScreen(uint24_t picsCount) {
 	ti_Close(database);
 }
 
-
-void deleteImage(uint24_t picName) {
-	//open the database to figure out what image we're about to delete
-	ti_var_t database{ ti_Open("HDPICDB","r") };
-	char imgWH[6], imgID[2], picAppvarToFind[9], palName[9];
-
-	//seeks past header (8bytes), imgName, and unselected images
-	ti_Seek(16 + (16 * picName), SEEK_CUR, database);
-	//reads the image letter ID (2 bytes)
-	ti_Read(imgID, 2, 1, database);
-	//reads the image width/height (6 bytes)
-	ti_Read(imgWH, 6, 1, database);
-	//closes database
-	ti_Close(database);
-
-	/*converts the char numbers from the header appvar into uint numbers
-	The header has 6 numbers so the below ? will go from 0-5
-	(uint24_t)imgWH[?]-'0')*100 covers the 100's place
-	(uint24_t)imgWH[?]-'0')*10 covers the 10's place
-	(uint24_t)imgWH[?]-'0' covers the 1's place
-	+1 accounts for 0 being the starting number
-	*/
-	uint24_t picWidthInSubimages{ ((static_cast<uint24_t>(imgWH[0]) - '0') * 100 + (static_cast<uint24_t>(imgWH[1]) - '0') * 10 + static_cast<uint24_t>(imgWH[2]) - '0') + 1 };
-	uint24_t picHeightInSubimages{ ((static_cast<uint24_t>(imgWH[3]) - '0') * 100 + (static_cast<uint24_t>(imgWH[4]) - '0') * 10 + static_cast<uint24_t>(imgWH[5]) - '0') + 1 };
-
-
-	//deletes palette
-	sprintf(palName, "HP%.2s0000", imgID);
-	int delSuccess{ ti_Delete(palName) };
-	if (delSuccess == 0) {
-		PrintCenteredX(palName, 120);
-		dbg_sprintf(dbgout, "\nERR: Issue deleting palette");
-	}
-	//sets up loading bar finish line
-	gfx_SetColor(PALETTE_WHITE);
-	gfx_VertLine_NoClip(260,153,7);
-
-	LoadingBar& loadingBar = LoadingBar::getInstance();
-	loadingBar.resetLoadingBar(picWidthInSubimages * picHeightInSubimages);
-
-	//delete every subimage
-	for (uint24_t xSubimage = (picWidthInSubimages - 1);xSubimage < MAX_UINT; xSubimage--) {
-		for (uint24_t ySubimage = (picHeightInSubimages - 1);ySubimage < MAX_UINT; ySubimage--) {
-
-			//combines the separate parts into one name to search for
-			sprintf(picAppvarToFind, "%.2s%03u%03u", imgID, xSubimage, ySubimage);
-
-			/*This opens the variable with the name that was just assembled.
-			* It then gets the pointer to that and stores it in a graphics variable
-			*/
-			delSuccess = ti_Delete(picAppvarToFind);
-			//checks if the subimage does not exist
-			if (delSuccess == 0) {
-				//subimage does not exist
-				dbg_sprintf(dbgout, "\nERR: Issue deleting subimage");
-				dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSubimage, ySubimage);
-			}
-			loadingBar.increment();
-		}
-	}
-}
-
 /* Draws the image stored in database at position selectedName.
 * Draws the image at location x,y starting at top left corner.
 * If x=-1 then make image horizontally centered in the screen.
@@ -494,11 +434,10 @@ void deleteImage(uint24_t picName) {
 * Image will automatically be resized to same aspect ratio so you just set the max width and height (4,3 will fit the screen normally)
 * If successful, returns 0. Otherwise returns 1
 */
-uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxAllowedHeightInPxl, int24_t xOffset, int24_t yOffset, bool refreshWholeScreen) {
+uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desiredHeightInPxl, int24_t xOffset, int24_t yOffset, bool refreshWholeScreen) {
 	dbg_sprintf(dbgout, "\n\n--IMAGE CHANGE--");
-	ti_var_t database{ ti_Open("HDPICDB","r") };
+	PicDatabase& picDB = PicDatabase::getInstance();
 
-	char imgWH[6], picID[2], picAppvarToFind[9], palName[9];
 	int24_t scaleNum{ 1 }, scaleDen{ 1 }, newSubimgWidthHeight{ 0 };
 	if (refreshWholeScreen)
 	{
@@ -510,18 +449,11 @@ uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 		gfx_SetColor(PALETTE_BLACK);
 		gfx_FillRectangle_NoClip(150, 0, 170, 240);
 	}
-	//seeks past header (8bytes), imgName, and unselected images
-	ti_Seek(16 + (16 * picName), SEEK_CUR, database);
-	//reads the image letter ID (2 bytes)
-	ti_Read(picID, 2, 1, database);
-	//reads the image width/height (6 bytes)
-	ti_Read(imgWH, 6, 1, database);
-	//closes database
-	ti_Close(database);
+
 
 	//Converts the width/height from a char array into two integers by converting char into decimal value
 	//then subtracting 48 to get the actual number.
-	dbg_sprintf(dbgout, "\nimgHeader: %s \n", imgWH);
+	dbg_sprintf(dbgout, "\nimg width in subimg: %d \nimg height in subimg: %d\n", picDB[picName].numOfSubImagesHorizontal, picDB[picName].numOfSubImagesVertical);
 
 	/*converts the char numbers from the header appvar into uint numbers
 	(uint24_t)imgWH[?]-'0')*100 covers the 100's place
@@ -529,23 +461,21 @@ uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	(uint24_t)imgWH[?]-'0' covers the 1's place
 	+1 accounts for 0 being the starting number
 	*/
-	int24_t picWidthInSubimages{ ((static_cast<int24_t>(imgWH[0]) - '0') * 100 + (static_cast<int24_t>(imgWH[1]) - '0') * 10 + static_cast<int24_t>(imgWH[2]) - '0') + 1 };
-	int24_t picHeightInSubimages{ ((static_cast<int24_t>(imgWH[3]) - '0') * 100 + (static_cast<int24_t>(imgWH[4]) - '0') * 10 + static_cast<int24_t>(imgWH[5]) - '0') + 1 };
-	uint24_t desiredWidthInSubimages{ (maxAllowedWidthInPxl / SUBIMG_WIDTH_AND_HEIGHT) }; 
-	uint24_t desiredHeightInSubimages{ (maxAllowedHeightInPxl / SUBIMG_WIDTH_AND_HEIGHT) };
+	uint24_t desiredWidthInSubimages{ (desiredWidthInPxl / SUBIMG_WIDTH_AND_HEIGHT) }; 
+	uint24_t desiredHeightInSubimages{ (desiredHeightInPxl / SUBIMG_WIDTH_AND_HEIGHT) };
 	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n", desiredWidthInSubimages, picWidthInSubimages, desiredHeightInSubimages, picHeightInSubimages);
 
 	//checks if it should scale an image horizontally or vertically.
-	if((picWidthInSubimages * 80)/320 >= (picHeightInSubimages * 80)/240)
+	if((picDB.getPicture(picName).numOfSubImagesHorizontal * 80)/320 >= (picDB.getPicture(picName).numOfSubImagesVertical * 80)/240)
 	{
 		scaleNum = desiredWidthInSubimages;
-		scaleDen = picWidthInSubimages;
-		//dbg_sprintf(dbgout, "\nWidth too wide. %d , %d", (picWidthInSubimages * 80)/320, (picHeightInSubimages * 80)/240);
+		scaleDen = picDB.getPicture(picName).numOfSubImagesHorizontal;
+		//dbg_sprintf(dbgout, "\nWidth too wide.");
 	}
 	else
 	{
 		scaleNum = desiredHeightInSubimages;
-		scaleDen = picHeightInSubimages;
+		scaleDen = picDB.getPicture(picName).numOfSubImagesVertical;
 		//dbg_sprintf(dbgout, "\nHeight too tall. ");
 	}
 	
@@ -599,7 +529,8 @@ uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	}
 
 	//sets correct palettes
-	sprintf(palName, "HP%.2s0000", picID);
+	char palName[9];
+	sprintf(palName, "HP%.2s0000", picDB.getPicture(picName).ID);
 	ti_var_t palSlot{ ti_Open(palName,"r") };
 	if (!palSlot) {
 		PrintCenteredX(palName, 110);
@@ -624,15 +555,15 @@ uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	*/
 	
 	//Displays all the images
-	dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", picWidthInSubimages, xOffset);
-	dbg_sprintf(dbgout, "\nhS: %d\nyO: %d", picHeightInSubimages, yOffset);
+	dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", picDB.getPicture(picName).numOfSubImagesHorizontal, xOffset);
+	dbg_sprintf(dbgout, "\nhS: %d\nyO: %d", picDB.getPicture(picName).numOfSubImagesVertical, yOffset);
 
 
 	//This calculates the number of subimages you can fit in the screen horizontally
 	//we know the horizontal resolution of the screen is 320px. 
 	//We can get the width of each subimage by doing newSubimgWidthHeight/scaleDen
 	//ceilDiv since we don't want missing subimages.
-	int24_t rightMostSubimg{ ceilDiv(static_cast<int24_t>( LCD_WIDTH) , ceilDiv(newSubimgWidthHeight , scaleDen)) };
+	int24_t rightMostSubimg{ ceilDiv(static_cast<int24_t>(LCD_WIDTH) , (newSubimgWidthHeight / scaleDen))+1 };
 	//leftmost and topmost always starts at 0
 	int24_t leftMostSubimg{ 0 };
 	int24_t topMostSubimg { 0 };
@@ -640,7 +571,7 @@ uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 	//we know the vertical resolution of the screen is 240px. 
 	//We can get the width of each subimages by doing newSubimgWidthHeight/scaleDen
 	//ceilDiv since we don't want missing subimages. (Overflow is compensated for, if necessary, below)
-	int24_t bottomMostSubimg{ ceilDiv(static_cast<int24_t> (LCD_HEIGHT) , (newSubimgWidthHeight / scaleDen)) };
+	int24_t bottomMostSubimg{ ceilDiv(static_cast<int24_t>(LCD_HEIGHT) , (newSubimgWidthHeight / scaleDen)) };
 
 
 	/* Apply pan offsets */
@@ -653,12 +584,12 @@ uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 
 
 	/* Ensure we don't try to display more subimages than exist */
-	if (rightMostSubimg > picWidthInSubimages)
-		rightMostSubimg = picWidthInSubimages;
+	if (rightMostSubimg > picDB.getPicture(picName).numOfSubImagesHorizontal)
+		rightMostSubimg = picDB.getPicture(picName).numOfSubImagesHorizontal;
 	if (leftMostSubimg < 0)
 		leftMostSubimg = 0;
-	if (bottomMostSubimg > picHeightInSubimages)
-		bottomMostSubimg = picHeightInSubimages;
+	if (bottomMostSubimg > picDB.getPicture(picName).numOfSubImagesVertical)
+		bottomMostSubimg = picDB.getPicture(picName).numOfSubImagesVertical;
 	if (topMostSubimg < 0)
 		topMostSubimg = 0;
 
@@ -704,8 +635,9 @@ uint8_t drawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 			}
 			
 			//combines the separate parts into one name to search for
-			sprintf(picAppvarToFind, "%.2s%03u%03u", picID, xSubimgID, ySubimgID);
-			//dbg_sprintf(dbgout, "\n%.2s%03u%03u", picID, xSubimgID, ySubimgID);
+			char picAppvarToFind[9];
+			sprintf(picAppvarToFind, "%.2s%03u%03u", picDB.getPicture(picName).ID, xSubimgID, ySubimgID);
+			//dbg_sprintf(dbgout, "\n%.2s%03u%03u", picDB.getPicture(picName).ID, xSubimgID, ySubimgID);
 			/*
 			* This opens the variable with the name that was just assembled.
 			* It then gets the pointer to that and stores it in a graphics variable
