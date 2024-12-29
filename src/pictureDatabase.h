@@ -90,6 +90,6 @@ public:
 			}
 		}
 
-		allImages.removeAt(4);
+		allImages.removeAt(picName);
 	}
 };

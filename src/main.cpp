@@ -47,7 +47,7 @@ int main(void)
 
 // Display UI to select an image
 void drawHomeScreen() {
-	uint24_t startName{ 0 },
+	uint24_t selectedPicIndex{ 0 },
 		desiredWidthInPxl{ MAX_THUMBNAIL_WIDTH }, desiredHeightInPxl{ MAX_THUMBNAIL_HEIGHT };
 	int24_t xOffset{ 0 }, yOffset{ 0 };
 	bool menuEnter, menuQuit,
@@ -62,11 +62,10 @@ void drawHomeScreen() {
 	
 	/* main menu */
 	gfx_FillScreen(PALETTE_BLACK);
-
-	drawMenu(startName);
+	drawMenu(selectedPicIndex);
 
 	//thumbnail
-	drawImage(startName, 180, 120, 0, 0, false);
+	drawImage(selectedPicIndex, 180, 120, 0, 0, false);
 
 	/* UI */
 	bool quitProgram{ false };
@@ -165,17 +164,17 @@ void drawHomeScreen() {
 				PicDatabase& picDB = PicDatabase::getInstance();
 
 				//convert subimg width to pixels width
-				desiredWidthInPxl = picDB.getPicture(startName).numOfSubImagesHorizontal * SUBIMG_WIDTH_AND_HEIGHT;
-				desiredHeightInPxl = picDB.getPicture(startName).numOfSubImagesVertical * SUBIMG_WIDTH_AND_HEIGHT;
+				desiredWidthInPxl = picDB.getPicture(selectedPicIndex).numOfSubImagesHorizontal * SUBIMG_WIDTH_AND_HEIGHT;
+				desiredHeightInPxl = picDB.getPicture(selectedPicIndex).numOfSubImagesVertical * SUBIMG_WIDTH_AND_HEIGHT;
 
-				imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
 					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
 					desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
 					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
 					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-					imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 					//if zooming back out didn't fix it, abort.
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
@@ -196,14 +195,14 @@ void drawHomeScreen() {
 				desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
 				desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
 				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-				imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
 					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
 					desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
 					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
 					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-					imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 					//if zooming back out didn't fix it, abort.
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
@@ -229,7 +228,7 @@ void drawHomeScreen() {
 					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
 
 					//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-					imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 					//this means we can't zoom out any more. Zoom back in.
 					if (imageErr != 0) {
 						//dbg_sprintf(dbgout, "\nCant zoom out trying zooming in...");
@@ -237,7 +236,7 @@ void drawHomeScreen() {
 						desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
 						//dbg_sprintf(dbgout, "\n Zoomed in\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 
-						imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+						imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 						//if zooming back in didn't fix it, abort.
 						if (imageErr != 0) {
 							dbg_sprintf(dbgout, "\nERR: Cant zoom out!!");
@@ -255,7 +254,7 @@ void drawHomeScreen() {
 					//dbg_sprintf(dbgout, "\nmaxWidth or desiredHeightInPxl too small. \n Zoom out aborted.");
 					//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 					//redraw the image. If it fails, I dunno why. It should be the exact same image as was previously displayed
-					imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
 					//err handler
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nERR: Issue displaying same image??");
@@ -283,7 +282,7 @@ void drawHomeScreen() {
 
 				//delete the palette and all subimages
 				PicDatabase& picDB = PicDatabase::getInstance();
-				picDB.deleteImage(startName);
+				picDB.deleteImage(selectedPicIndex);
 
 				PrintCenteredX("Picture deleted.", 130);
 				PrintCenteredX("Press any key.", 140);
@@ -291,7 +290,7 @@ void drawHomeScreen() {
 				while (!os_GetCSC());
 
 				//picture names will change. Delete what we currently have
-				startName = 0;
+				selectedPicIndex = 0;
 				
 				//set color for splash screen
 				gfx_SetTextFGColor(XLIBC_GREY);
@@ -310,10 +309,9 @@ void drawHomeScreen() {
 				}
 
 				//ensure text is readable
+				//re construct the GUI
 				gfx_SetTextFGColor(XLIBC_GREY);
 				gfx_SetTextBGColor(PALETTE_BLACK);
-
-				//re construct the GUI
 				gfx_FillScreen(PALETTE_BLACK);
 				resetPic=true;
 				redrawPic = true;
@@ -321,11 +319,11 @@ void drawHomeScreen() {
 
 			/* Graph or down. Increases the name to start on and redraws the text */
 			if (next || (menuDown &&  !fullScreenImage)) {
-				startName++;
+				selectedPicIndex++;
 				//make sure user can't scroll down too far
-				if (startName > picDB.size()-1)
+				if (selectedPicIndex > picDB.size()-1)
 				{
-					startName = picDB.size()-1;
+					selectedPicIndex = picDB.size()-1;
 				}
 
 				resetPic = fullScreenImage;
@@ -335,11 +333,11 @@ void drawHomeScreen() {
 
 			/* Y= or up. Decreases the name to start on and redraws the text */
 			if (prev || (menuUp && !fullScreenImage)) {
-				startName--;
+				selectedPicIndex--;
 				// Checks if selectedName underflowed. selectedName shouldn't be more than the max number of images possible.
-				if (startName > MAX_IMAGES)
+				if (selectedPicIndex > MAX_IMAGES)
 				{
-					startName = 0;
+					selectedPicIndex = 0;
 				}
 				resetPic = fullScreenImage;
 				redrawPic = true;
@@ -367,10 +365,10 @@ void drawHomeScreen() {
 			if (redrawPic) {
 				if(!fullScreenImage)
 				{
-					drawMenu(startName);
+					drawMenu(selectedPicIndex);
 				}
 				while(kb_AnyKey()!=0); //wait for key lift
-				imageErr = drawImage(startName, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, fullScreenImage);
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, fullScreenImage);
 				if (imageErr != 0) {
 					PrintCenteredX("Error: ", 150);
 					gfx_PrintUInt(errorID,3);
