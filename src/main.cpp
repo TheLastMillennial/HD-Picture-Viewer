@@ -287,18 +287,12 @@ void drawHomeScreen() {
 				PrintCenteredX("Picture deleted.", 130);
 				PrintCenteredX("Press any key.", 140);
 				while (kb_AnyKey() != 0); //wait for key lift
-				while (!os_GetCSC());
-
-				//picture names will change. Delete what we currently have
-				selectedPicIndex = 0;
+				while (!os_GetCSC());		
 				
 				//set color for splash screen
 				gfx_SetTextFGColor(XLIBC_GREY);
 				gfx_SetTextBGColor(PALETTE_BLACK);
 				
-				//rebuild the database to account for the deleted image. 
-				//picsCount = findPictures();
-
 				//check if all images were deleted. If so, just quit.
 				if (picDB.size() == 0) {
 					drawNoImagesFound();
@@ -306,6 +300,12 @@ void drawHomeScreen() {
 					while (!os_GetCSC());
 					gfx_End();
 					return;
+				}
+
+				//select next picture
+				if (selectedPicIndex > 0)
+				{
+					selectedPicIndex--;
 				}
 
 				//ensure text is readable
@@ -323,7 +323,7 @@ void drawHomeScreen() {
 				//make sure user can't scroll down too far
 				if (selectedPicIndex > picDB.size()-1)
 				{
-					selectedPicIndex = picDB.size()-1;
+					selectedPicIndex = 0;
 				}
 
 				resetPic = fullScreenImage;
@@ -337,7 +337,7 @@ void drawHomeScreen() {
 				// Checks if selectedName underflowed. selectedName shouldn't be more than the max number of images possible.
 				if (selectedPicIndex > MAX_IMAGES)
 				{
-					selectedPicIndex = 0;
+					selectedPicIndex = picDB.size() - 1;
 				}
 				resetPic = fullScreenImage;
 				redrawPic = true;
