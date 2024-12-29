@@ -1,6 +1,7 @@
-void SplashScreen();
-void DisplayWatermark();
-void NoImagesFound();
+void drawSplashScreen();
+void drawWatermark();
+void drawHelp();
+void drawNoImagesFound();
 void PrintCentered(const char* str);
 void PrintCenteredX(const char* str, uint24_t y);
 void PrintCenteredY(const char* str, uint8_t x);

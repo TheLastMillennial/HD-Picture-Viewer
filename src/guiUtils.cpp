@@ -5,7 +5,7 @@
 
 
 // Simple text that displays program name and how to open help.
-void DisplayWatermark()
+void drawWatermark()
 {
 	gfx_SetTextScale(1, 1);
 	gfx_SetTextFGColor(PALETTE_WHITE);
@@ -44,7 +44,7 @@ void PrintHelpText(const char* button, const char* help, uint24_t yPos) {
 }
 
 //creates a simple splash screen when program starts
-void SplashScreen() {
+void drawSplashScreen() {
 	//gfx_SetColor(PALETTE_BLACK);
 	//gfx_FillRectangle_NoClip(60, 80, LCD_WIDTH - 120, LCD_HEIGHT - 160);
 	gfx_FillScreen(PALETTE_BLACK);
@@ -57,8 +57,45 @@ void SplashScreen() {
 	PrintCenteredX("HD Picture Viewer", 110);
 }
 
+// Display full help screen
+void drawHelp()
+{
+	gfx_FillScreen(PALETTE_BLACK);
+	gfx_SetTextBGColor(PALETTE_BLACK);
+	gfx_SetTextFGColor(PALETTE_WHITE);
+	gfx_SetColor(PALETTE_WHITE);
+	PrintCenteredX("HD Picture Viewer Help", 6);
+	gfx_PrintStringXY("Keymap in Menu:", 1, 20);
+
+	PrintHelpText("Clear", "Quit program.", 30);
+	PrintHelpText("Enter", "Open picture fullscreen.", 40);
+	PrintHelpText("Up   ", "Select previous.", 50);
+	PrintHelpText("Down ", "Select next.", 60);
+
+	gfx_PrintStringXY("Keymap in Fullscreen:", 1, 80);
+	PrintHelpText("Clear ", " Quit to menu.", 90);
+	PrintHelpText("Y= ", " Show previous.", 100);
+	PrintHelpText("Graph ", " Show next.", 110);
+	PrintHelpText("Arrow Keys", " Pan picture.", 120);
+	PrintHelpText("Del ", " Delete picture permanently.", 130);
+	PrintHelpText("+ ", " Zoom in.", 140);
+	PrintHelpText("- ", " Zoom out.", 150);
+	PrintHelpText("Zoom ", " Maximum zoom.", 160);
+	PrintHelpText("Window", " Default zoom.", 170);
+
+	PrintCenteredX("Press any key to return.", 190);
+
+	gfx_PrintStringXY("Author:", 1, 220);
+	gfx_PrintStringXY("TheLastMillennial", 64, 220);
+	gfx_PrintStringXY("Tutorial:", 1, 210);
+	gfx_PrintStringXY(TUTORIAL_LINK, 64, 210);
+	gfx_PrintStringXY("Version:", 1, 230);
+	gfx_PrintStringXY(VERSION, 64, 230);
+	gfx_PrintStringXY(YEAR, 288, 230);
+}
+
 // Draw screen that informs user that no picture were detected.
-void NoImagesFound() {
+void drawNoImagesFound() {
 	gfx_SetTextBGColor(PALETTE_BLACK);
 	gfx_SetTextFGColor(XLIBC_RED);
 	PrintCenteredX("No Pictures Detected!", 15);
