@@ -13,13 +13,14 @@
 #define TUTORIAL_LINK "https://youtu.be/uixL9t5ZTJs"
 
 
-/* MAX_IMAGES is obtained from the two characters used for appvar identification. 
-* First character can be alphabetic (26 options). Second character can be alphanumeric (36 options). 
-* 26*36=936 */
+/* MAX_IMAGES is the maximum number of images that can be on the calculator.
+* It's obtained from the two characters used for appvar identification. 
+* First character can be alphabetic (26 options). 
+* Second character can be alphanumeric (36 options). 
+* 26 * 36 = 936 */
 #define MAX_IMAGES 936 
 //8 for image name, 1 for null terminator
 #define BYTES_PER_IMAGE_NAME 9 
-#define TASKS_TO_FINISH 2
 #define X_MARGIN 8
 #define Y_MARGIN 38
 #define Y_SPACING 25

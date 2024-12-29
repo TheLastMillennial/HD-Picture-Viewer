@@ -2,12 +2,29 @@
 
 class LoadingBar {
 private:
+
+    uint24_t tasksFinished, tasksToFinish;
+
     // Private constructor to prevent instantiation from outside the class
-    LoadingBar() {}
+    LoadingBar() {
+        tasksFinished = 0;
+        tasksToFinish = 0;
+    }
 
     // Private copy constructor and assignment operator to prevent copying
     LoadingBar(const LoadingBar&) = delete;
     LoadingBar& operator=(const LoadingBar&) = delete;
+
+
+    //makes a loading bar and fills it in depending on progress made / tasks left
+    void draw() const {
+        constexpr double maxPixelWidth{ 200.0 };
+        const double progress = (static_cast<double>(tasksFinished) / static_cast<double>(tasksToFinish)) * maxPixelWidth;
+
+        gfx_SetColor(PALETTE_WHITE);
+        gfx_FillRectangle_NoClip(60, 153, progress, 7);
+
+    }
 
 public:
     // Static method to get the instance of the Singleton
@@ -16,20 +33,24 @@ public:
         return instance;
     }
 
-    //makes a loading bar and fills it in depending on progress made / tasks left
-    void SetLoadingBarProgress(uint24_t progress, const uint24_t tasks) {
-        progress = ((double)progress / (double)tasks) * 200.0;
-        //ensures loading bar doesn't go past max point
-        if (progress > 200)
-            progress = 200;
+    // Resets the loading bar back to 0%.
+    // Draws the loading bar
+    void resetLoadingBar(uint24_t newTasksToFinish = 0)
+    {
+        tasksFinished = 0;
+        tasksToFinish = newTasksToFinish;
+        if (newTasksToFinish != 0)
+            draw();
+    }
 
-        gfx_SetColor(PALETTE_WHITE);
-        gfx_FillRectangle_NoClip(60, 153, progress, 7);
-
+    // Increments progress by 1 by default
+    // Wont go past 100% completion
+    // Draws the loading bar
+    void increment(uint24_t amount = 1)
+    {
+        tasksFinished += amount;
+        if (amount > tasksToFinish)
+            amount = tasksFinished;
+        draw();
     }
 };
-
-
-    // Accessing the Singleton instance
-    //LoadingBar& s1 = LoadingBar::getInstance();
-    //s1.doSomething();

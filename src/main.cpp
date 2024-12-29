@@ -27,49 +27,45 @@
 /* Main function, called first */
 int main(void)
 {
-	uint8_t ready{ 0 }, tasksFinished{ 0 };
-	uint24_t picsDetected{ 0 };
-	
 	gfx_Begin();
 	gfx_SetTextTransparentColor(254);
 	SplashScreen();
 
 	LoadingBar& loadingBar = LoadingBar::getInstance();
 
-	loadingBar.SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
+	loadingBar.resetLoadingBar(2);
+
 	//checks if the database exists and is ready 0 failure; 1 created; 2 exists
-	ready = DatabaseReady();
-
-	if (ready == 0)
-		goto err;
-
-
-	//returns how many images were found. 0 means no images found so quit.
-	picsDetected = RebuildDB(tasksFinished);
-
-	if (picsDetected > 0)
+	if (DatabaseReady() == 0)
 	{
-		loadingBar.SetLoadingBarProgress(++tasksFinished, TASKS_TO_FINISH);
+		// Display error then quit.
+		dbg_sprintf(dbgout, "\nDatabase not ready");
+		PrintCentered("Database failure.");
+		while (!os_GetCSC());
+		gfx_End();
+		return 0;
+	}
+
+	loadingBar.increment();
+
+	// RebuildDB() returns how many images were found.
+	uint24_t picsDetected {RebuildDB()};
+	if (picsDetected == 0)
+	{
+		NoImagesFound();
+		while (!os_GetCSC());
+		gfx_End();
+		return 0;
+	}
+	else
+	{
+		loadingBar.increment();
 		//display the list of images
 		DisplayHomeScreen(picsDetected);
 		//quit
 		gfx_End();
 		return 0;
 	}
-
-
-	//something went wrong. Close all slots and quit.
-err:
-	dbg_sprintf(dbgout, "\nNot Ready");
-
-	/* Waits for a keypress */
-	while (!os_GetCSC());
-	//ti_CloseAll();
-	gfx_End();
-
-	/* Return 0 for success */
-	return 0;
-
 }
 
 /* Functions */
@@ -374,12 +370,12 @@ void DisplayHomeScreen(uint24_t picsCount) {
 				
 				//rebuild the database to account for the deleted image. 
 				ti_Close(database);
-				picsCount = RebuildDB(0);
+				picsCount = RebuildDB();
 				database = ti_Open("HDPICDB", "r");
 
 				//check if all images were deleted. If so, just quit.
 				if (picsCount == 0) {
-					//we pause because RebuildDB will show a warning screen we want the user to see
+					NoImagesFound();
 					while (!os_GetCSC());
 					gfx_End();
 					return;
@@ -514,9 +510,9 @@ void DeleteImage(uint24_t picName) {
 	//sets up loading bar finish line
 	gfx_SetColor(PALETTE_WHITE);
 	gfx_VertLine_NoClip(260,153,7);
-	uint24_t deleteCount{0};
 
 	LoadingBar& loadingBar = LoadingBar::getInstance();
+	loadingBar.resetLoadingBar(picWidthInSubimages * picHeightInSubimages);
 
 	//delete every subimage
 	for (uint24_t xSubimage = (picWidthInSubimages - 1);xSubimage < MAX_UINT; xSubimage--) {
@@ -535,7 +531,7 @@ void DeleteImage(uint24_t picName) {
 				dbg_sprintf(dbgout, "\nERR: Issue deleting subimage");
 				dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgID, xSubimage, ySubimage);
 			}
-			loadingBar.SetLoadingBarProgress(++deleteCount,picWidthInSubimages*picHeightInSubimages);
+			loadingBar.increment();
 		}
 	}
 }
@@ -815,17 +811,18 @@ uint8_t DrawImage(uint24_t picName, uint24_t maxAllowedWidthInPxl, uint24_t maxA
 
 
 /* Rebuilds the database of images on the calculator */
-uint24_t RebuildDB(uint8_t progress) {
+uint24_t RebuildDB() {
 	char* var_name, * imgInfo[16];// nameBuffer[10];
 	void* search_pos = NULL;
 	uint24_t imagesFound{ 0 };
 	ti_var_t database = ti_Open("HDPICDB", "w"), palette;
 	ti_Write("HDDATV10", 8, 1, database);//Rewrites the header because w overwrites everything
 
-	//resets splash screen for new loading loadingBar.SetLoadingBarProgress
+	//resets splash screen for new loading bar
 	SplashScreen();
 
 	LoadingBar& loadingBar = LoadingBar::getInstance();
+	loadingBar.resetLoadingBar(MAX_IMAGES);
 
 	/*
 	* Searches for palettes. This is a lot easier than searching for every single
@@ -834,8 +831,10 @@ uint24_t RebuildDB(uint8_t progress) {
 	* the two letter ID for each appvar. This makes it easy to find every subimage via a loop.
 	*/
 	while ((var_name = ti_DetectVar(&search_pos, "HDPALV10", OS_TYPE_APPVAR)) != NULL) {
+
 		//sets progress of how many images were found
-		loadingBar.SetLoadingBarProgress(++imagesFound, MAX_IMAGES);
+		imagesFound++;
+		loadingBar.increment();
 		//finds the name, letter ID, and size of entire image this palette belongs to.
 		palette = ti_Open(var_name, "r");
 		//seeks past useless info
@@ -848,6 +847,7 @@ uint24_t RebuildDB(uint8_t progress) {
 		//closes palette for next iteration
 		ti_Close(palette);
 	}
+
 	//closes the database
 	ti_Close(database);
 	gfx_End();
@@ -856,10 +856,7 @@ uint24_t RebuildDB(uint8_t progress) {
 
 	SplashScreen();
 	dbg_sprintf(dbgout,"Pics Detected: %d",imagesFound);
-	if (imagesFound == 0) {
-		NoImagesFound();
-	}
-	loadingBar.SetLoadingBarProgress(++progress, TASKS_TO_FINISH);
+	loadingBar.increment();
 	return imagesFound;
 }
 
@@ -926,7 +923,7 @@ uint8_t DatabaseReady() {
 		return 1;
 	}
 	else if (ready == 2) {
-		dbg_sprintf(dbgout, "\nDatabase Aready Exists");
+		dbg_sprintf(dbgout, "\nDatabase Already Exists");
 		return 2;
 	}
 	else {
