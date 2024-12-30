@@ -12,6 +12,7 @@
 #include <debug.h>
 #include <compression.h>
 #include <cstring>
+#include <cmath>
 
 #include "main.h"
 #include "loadingBarHandler.h"
@@ -49,7 +50,6 @@ int main(void)
 void drawHomeScreen() {
 	uint24_t selectedPicIndex{ 0 },
 		desiredWidthInPxl{ MAX_THUMBNAIL_WIDTH }, desiredHeightInPxl{ MAX_THUMBNAIL_HEIGHT };
-	int24_t xOffset{ 0 }, yOffset{ 0 };
 	bool menuEnter, menuQuit,
 		menuUp, menuDown, menuHelp,
 		prev, next,
@@ -65,7 +65,7 @@ void drawHomeScreen() {
 	drawMenu(selectedPicIndex);
 
 	//thumbnail
-	drawImage(selectedPicIndex, 180, 120, 0, 0, false);
+	drawImage(selectedPicIndex, 180, 120, false);
 
 	/* UI */
 	bool quitProgram{ false };
@@ -136,24 +136,37 @@ void drawHomeScreen() {
 			//left, right, up, down. Image panning.
 			if (fullScreenImage){
 				if (panLeft) {
-					xOffset++;
-					redrawPic=true;
 					errorID = 3;
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 1,0);
+					while (kb_AnyKey() != 0); //wait for key lift
+
 				}
 				if (panRight) {
-					xOffset--;
-					redrawPic=true;	
 					errorID = 4;
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);
+					while (kb_AnyKey() != 0); //wait for key lift								  
+																								  
+				}																				  
+				if (panUp) {																	  
+					errorID = 5;																  
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);
+					while (kb_AnyKey() != 0); //wait for key lift								  
+																								  
+				}																				  
+				if (panDown) {																	  
+					errorID = 6;																  
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
+					while (kb_AnyKey() != 0); //wait for key lift
+
 				}
-				if (panUp) {
-					yOffset--;
-					redrawPic=true;	
-					errorID = 5;
-				}
-				if (panDown) {
-					yOffset++;
-					redrawPic=true;	
-					errorID = 6;
+
+				if (imageErr != 0) {
+					PrintCenteredX("Error: ", 150);
+					gfx_PrintUInt(errorID, 3);
+					PrintCenteredX("Press any key to quit.", 160);
+					while (!os_GetCSC());
+					gfx_End();
+					return;
 				}
 			}
 
@@ -164,17 +177,17 @@ void drawHomeScreen() {
 				PicDatabase& picDB = PicDatabase::getInstance();
 
 				//convert subimg width to pixels width
-				desiredWidthInPxl = picDB.getPicture(selectedPicIndex).numOfSubImagesHorizontal * SUBIMG_WIDTH_AND_HEIGHT;
-				desiredHeightInPxl = picDB.getPicture(selectedPicIndex).numOfSubImagesVertical * SUBIMG_WIDTH_AND_HEIGHT;
+				desiredWidthInPxl = picDB.getPicture(selectedPicIndex).horizSubImages * SUBIMG_WIDTH_AND_HEIGHT;
+				desiredHeightInPxl = picDB.getPicture(selectedPicIndex).vertSubImages * SUBIMG_WIDTH_AND_HEIGHT;
 
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
 					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
 					desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
 					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
 					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
 					//if zooming back out didn't fix it, abort.
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
@@ -195,14 +208,14 @@ void drawHomeScreen() {
 				desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
 				desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
 				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
 					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
 					desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
 					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
 					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl,  true);
 					//if zooming back out didn't fix it, abort.
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
@@ -228,7 +241,7 @@ void drawHomeScreen() {
 					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
 
 					//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl,  true);
 					//this means we can't zoom out any more. Zoom back in.
 					if (imageErr != 0) {
 						//dbg_sprintf(dbgout, "\nCant zoom out trying zooming in...");
@@ -236,7 +249,7 @@ void drawHomeScreen() {
 						desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
 						//dbg_sprintf(dbgout, "\n Zoomed in\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 
-						imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+						imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl,  true);
 						//if zooming back in didn't fix it, abort.
 						if (imageErr != 0) {
 							dbg_sprintf(dbgout, "\nERR: Cant zoom out!!");
@@ -254,7 +267,7 @@ void drawHomeScreen() {
 					//dbg_sprintf(dbgout, "\nmaxWidth or desiredHeightInPxl too small. \n Zoom out aborted.");
 					//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 					//redraw the image. If it fails, I dunno why. It should be the exact same image as was previously displayed
-					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, true);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
 					//err handler
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nERR: Issue displaying same image??");
@@ -348,13 +361,15 @@ void drawHomeScreen() {
 			if (resetPic) {
 				if (fullScreenImage)
 				{
-					xOffset = 0;
-					yOffset = 0;
+
+					picDB.getPicture(selectedPicIndex).xOffset = 0;
+					picDB.getPicture(selectedPicIndex).yOffset = 0;
+
 					desiredWidthInPxl = LCD_WIDTH;
 					desiredHeightInPxl = LCD_HEIGHT;
 				}else{
-					xOffset = 0;
-					yOffset = 0;
+					picDB.getPicture(selectedPicIndex).xOffset = 0;
+					picDB.getPicture(selectedPicIndex).yOffset = 0;
 					desiredWidthInPxl = MAX_THUMBNAIL_WIDTH;
 					desiredHeightInPxl = MAX_THUMBNAIL_HEIGHT;
 				}
@@ -368,7 +383,7 @@ void drawHomeScreen() {
 					drawMenu(selectedPicIndex);
 				}
 				while(kb_AnyKey()!=0); //wait for key lift
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, xOffset, yOffset, fullScreenImage);
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, fullScreenImage);
 				if (imageErr != 0) {
 					PrintCenteredX("Error: ", 150);
 					gfx_PrintUInt(errorID,3);
@@ -392,16 +407,13 @@ void drawHomeScreen() {
 * Image will automatically be resized to same aspect ratio so you just set the max width and height (4,3 will fit the screen normally)
 * If successful, returns 0. Otherwise returns 1
 */
-uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desiredHeightInPxl, int24_t xOffset, int24_t yOffset, bool refreshWholeScreen) {
+uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desiredHeightInPxl, bool fullScreenPic, int8_t shiftX, int8_t shiftY) {
 	dbg_sprintf(dbgout, "\n\n--IMAGE CHANGE--");
 	PicDatabase& picDB = PicDatabase::getInstance();
+	imageData const& curPicture = picDB.getPicture(picName);
 
 	int24_t scaleNum{ 1 }, scaleDen{ 1 }, newSubimgWidthHeight{ 0 };
-	if (refreshWholeScreen)
-	{
-		gfx_FillScreen(PALETTE_BLACK);
-	}
-	else
+	if (!fullScreenPic)
 	{
 		//used for thumbnails
 		gfx_SetColor(PALETTE_BLACK);
@@ -411,7 +423,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//Converts the width/height from a char array into two integers by converting char into decimal value
 	//then subtracting 48 to get the actual number.
-	dbg_sprintf(dbgout, "\nimg width in subimg: %d \nimg height in subimg: %d\n", picDB.getPicture(picName).numOfSubImagesHorizontal, picDB.getPicture(picName).numOfSubImagesVertical);
+	dbg_sprintf(dbgout, "\nimg width in subimg: %d \nimg height in subimg: %d\n", curPicture.horizSubImages, curPicture.vertSubImages);
 
 	/*converts the char numbers from the header appvar into uint numbers
 	(uint24_t)imgWH[?]-'0')*100 covers the 100's place
@@ -421,19 +433,20 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	*/
 	uint24_t desiredWidthInSubimages{ (desiredWidthInPxl / SUBIMG_WIDTH_AND_HEIGHT) }; 
 	uint24_t desiredHeightInSubimages{ (desiredHeightInPxl / SUBIMG_WIDTH_AND_HEIGHT) };
-	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n", desiredWidthInSubimages, picDB.getPicture(picName).numOfSubImagesHorizontal, desiredHeightInSubimages, picDB.getPicture(picName).numOfSubImagesVertical);
+	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n", 
+		desiredWidthInSubimages, curPicture.horizSubImages, desiredHeightInSubimages, curPicture.vertSubImages);
 
 	//checks if it should scale an image horizontally or vertically.
-	if((picDB.getPicture(picName).numOfSubImagesHorizontal * 80)/320 >= (picDB.getPicture(picName).numOfSubImagesVertical * 80)/240)
+	if((curPicture.horizSubImages * 80)/320 >= (curPicture.vertSubImages * 80)/240)
 	{
 		scaleNum = desiredWidthInSubimages;
-		scaleDen = picDB.getPicture(picName).numOfSubImagesHorizontal;
+		scaleDen = curPicture.horizSubImages;
 		//dbg_sprintf(dbgout, "\nWidth too wide.");
 	}
 	else
 	{
 		scaleNum = desiredHeightInSubimages;
-		scaleDen = picDB.getPicture(picName).numOfSubImagesVertical;
+		scaleDen = curPicture.vertSubImages;
 		//dbg_sprintf(dbgout, "\nHeight too tall. ");
 	}
 	
@@ -459,7 +472,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	[MateoC] huh I didn't know about roundDiv
 	*/
 
-	dbg_sprintf(dbgout, "\n newWH: %d \n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d", newSubimgWidthHeight, scaleNum, scaleDen, xOffset, yOffset);
+	dbg_sprintf(dbgout, "\n newWH: %d \n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d", newSubimgWidthHeight, scaleNum, scaleDen, curPicture.xOffset, curPicture.yOffset);
 
 	//pointer to memory where each unsized subimage will be stored
 	gfx_sprite_t* srcImg{ gfx_MallocSprite(SUBIMG_WIDTH_AND_HEIGHT, SUBIMG_WIDTH_AND_HEIGHT) };
@@ -488,7 +501,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//sets correct palettes
 	char palName[9];
-	sprintf(palName, "HP%.2s0000", picDB.getPicture(picName).ID);
+	sprintf(palName, "HP%.2s0000", curPicture.ID);
 	ti_var_t palSlot{ ti_Open(palName,"r") };
 	if (!palSlot) {
 		PrintCenteredX(palName, 110);
@@ -504,17 +517,71 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	gfx_SetPalette(ti_GetDataPtr(palSlot), 512, 0);
 	ti_Close(palSlot);
 
-	dbg_sprintf(dbgout, "\n-------------------------");
 
-	gfx_SetTextFGColor(PALETTE_WHITE);
-	/*
-	if (refreshWholeScreen)
-		PrintCenteredX("Rendering...",110);
-	*/
+	/* Apply Offset */
+
+	// Which direction to draw the subimages. 
+	// By default it's the percieved most performant option
+	// If the image gets panned, it prioritizes filling in the missing subimages first.
+	bool bReverseDirection{ false }; //false means the image initially draws slow then speeds up.
+	bool bDrawVertical{ true }; //true: draws columns. False: draws rows.
+
+	picDB.getPicture(picName).xOffset += shiftX;
+	picDB.getPicture(picName).yOffset += shiftY;
+
+	uint24_t const shift = newSubimgDim;
+
+	dbg_sprintf(dbgout, "\nshift: %d shiftX: %d shiftY: %d", shift, shiftX, shiftY);
+
+	//gfx_CopyRectangle(gfx_location_t src, gfx_location_t dst, uint24_t src_x, uint8_t src_y, uint24_t dst_x, uint8_t dst_y, uint24_t width, uint8_t height)
+	//Check if we need to pan the image. If so, shift the contents of the screen over so we don't need to redraw as many subimages.
+	if (shiftX != 0 || shiftY !=0)
+	{
+		gfx_SetDrawBuffer();
+		gfx_FillScreen(0);
+		// Shift screen to right
+		if (shiftX > 0)
+		{
+			bReverseDirection = true;
+			bDrawVertical = true;
+			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, shift, 0, (320 - shift), 240);
+		}
+		// Shift screen to left
+		if (shiftX < 0)
+		{
+			bReverseDirection = false;
+			bDrawVertical = true;
+			gfx_CopyRectangle(gfx_screen, gfx_buffer, shift, 0, 0, 0, (320 - shift), 240);
+		}
+		// Shift screen up
+		if (shiftY > 0)
+		{
+			bReverseDirection = false;
+			bDrawVertical = false;
+			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, shift, 0, 0, 320, (240 - shift));
+		}
+		// Shift screen down
+		if (shiftY < 0)
+		{
+			bReverseDirection = true;
+			bDrawVertical = false;
+			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, 0, shift, 320, (240 - shift));
+		}
+
+		gfx_BlitBuffer();
+		gfx_SetDrawScreen();
+	}
+	else if (fullScreenPic)
+	{
+		//If there's no panning, then we need to re-draw the entire image. 
+		gfx_FillScreen(PALETTE_BLACK);
+	}
+
 	
 	//Displays all the images
-	dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", picDB.getPicture(picName).numOfSubImagesHorizontal, xOffset);
-	dbg_sprintf(dbgout, "\nhS: %d\nyO: %d", picDB.getPicture(picName).numOfSubImagesVertical, yOffset);
+	dbg_sprintf(dbgout, "\n-------------------------");
+	dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", curPicture.horizSubImages, curPicture.xOffset);
+	dbg_sprintf(dbgout, "\nhS: %d\nyO: %d", curPicture.vertSubImages, curPicture.yOffset);
 
 
 	//This calculates the number of subimages you can fit in the screen horizontally
@@ -534,20 +601,20 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	/* Apply pan offsets */
 	//if we're panning horizontally, shift the rightmost and leftmost subimages (xOffset is negative in this case)
-	rightMostSubimg -= xOffset;
-	leftMostSubimg -= xOffset;
+	rightMostSubimg -= curPicture.xOffset;
+	leftMostSubimg -= curPicture.xOffset;
 	//if we're panning vertically, shift the topmost and bottommost subimages (yOffset is negative in this case)
-	bottomMostSubimg += yOffset;
-	topMostSubimg += yOffset;
+	bottomMostSubimg += curPicture.yOffset;
+	topMostSubimg += curPicture.yOffset;
 
 
 	/* Ensure we don't try to display more subimages than exist */
-	if (rightMostSubimg > picDB.getPicture(picName).numOfSubImagesHorizontal)
-		rightMostSubimg = picDB.getPicture(picName).numOfSubImagesHorizontal;
+	if (rightMostSubimg > curPicture.horizSubImages)
+		rightMostSubimg = curPicture.horizSubImages;
 	if (leftMostSubimg < 0)
 		leftMostSubimg = 0;
-	if (bottomMostSubimg > picDB.getPicture(picName).numOfSubImagesVertical)
-		bottomMostSubimg = picDB.getPicture(picName).numOfSubImagesVertical;
+	if (bottomMostSubimg > curPicture.vertSubImages)
+		bottomMostSubimg = curPicture.vertSubImages;
 	if (topMostSubimg < 0)
 		topMostSubimg = 0;
 
@@ -559,89 +626,93 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//the -1 is to account for both the
 	//the +1 is to prevent underflow which would cause an infinite loop
 	//this for loop outputs pic right to left, top to bottom
-	const int24_t xFirstID{ (leftMostSubimg) - 1 }, xLastID{(rightMostSubimg) - 1 };
-	const int24_t yFirstID{ (topMostSubimg) - 1 }, yLastID{ (bottomMostSubimg) - 1 };
+	const int24_t xFirstID{ (leftMostSubimg) }, xLastID{(rightMostSubimg) - 1 };
+	const int24_t yFirstID{ (topMostSubimg) }, yLastID{ (bottomMostSubimg) - 1 };
 
-	const uint8_t thumbnailOffsetX = refreshWholeScreen ? 0 : 150;
-	const uint24_t thumbnailOffsetY = refreshWholeScreen ? 0 : ((240-(newSubimgDim*bottomMostSubimg))/2);
+	const uint24_t thumbnailOffsetX = fullScreenPic ? 0 : 150;
+	const uint24_t thumbnailOffsetY = fullScreenPic ? 0 : ((240-(newSubimgDim*bottomMostSubimg))/2);
 
 	dbg_sprintf(dbgout, "\nxFirstID %d \nxLastID %d", xFirstID, xLastID);
 
-
+	int24_t xSubimgID{ 0 };
+	int24_t ySubimgID{ 0 };
 	// Loop through all subimages to create full image
-	for (int24_t xSubimgID{ xLastID };xSubimgID > xFirstID;--xSubimgID) {
-		const uint24_t subimgPxlPosX{ static_cast<uint24_t>(thumbnailOffsetX) + static_cast<uint24_t>((xSubimgID + xOffset) * (newSubimgWidthHeight / scaleDen)) };
+	while (iterate(xSubimgID,xFirstID, xLastID, ySubimgID, yFirstID, yLastID, bDrawVertical, bReverseDirection)){
+		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (newSubimgWidthHeight / scaleDen)) };
+		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (newSubimgWidthHeight / scaleDen)) };
+		
 
-		//this for loop outputs pic bottom to top
-		for (int24_t ySubimgID{ yLastID };ySubimgID > yFirstID;--ySubimgID) {
-			const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - yOffset) * (newSubimgWidthHeight / scaleDen)) };
-
-			//a key interrupted output. Quit immediately
-
-			if(os_GetCSC())
+		//a key interrupted output. Quit immediately
+		while (kb_AnyKey() != 0); //wait for key lift
+		if(os_GetCSC())
+		{
+				
+			if(fullScreenPic)
 			{
-					
-				if(refreshWholeScreen)
-				{
-					PrintCenteredX("Rendering Halted.",130);
-					PrintCenteredX("Press [enter] to restart.",140);
-				}
-				//free up source and output memory
-				free(srcImg);
-				free(outputImg);
-				return 0;
+				PrintCenteredX("Render Interrupted.",10);
+				PrintCenteredX("Press [enter] to restart.",215);
+				dbg_sprintf(dbgout, "\nRender aborted!");
+			}
+			//free up source and output memory
+			free(srcImg);
+			free(outputImg);
+			return 0;
+		}
+		
+		//combines the separate parts into one name to search for
+		char picAppvarToFind[9];
+		sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
+		dbg_sprintf(dbgout, "\n%.2s%03u%03u @ %d x %d", curPicture.ID, xSubimgID, ySubimgID, subimgPxlPosX, subimgPxlPosY);
+		/*
+		* This opens the variable with the name that was just assembled.
+		* It then gets the pointer to that and stores it in a graphics variable
+		*/
+		const ti_var_t subimgSlot{ ti_Open(picAppvarToFind,"r") };
+		//checks if the subimage exists
+		if (subimgSlot) {
+			//subimage exists, load it
+			//seeks past header
+			ti_Seek(16, SEEK_CUR, subimgSlot);
+			//store the original image into srcImg
+			//srcImg = (gfx_sprite_t*)ti_GetDataPtr(subimgSlot);
+
+			zx0_Decompress(srcImg, ti_GetDataPtr(subimgSlot));
+			//resizes it to outputImg size
+			gfx_ScaleSprite(srcImg, outputImg);
+
+			//displays subimage
+			//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
+			if (xSubimgID >= xLastID -1 || ySubimgID >= yLastID -1 || xSubimgID <= xFirstID +1 || ySubimgID <= yFirstID +1) 
+			{
+				//dbg_sprintf(dbgout, "\n\nCLIPPED");
+				gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
+			}
+			else 
+			{
+				//dbg_sprintf(dbgout, "\nnoclip");
+				gfx_Sprite_NoClip(outputImg, subimgPxlPosX, subimgPxlPosY);
 			}
 			
-			//combines the separate parts into one name to search for
-			char picAppvarToFind[9];
-			sprintf(picAppvarToFind, "%.2s%03u%03u", picDB.getPicture(picName).ID, xSubimgID, ySubimgID);
-			//dbg_sprintf(dbgout, "\n%.2s%03u%03u", picDB.getPicture(picName).ID, xSubimgID, ySubimgID);
-			/*
-			* This opens the variable with the name that was just assembled.
-			* It then gets the pointer to that and stores it in a graphics variable
-			*/
-			const ti_var_t subimgSlot{ ti_Open(picAppvarToFind,"r") };
-			//checks if the subimage exists
-			if (subimgSlot) {
-				//subimage exists, load it
-				//seeks past header
-				ti_Seek(16, SEEK_CUR, subimgSlot);
-				//store the original image into srcImg
-				//srcImg = (gfx_sprite_t*)ti_GetDataPtr(subimgSlot);
-
-				zx0_Decompress(srcImg, ti_GetDataPtr(subimgSlot));
-				//resizes it to outputImg size
-				gfx_ScaleSprite(srcImg, outputImg);
-
-				//displays subimage
-				//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
-				if (xSubimgID == xLastID || ySubimgID == yLastID) {
-					gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY );
-				}
-				else {
-					gfx_Sprite_NoClip(outputImg, subimgPxlPosX, subimgPxlPosY);
-				}
-
-			}
-			else {
-				//subimage does not exist, display error image
-				dbg_sprintf(dbgout, "\nERR: Subimage doesn't exist!");
-				dbg_sprintf(dbgout, "\n %s", picAppvarToFind);
-				//dbg_sprintf(dbgout,"\nERR: \nxsubimage: %d \newSubimgWidthHeight: %d \nscaleDen: %d",xSubimage,newSubimgWidthHeight,scaleDen);
-				zx7_Decompress(srcImg, errorTriangle_compressed);
-				//resizes it to outputImg size
-				gfx_ScaleSprite(srcImg, outputImg);
-				//displays the output image
-				//dbg_sprintf(dbgout,"\nxsubimage: %d \newSubimgWidthHeight: %d \nscaleDen: %d\n",xSubimage,newSubimgWidthHeight,scaleDen);
-				gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
-				//while(!os_GetCSC());
-				continue;
-			}
-
-			//cleans up
-			ti_Close(subimgSlot);
 
 		}
+		else {
+			//subimage does not exist, display error image
+			dbg_sprintf(dbgout, "\nERR: Subimage doesn't exist!");
+			dbg_sprintf(dbgout, "\n %s", picAppvarToFind);
+			//dbg_sprintf(dbgout,"\nERR: \nxsubimage: %d \newSubimgWidthHeight: %d \nscaleDen: %d",xSubimage,newSubimgWidthHeight,scaleDen);
+			zx7_Decompress(srcImg, errorTriangle_compressed);
+			//resizes it to outputImg size
+			gfx_ScaleSprite(srcImg, outputImg);
+			//displays the output image
+			//dbg_sprintf(dbgout,"\nxsubimage: %d \newSubimgWidthHeight: %d \nscaleDen: %d\n",xSubimage,newSubimgWidthHeight,scaleDen);
+			gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
+			//while(!os_GetCSC());
+			continue;
+		}
+
+		//cleans up
+		ti_Close(subimgSlot);
+		
 	}
 	//free up source and output memory
 	free(srcImg);
@@ -712,11 +783,11 @@ uint24_t findPictures() {
 		// Get width of whole image. Then convert the number from a char representation to a int24_t
 		char buffer[3];
 		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE, HORIZ_VERT_SIZE );
-		imgData.numOfSubImagesHorizontal = (((static_cast<int24_t>(buffer[0]) - '0') * 100 + (static_cast<int24_t>(buffer[1]) - '0') * 10 + static_cast<int24_t>(buffer[2]) - '0') + 1);
+		imgData.horizSubImages = (((static_cast<int24_t>(buffer[0]) - '0') * 100 + (static_cast<int24_t>(buffer[1]) - '0') * 10 + static_cast<int24_t>(buffer[2]) - '0') + 1);
 		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE, HORIZ_VERT_SIZE);
-		imgData.numOfSubImagesVertical = (((static_cast<int24_t>(buffer[0]) - '0') * 100 + (static_cast<int24_t>(buffer[1]) - '0') * 10 + static_cast<int24_t>(buffer[2]) - '0') + 1);
+		imgData.vertSubImages = (((static_cast<int24_t>(buffer[0]) - '0') * 100 + (static_cast<int24_t>(buffer[1]) - '0') * 10 + static_cast<int24_t>(buffer[2]) - '0') + 1);
 
-		dbg_sprintf(dbgout,"\nPicture found:\n imgName: %.8s\n palletName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n", imgData.imgName, imgData.palletName, imgData.ID, imgData.numOfSubImagesHorizontal, imgData.numOfSubImagesVertical);
+		dbg_sprintf(dbgout,"\nPicture found:\n imgName: %.8s\n palletName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n", imgData.imgName, imgData.palletName, imgData.ID, imgData.horizSubImages, imgData.vertSubImages);
 
 		picDB.addPicture(imgData);
 
@@ -788,6 +859,108 @@ void drawMenu(uint24_t selectedName) {
 		}
 	}
 	drawWatermark();
+}
+
+
+
+
+bool iterate(int24_t& xSubimgID, int24_t const& xFirstID, int24_t const& xLastID, int24_t& ySubimgID, int24_t const& yFirstID, int24_t const& yLastID, bool bDrawVertically, bool bDrawOppositeSideFirst)
+{
+	static bool bFirstRun{ true };
+
+	if (bDrawVertically)
+	{
+		if (bDrawOppositeSideFirst)
+		{
+			if (bFirstRun)
+			{
+				xSubimgID = xFirstID;
+				ySubimgID = yLastID;
+				bFirstRun = false;
+				return true;
+			}
+			if (--ySubimgID < yFirstID)
+			{
+				ySubimgID = yLastID;
+				if (++xSubimgID > xLastID)
+				{
+					bFirstRun = true;
+					return false;
+				}
+			}
+			dbg_sprintf(dbgout, "\n1. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
+			return true;
+		}
+		else
+		{
+			if (bFirstRun)
+			{
+				xSubimgID = xLastID;
+				ySubimgID = yLastID;
+				bFirstRun = false;
+				return true;
+			}
+			if (--ySubimgID < yFirstID)
+			{
+				ySubimgID = yLastID;
+				if (--xSubimgID < xFirstID)
+				{
+					bFirstRun = true;
+					return false;
+				}
+			}
+			dbg_sprintf(dbgout, "\n2. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
+			return true;
+		}
+	}
+	else
+	{
+		if (bDrawOppositeSideFirst)
+		{ 
+			if (bFirstRun)
+			{
+				ySubimgID = yFirstID;
+				xSubimgID = xLastID;
+				bFirstRun = false;
+				return true;
+			}
+			if (--xSubimgID < xFirstID)
+			{
+				xSubimgID = xLastID;
+				if (++ySubimgID > yLastID)
+				{
+					bFirstRun = true;
+					return false;
+				}
+			}
+			dbg_sprintf(dbgout, "\n3. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
+			return true;
+		}
+		else
+		{
+			if (bFirstRun)
+			{
+				xSubimgID = xLastID;
+				ySubimgID = yLastID;
+				bFirstRun = false;
+				return true;
+			}
+			if (--xSubimgID < xFirstID)
+			{
+				xSubimgID = xLastID;
+				if (--ySubimgID < yFirstID)
+				{
+					bFirstRun = true;
+					return false;
+				}
+			}
+			dbg_sprintf(dbgout, "\n4. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
+			return true;
+		}
+	}
+
+	bFirstRun = true;
+	return false;
 }
 
 // divide and round up if necessary

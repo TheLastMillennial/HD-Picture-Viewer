@@ -47,6 +47,6 @@ struct imageData
 	double zoomScale{ 1.0 };
 	int24_t xOffset{ 0 };
 	int24_t yOffset{ 0 };
-	int24_t numOfSubImagesHorizontal{ 0 };
-	int24_t numOfSubImagesVertical{ 0 };
+	int24_t horizSubImages{ 0 };
+	int24_t vertSubImages{ 0 };
 };

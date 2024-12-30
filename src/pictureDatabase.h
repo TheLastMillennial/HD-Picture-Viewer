@@ -66,8 +66,8 @@ public:
 		gfx_SetColor(PALETTE_WHITE);
 		gfx_VertLine_NoClip(260, 153, 7);
 
-		int24_t const& picWidthInSubimages{ imgToDelete->numOfSubImagesHorizontal };
-		int24_t const& picHeightInSubimages{ imgToDelete->numOfSubImagesVertical };
+		int24_t const& picWidthInSubimages{ imgToDelete->horizSubImages };
+		int24_t const& picHeightInSubimages{ imgToDelete->vertSubImages };
 
 		LoadingBar& loadingBar = LoadingBar::getInstance();
 		loadingBar.resetLoadingBar(picWidthInSubimages * picHeightInSubimages);
