@@ -3,62 +3,65 @@
 #include "globals.h"
 #include "types/vector.h"
 
-class PicDatabase {
+class PicDatabase
+{
 private:
 
-    // Private constructor to prevent instantiation from outside the class
-    PicDatabase() {}
+	// Private constructor to prevent instantiation from outside the class
+	PicDatabase() {}
 
-    // Private copy constructor and assignment operator to prevent copying
-    PicDatabase(const PicDatabase&) = delete;
-    PicDatabase& operator=(const PicDatabase&) = delete;
+	// Private copy constructor and assignment operator to prevent copying
+	PicDatabase(const PicDatabase &) = delete;
+	PicDatabase &operator=(const PicDatabase &) = delete;
 
 
 public:
-    // Static method to get the instance of the Singleton
-    static PicDatabase& getInstance() {
-        static PicDatabase instance; // Guaranteed to be created once
-        return instance;
-    }
+	// Static method to get the instance of the Singleton
+	static PicDatabase &getInstance()
+	{
+		static PicDatabase instance; // Guaranteed to be created once
+		return instance;
+	}
 
-    Vector <imageData> allImages;
+	Vector <imageData> allImages;
 
-    // Resets all memory this db uses
-    void resetPicDB()
-    {
-        allImages.clear();
-    }
+	// Resets all memory this db uses
+	void resetPicDB()
+	{
+		allImages.clear();
+	}
 
 	uint24_t size()
 	{
 		return allImages.getSize();
 	}
 
-    //pre-allocate memory for the database (optional but faster than only calling addPicture())
-    void reserve(uint24_t size)
-    {
-        allImages.reserve(size);
-    }
+	//pre-allocate memory for the database (optional but faster than only calling addPicture())
+	void reserve(uint24_t size)
+	{
+		allImages.reserve(size);
+	}
 
-    //Add a picture to the database
-    void addPicture(imageData const img)
-    {
-        allImages.push_back(img);
-    }
+	//Add a picture to the database
+	void addPicture(imageData const img)
+	{
+		allImages.push_back(img);
+	}
 
-    imageData &getPicture(uint24_t index)
-    {
-        return allImages[index];
-    }
+	imageData &getPicture(uint24_t index)
+	{
+		return allImages[index];
+	}
 
 	// Delete image from calculator and remove from allImages
-	void deleteImage(uint24_t picName) {
+	void deleteImage(uint24_t picName)
+	{
 		char picAppvarToFind[9];
 
 		imageData *imgToDelete{ &allImages[picName] };
-		
+
 		//deletes palette
-		int delSuccess{ ti_Delete(imgToDelete->palletName)};
+		int delSuccess{ ti_Delete(imgToDelete->palletName) };
 		if (delSuccess == 0) {
 			dbg_sprintf(dbgout, "\nERR: Issue deleting palette");
 		}
@@ -66,15 +69,15 @@ public:
 		gfx_SetColor(PALETTE_WHITE);
 		gfx_VertLine_NoClip(260, 153, 7);
 
-		int24_t const& picWidthInSubimages{ imgToDelete->horizSubImages };
-		int24_t const& picHeightInSubimages{ imgToDelete->vertSubImages };
+		int24_t const &picWidthInSubimages{ imgToDelete->horizSubImages };
+		int24_t const &picHeightInSubimages{ imgToDelete->vertSubImages };
 
-		LoadingBar& loadingBar = LoadingBar::getInstance();
+		LoadingBar &loadingBar = LoadingBar::getInstance();
 		loadingBar.resetLoadingBar(picWidthInSubimages * picHeightInSubimages);
 
 		//delete every subimage
-		for (uint24_t xSubimage = (picWidthInSubimages - 1);xSubimage < MAX_UINT; xSubimage--) {
-			for (uint24_t ySubimage = (picHeightInSubimages - 1);ySubimage < MAX_UINT; ySubimage--) {
+		for (uint24_t xSubimage = (picWidthInSubimages - 1); xSubimage < MAX_UINT; xSubimage--) {
+			for (uint24_t ySubimage = (picHeightInSubimages - 1); ySubimage < MAX_UINT; ySubimage--) {
 
 				//combines the separate parts into one name to search for
 				sprintf(picAppvarToFind, "%.2s%03u%03u", imgToDelete->ID, xSubimage, ySubimage);

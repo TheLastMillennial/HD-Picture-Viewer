@@ -15,36 +15,39 @@ void drawWatermark()
 }
 
 /* Prints a screen centered string */
-void PrintCentered(const char* str)
+void PrintCentered(const char *str)
 {
 	gfx_PrintStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2, (LCD_HEIGHT - 8) / 2);
 }
 /* Prints a X centered string */
-void PrintCenteredX(const char* str, const uint24_t y)
+void PrintCenteredX(const char *str, const uint24_t y)
 {
 	gfx_PrintStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2, y);
 }
 /* Prints a Y centered string */
-void PrintCenteredY(const char* str, const uint8_t x)
+void PrintCenteredY(const char *str, const uint8_t x)
 {
 	gfx_PrintStringXY(str, x, (LCD_HEIGHT - 8) / 2);
 }
 
 /* Draw text on the homescreen at the given X/Y location */
-void PrintText(const int8_t xpos, const int8_t ypos, const char* text) {
+void PrintText(const int8_t xpos, const int8_t ypos, const char *text)
+{
 	os_SetCursorPos(ypos, xpos);
 	os_PutStrFull(text);
 }
 
 /* Easy way to align help with a horizontal separator */
-void PrintHelpText(const char* button, const char* help, uint24_t yPos) {
+void PrintHelpText(const char *button, const char *help, uint24_t yPos)
+{
 	gfx_PrintStringXY(button, 10, yPos);
 	gfx_PrintStringXY(help, 120, yPos);
 	gfx_HorizLine_NoClip(10, yPos + 8, 301);
 }
 
 //creates a simple splash screen when program starts
-void drawSplashScreen() {
+void drawSplashScreen()
+{
 	//gfx_SetColor(PALETTE_BLACK);
 	//gfx_FillRectangle_NoClip(60, 80, LCD_WIDTH - 120, LCD_HEIGHT - 160);
 	gfx_FillScreen(PALETTE_BLACK);
@@ -95,7 +98,8 @@ void drawHelp()
 }
 
 // Draw screen that informs user that no picture were detected.
-void drawNoImagesFound() {
+void drawNoImagesFound()
+{
 	gfx_SetTextBGColor(PALETTE_BLACK);
 	gfx_SetTextFGColor(XLIBC_RED);
 	PrintCenteredX("No Pictures Detected!", 15);

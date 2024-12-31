@@ -16,9 +16,9 @@
 
 
 /* MAX_IMAGES is the maximum number of images that can be on the calculator.
-* It's obtained from the two characters used for appvar identification. 
-* First character can be alphabetic (26 options). 
-* Second character can be alphanumeric (36 options). 
+* It's obtained from the two characters used for appvar identification.
+* First character can be alphabetic (26 options).
+* Second character can be alphanumeric (36 options).
 * 26 * 36 = 936 */
 #define MAX_IMAGES 936 
 //8 for image name, 1 for null terminator
@@ -38,7 +38,8 @@
 #define PALETTE_BLACK 0 //the xlibc palette and all hdpic generated palettes will have black as 0
 #define PALETTE_WHITE 255 //the xlibc palette and all hdpic generated palettes will have white as 255
 
-enum keyPress {
+enum keyPress
+{
 	null,
 	on,
 	enter,
