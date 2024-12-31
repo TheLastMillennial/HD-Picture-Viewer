@@ -46,16 +46,52 @@ int main(void)
 	}
 }
 
+keyPress scanKeys( bool bInFullscreen)
+{
+	kb_Scan();
+	keyPress lastKey{ keyPress::null };
+
+	if (kb_On) //important we return immediately for ON
+		return keyPress::on; 
+	if (kb_Data[1] & kb_Mode)
+		lastKey = keyPress::mode;
+	if (kb_Data[6] & kb_Enter)
+		lastKey = keyPress::enter;
+	if (kb_Data[6] & kb_Clear)
+		lastKey = keyPress::clear;
+	if (kb_Data[1] & kb_Graph && bInFullscreen)
+		lastKey = keyPress::graph;
+	if (kb_Data[1] & kb_Yequ && bInFullscreen)
+		lastKey = keyPress::yequ;
+	if (kb_Data[1] & kb_Window && bInFullscreen)
+		lastKey = keyPress::window;
+	if (kb_Data[1] & kb_Del)
+		lastKey = keyPress::del;
+	if (kb_Data[1] & kb_Zoom && bInFullscreen)
+		lastKey = keyPress::zoom;
+	if (kb_Data[6] & kb_Add && bInFullscreen)
+		lastKey = keyPress::add;
+	if (kb_Data[6] & kb_Sub && bInFullscreen)
+		lastKey = keyPress::sub;
+	if (kb_Data[7] & kb_Up)
+		lastKey = keyPress::up;
+	if (kb_Data[7] & kb_Down)
+		lastKey = keyPress::down;
+	if (kb_Data[7] & kb_Left && bInFullscreen)
+		lastKey = keyPress::left;
+	if (kb_Data[7] & kb_Right && bInFullscreen)
+		lastKey = keyPress::right;
+
+	//while (kb_AnyKey() != 0); //wait for key lift
+	return lastKey;
+
+}
+
 // Display UI to select an image
 void drawHomeScreen() {
 	uint24_t selectedPicIndex{ 0 },
 		desiredWidthInPxl{ MAX_THUMBNAIL_WIDTH }, desiredHeightInPxl{ MAX_THUMBNAIL_HEIGHT };
-	bool menuEnter, menuQuit,
-		menuUp, menuDown, menuHelp,
-		prev, next,
-		deletePic, resetPic, redrawPic,
-		zoomIn, zoomOut, zoomMax,
-		panUp, panDown, panLeft, panRight;
+
 	//set up variable that checks if drawImage failed
 	uint8_t imageErr{ 0 };
 	PicDatabase& picDB = PicDatabase::getInstance();
@@ -70,36 +106,51 @@ void drawHomeScreen() {
 	/* UI */
 	bool quitProgram{ false };
 	uint8_t errorID = 0;
+		
 	do {
 		static bool fullScreenImage{ false };	
+		bool resetPic{ false }, redrawPic{ false };
+
+		// Pressing on means halt immediately.
+		if (kb_On)
+		{
+			kb_ClearOnLatch();
+			global_lastKey = keyPress::null;
+			dbg_sprintf(dbgout, "\nRender aborted by ON.");
+			PrintCenteredX("Render Interrupted.", 10);
+			PrintCenteredX("Press [enter] to restart.", 215);
+			while (!os_GetCSC()); //wait for key press
+		}
 
 		//scans the keys for keypress
-		kb_Scan();
+		if (global_lastKey == keyPress::null)
+		{
+			//dbg_sprintf(dbgout, "\npre-check: NULL");
 
-		menuHelp  = kb_Data[1] & kb_Mode;
-		menuEnter = kb_Data[6] & kb_Enter;
-		menuQuit  = kb_Data[6] & kb_Clear;
-		menuUp    = kb_Data[7] & kb_Up;
-		menuDown  = kb_Data[7] & kb_Down;
+			//no key press is in the queue. Check for new keypress
+			global_lastKey = scanKeys(fullScreenImage);
+			
+			if (global_lastKey == keyPress::null)
+			{
+				//dbg_sprintf(dbgout, "\nPOST-check: NULL");
 
-		next      = kb_Data[1] & kb_Graph;
-		prev      = kb_Data[1] & kb_Yequ;
-		resetPic  = kb_Data[1] & kb_Window;
-		deletePic = kb_Data[1] & kb_Del;
-		zoomMax   = kb_Data[1] & kb_Zoom;
-		zoomIn    = kb_Data[6] & kb_Add;
-		zoomOut   = kb_Data[6] & kb_Sub;
-		redrawPic = kb_Data[6] & kb_Enter;
-		panUp     = kb_Data[7] & kb_Up;
-		panDown   = kb_Data[7] & kb_Down;
-		panLeft   = kb_Data[7] & kb_Left;
-		panRight  = kb_Data[7] & kb_Right;
+				continue; // no new keypress. There is nothing to do.
+			}
+			else
+			{
+				dbg_sprintf(dbgout, "\nPOST-check: %d", static_cast<uint8_t>( global_lastKey));
 
-		//if any key was pressed
-		if (kb_AnyKey()) {
+			}
+		}
+		else
+		{
+			dbg_sprintf(dbgout, "\nPre-check: %d", static_cast<uint8_t>(global_lastKey));
+		}
+		// A key press is in the queue or there's a new key press
+	
 
 			// clear. Go back.
-			if (menuQuit){
+			if (global_lastKey == keyPress::clear){
 				//If we're viewing an image, exit to menu. If we're already on menu, quit program.
 				if (fullScreenImage){
 					fullScreenImage = false;
@@ -115,7 +166,7 @@ void drawHomeScreen() {
 			}
 			
 			// enter. Fullscreen image
-			if (menuEnter){
+			if (global_lastKey == keyPress::enter){
 				if(!fullScreenImage)
 					resetPic=true;
 				fullScreenImage = true;
@@ -124,7 +175,7 @@ void drawHomeScreen() {
 			}
 			
 			// mode. Show help.
-			if (menuHelp){
+			if (global_lastKey == keyPress::mode){
 				drawHelp();
 				while(kb_AnyKey()!=0); //wait for key lift
 				while(!os_GetCSC()); //wait for key press
@@ -135,29 +186,21 @@ void drawHomeScreen() {
 			
 			//left, right, up, down. Image panning.
 			if (fullScreenImage){
-				if (panLeft) {
+				if (global_lastKey == keyPress::left) {
 					errorID = 3;
 					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 1,0);
-					while (kb_AnyKey() != 0); //wait for key lift
-
 				}
-				if (panRight) {
+				if (global_lastKey == keyPress::right) {
 					errorID = 4;
-					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);
-					while (kb_AnyKey() != 0); //wait for key lift								  
-																								  
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);									  
 				}																				  
-				if (panUp) {																	  
+				if (global_lastKey == keyPress::up) {
 					errorID = 5;																  
-					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);
-					while (kb_AnyKey() != 0); //wait for key lift								  
-																								  
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);									  
 				}																				  
-				if (panDown) {																	  
+				if (global_lastKey == keyPress::down) {
 					errorID = 6;																  
 					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
-					while (kb_AnyKey() != 0); //wait for key lift
-
 				}
 
 				if (imageErr != 0) {
@@ -171,7 +214,7 @@ void drawHomeScreen() {
 			}
 
 			//Zoom key. Zoom in as far as possible while maintaining full quality
-			if(zoomMax && fullScreenImage)
+			if(global_lastKey == keyPress::zoom && fullScreenImage)
 			{
 				//pull image full dimensions from database
 				PicDatabase& picDB = PicDatabase::getInstance();
@@ -202,7 +245,7 @@ void drawHomeScreen() {
 			}
 			
 			//Plus key. Zoom in by double
-			if (zoomIn && fullScreenImage) {
+			if (global_lastKey == keyPress::add && fullScreenImage) {
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomIn error"); }
 				//doubles zoom
 				desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
@@ -230,7 +273,7 @@ void drawHomeScreen() {
 			}
 
 			//subtract key. Zoom out by double.
-			if (zoomOut && fullScreenImage) {
+			if (global_lastKey == keyPress::sub && fullScreenImage) {
 				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom Out");
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomOut error"); }
 
@@ -283,7 +326,7 @@ void drawHomeScreen() {
 			}
 
 			//Delete. delete all appvars related to current image
-			if (deletePic) {
+			if (global_lastKey == keyPress::del) {
 				//the current palette is about to be deleted. Set the default palette
 				gfx_SetDefaultPalette(gfx_8bpp);
 				//we don't want the user seeing the horrors of their image with the wrong palette
@@ -331,7 +374,7 @@ void drawHomeScreen() {
 			}
 
 			/* Graph or down. Increases the name to start on and redraws the text */
-			if (next || (menuDown &&  !fullScreenImage)) {
+			if (global_lastKey == keyPress::graph || (global_lastKey == keyPress::down &&  !fullScreenImage)) {
 				selectedPicIndex++;
 				//make sure user can't scroll down too far
 				if (selectedPicIndex > picDB.size()-1)
@@ -345,7 +388,7 @@ void drawHomeScreen() {
 			}
 
 			/* Y= or up. Decreases the name to start on and redraws the text */
-			if (prev || (menuUp && !fullScreenImage)) {
+			if (global_lastKey == keyPress::yequ || (global_lastKey == keyPress::up && !fullScreenImage)) {
 				selectedPicIndex--;
 				// Checks if selectedName underflowed. selectedName shouldn't be more than the max number of images possible.
 				if (selectedPicIndex > MAX_IMAGES)
@@ -358,7 +401,7 @@ void drawHomeScreen() {
 			}
 			
 			//Window. Reset zoom and pan
-			if (resetPic) {
+			if (resetPic || global_lastKey == keyPress::window) {
 				if (fullScreenImage)
 				{
 
@@ -395,7 +438,7 @@ void drawHomeScreen() {
 			}
 			if(!fullScreenImage)
 				drawWatermark();
-		}
+		
 	} while (!quitProgram);
 
 }
@@ -640,17 +683,13 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	while (iterate(xSubimgID,xFirstID, xLastID, ySubimgID, yFirstID, yLastID, bDrawVertical, bReverseDirection)){
 		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (newSubimgWidthHeight / scaleDen)) };
 		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (newSubimgWidthHeight / scaleDen)) };
-		
 
 		//a key interrupted output. Quit immediately
-		while (kb_AnyKey() != 0); //wait for key lift
-		if(os_GetCSC())
+		global_lastKey = scanKeys(fullScreenPic);
+		if(global_lastKey != keyPress::null)
 		{
-				
 			if(fullScreenPic)
 			{
-				PrintCenteredX("Render Interrupted.",10);
-				PrintCenteredX("Press [enter] to restart.",215);
 				dbg_sprintf(dbgout, "\nRender aborted!");
 			}
 			//free up source and output memory
@@ -658,11 +697,14 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			free(outputImg);
 			return 0;
 		}
+
+		if (subimgPxlPosX > 320 || subimgPxlPosX < 0 || subimgPxlPosY > 240 || subimgPxlPosY < 0)
+			 continue;
 		
 		//combines the separate parts into one name to search for
 		char picAppvarToFind[9];
 		sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
-		dbg_sprintf(dbgout, "\n%.2s%03u%03u @ %d x %d", curPicture.ID, xSubimgID, ySubimgID, subimgPxlPosX, subimgPxlPosY);
+		//dbg_sprintf(dbgout, "\n%.2s%03u%03u @ %d x %d", curPicture.ID, xSubimgID, ySubimgID, subimgPxlPosX, subimgPxlPosY);
 		/*
 		* This opens the variable with the name that was just assembled.
 		* It then gets the pointer to that and stores it in a graphics variable
@@ -682,7 +724,9 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 			//displays subimage
 			//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
-			if (xSubimgID >= xLastID -1 || ySubimgID >= yLastID -1 || xSubimgID <= xFirstID +1 || ySubimgID <= yFirstID +1) 
+			if (subimgPxlPosX < 0 || subimgPxlPosX + newSubimgDim > 320 || subimgPxlPosY < 0 || subimgPxlPosY + newSubimgDim > 240)
+
+			//if (xSubimgID >= xLastID -1 || ySubimgID >= yLastID -1 || xSubimgID <= xFirstID +1 || ySubimgID <= yFirstID +1) 
 			{
 				//dbg_sprintf(dbgout, "\n\nCLIPPED");
 				gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
@@ -692,8 +736,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 				//dbg_sprintf(dbgout, "\nnoclip");
 				gfx_Sprite_NoClip(outputImg, subimgPxlPosX, subimgPxlPosY);
 			}
-			
-
 		}
 		else {
 			//subimage does not exist, display error image
@@ -888,7 +930,7 @@ bool iterate(int24_t& xSubimgID, int24_t const& xFirstID, int24_t const& xLastID
 					return false;
 				}
 			}
-			dbg_sprintf(dbgout, "\n1. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
+			//dbg_sprintf(dbgout, "\n1. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
 			return true;
 		}
 		else
@@ -909,13 +951,13 @@ bool iterate(int24_t& xSubimgID, int24_t const& xFirstID, int24_t const& xLastID
 					return false;
 				}
 			}
-			dbg_sprintf(dbgout, "\n2. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
+			//dbg_sprintf(dbgout, "\n2. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
 			return true;
 		}
 	}
 	else
 	{
-		if (bDrawOppositeSideFirst)
+		if (bDrawOppositeSideFirst) //todo: top left corner not drawn sometimes
 		{ 
 			if (bFirstRun)
 			{
@@ -933,7 +975,7 @@ bool iterate(int24_t& xSubimgID, int24_t const& xFirstID, int24_t const& xLastID
 					return false;
 				}
 			}
-			dbg_sprintf(dbgout, "\n3. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
+			//dbg_sprintf(dbgout, "\n3. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
 			return true;
 		}
 		else
@@ -954,7 +996,7 @@ bool iterate(int24_t& xSubimgID, int24_t const& xFirstID, int24_t const& xLastID
 					return false;
 				}
 			}
-			dbg_sprintf(dbgout, "\n4. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
+			//dbg_sprintf(dbgout, "\n4. xSubimgID %d : ( %d - %d ) \n   ySubimgID %d : ( %d - %d )", xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID);
 			return true;
 		}
 	}

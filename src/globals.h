@@ -38,6 +38,26 @@
 #define PALETTE_BLACK 0 //the xlibc palette and all hdpic generated palettes will have black as 0
 #define PALETTE_WHITE 255 //the xlibc palette and all hdpic generated palettes will have white as 255
 
+enum keyPress {
+	null,
+	on,
+	enter,
+	up,
+	down,
+	left,
+	right,
+	clear,
+	del,
+	mode,
+	graph,
+	yequ,
+	window,
+	zoom,
+	add,
+	sub
+};
+
+keyPress global_lastKey;
 
 struct imageData
 {
