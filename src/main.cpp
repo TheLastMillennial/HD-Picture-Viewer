@@ -40,6 +40,7 @@ int main(void)
 		drawHomeScreen();
 		//quit
 		gfx_End();
+		kb_ClearOnLatch();
 		return 0;
 	}
 }
@@ -67,30 +68,26 @@ void drawHomeScreen()
 
 	/* UI */
 	bool quitProgram{ false };
-	uint8_t errorID = 0;
-
-	
+	uint8_t errorID = 0;	
 
 	do {
 		static bool fullScreenImage{ false };
 		bool resetPic{ false }, redrawPic{ false };
 
 		// Pressing on means halt immediately.
-		if (keyHandler.wasKeyPressed(keyPress::on)) {
+		if (kb_On) {
+			kb_ClearOnLatch();
 			keyHandler.reset();
 			dbg_sprintf(dbgout, "\nRender aborted by ON.");
 			PrintCenteredX("Render Interrupted.", 10);
-			PrintCenteredX("Press [enter] to restart.", 215);
+			PrintCenteredX("Press any key to continue.", 215);
 			while (!os_GetCSC()); //wait for key press
 		}
 
 		//scans the keys for existing keypress.
 		if (!keyHandler.isAnyKeyPressed()) {
-			
-
 			//no existing key press. Check for new keypress.
 			if (!keyHandler.scanKeys(fullScreenImage)) {
-
 				continue; // no new keypress. There is nothing to do.
 			}
 			else {
@@ -104,7 +101,7 @@ void drawHomeScreen()
 
 
 			// clear. Go back.
-		if (keyHandler.wasKeyPressed(keyPress::clear)) {
+		if (keyHandler.wasKeyPressed(kb_KeyClear)) {
 			//If we're viewing an image, exit to menu. If we're already on menu, quit program.
 			if (fullScreenImage) {
 				fullScreenImage = false;
@@ -120,7 +117,7 @@ void drawHomeScreen()
 		}
 
 		// enter. Fullscreen image
-		if (keyHandler.wasKeyPressed(keyPress::enter)) {
+		if (keyHandler.wasKeyPressed(kb_KeyEnter)) {
 			if (!fullScreenImage)
 				resetPic = true;
 			fullScreenImage = true;
@@ -129,7 +126,7 @@ void drawHomeScreen()
 		}
 
 		// mode. Show help.
-		if (keyHandler.wasKeyPressed(keyPress::mode)) {
+		if (keyHandler.wasKeyPressed(kb_KeyMode)) {
 			drawHelp();
 			KeyPressHandler::waitForAnyKey();
 			gfx_FillScreen(PALETTE_BLACK);
@@ -139,7 +136,7 @@ void drawHomeScreen()
 
 
 		//Delete. delete all appvars related to current image
-		if (keyHandler.wasKeyPressed(keyPress::del)) {
+		if (keyHandler.wasKeyPressed(kb_KeyDel)) {
 			//the current palette is about to be deleted. Set the default palette
 			gfx_SetDefaultPalette(gfx_8bpp);
 			//we don't want the user seeing the horrors of their image with the wrong palette
@@ -184,7 +181,7 @@ void drawHomeScreen()
 		}
 
 		/* Graph or down. Increases the name to start on and redraws the text */
-		if (keyHandler.wasKeyPressed(keyPress::graph) || (keyHandler.wasKeyPressed(keyPress::down) && !fullScreenImage)) {
+		if (keyHandler.wasKeyPressed(kb_KeyGraph) || (keyHandler.wasKeyPressed(kb_KeyDown) && !fullScreenImage)) {
 			selectedPicIndex++;
 			//make sure user can't scroll down too far
 			if (selectedPicIndex > picDB.size() - 1) {
@@ -196,10 +193,11 @@ void drawHomeScreen()
 			resetPic = fullScreenImage;
 			redrawPic = true;
 			errorID = 8; //if an error is thrown, then we've scrolled past the safety barrier somehow.
+
 		}
 
 		/* Y= or up. Decreases the name to start on and redraws the text */
-		if (keyHandler.wasKeyPressed(keyPress::yequ) || (keyHandler.wasKeyPressed(keyPress::up) && !fullScreenImage)) {
+		if (keyHandler.wasKeyPressed(kb_KeyYequ) || (keyHandler.wasKeyPressed(kb_KeyUp) && !fullScreenImage)) {
 			selectedPicIndex--;
 			// Checks if selectedName underflowed. selectedName shouldn't be more than the max number of images possible.
 			if (selectedPicIndex > MAX_IMAGES) {
@@ -214,19 +212,19 @@ void drawHomeScreen()
 
 		//left, right, up, down. Image panning.
 		if (fullScreenImage) {
-			if (keyHandler.wasKeyPressed(keyPress::left)) {
+			if (keyHandler.wasKeyPressed(kb_KeyLeft)) {
 				errorID = 3;
 				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 1, 0);
 			}
-			if (keyHandler.wasKeyPressed(keyPress::right)) {
+			if (keyHandler.wasKeyPressed(kb_KeyRight)) {
 				errorID = 4;
 				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);
 			}
-			if (keyHandler.wasKeyPressed(keyPress::up)) {
+			if (keyHandler.wasKeyPressed(kb_KeyUp)) {
 				errorID = 5;
 				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);
 			}
-			if (keyHandler.wasKeyPressed(keyPress::down)) {
+			if (keyHandler.wasKeyPressed(kb_KeyDown)) {
 				errorID = 6;
 				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
 			}
@@ -242,7 +240,7 @@ void drawHomeScreen()
 
 
 			//Zoom key. Zoom in as far as possible while maintaining full quality
-			if (keyHandler.wasKeyPressed(keyPress::zoom)) {
+			if (keyHandler.wasKeyPressed(kb_KeyZoom)) {
 				//pull image full dimensions from database
 				PicDatabase &picDB = PicDatabase::getInstance();
 
@@ -272,7 +270,7 @@ void drawHomeScreen()
 			}
 
 			//Plus key. Zoom in by double
-			if (keyHandler.wasKeyPressed(keyPress::add)) {
+			if (keyHandler.wasKeyPressed(kb_KeyAdd)) {
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomIn error"); }
 				//doubles zoom
 				desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
@@ -300,7 +298,7 @@ void drawHomeScreen()
 			}
 
 			//subtract key. Zoom out by double.
-			if (keyHandler.wasKeyPressed(keyPress::sub)) {
+			if (keyHandler.wasKeyPressed(kb_KeySub)) {
 				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom Out");
 				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomOut error"); }
 
@@ -353,7 +351,7 @@ void drawHomeScreen()
 		}
 
 		//Window. Reset zoom and pan
-		if (resetPic || keyHandler.wasKeyPressed(keyPress::window)) {
+		if (resetPic || keyHandler.wasKeyPressed(kb_KeyWindow)) {
 			if (fullScreenImage) {
 
 				picDB.getPicture(selectedPicIndex).xOffset = 0;
@@ -373,9 +371,12 @@ void drawHomeScreen()
 
 		// If necessary, draw the image with new settings.
 		if (redrawPic) {
+			dbg_sprintf(dbgout, "\nredrawPic Call");
+
 			if (!fullScreenImage) {
 				drawMenu(selectedPicIndex);
 			}
+			keyHandler.reset();
 			imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, fullScreenImage);
 			if (imageErr != 0) {
 				PrintCenteredX("Error: ", 150);
@@ -390,6 +391,7 @@ void drawHomeScreen()
 		if (!fullScreenImage)
 			drawWatermark();
 
+
 	} while (!quitProgram);
 
 }
@@ -403,7 +405,7 @@ void drawHomeScreen()
 */
 uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desiredHeightInPxl, bool fullScreenPic, int8_t shiftX, int8_t shiftY)
 {
-	dbg_sprintf(dbgout, "\n\n--IMAGE CHANGE--");
+	dbg_sprintf(dbgout, "\n\n--DRAW IMAGE--");
 	PicDatabase &picDB = PicDatabase::getInstance();
 	imageData const &curPicture = picDB.getPicture(picName);
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
@@ -419,7 +421,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//Converts the width/height from a char array into two integers by converting char into decimal value
 	//then subtracting 48 to get the actual number.
-	dbg_sprintf(dbgout, "\nimg width in subimg: %d \nimg height in subimg: %d\n", curPicture.horizSubImages, curPicture.vertSubImages);
+	//dbg_sprintf(dbgout, "\nimg width in subimg: %d \nimg height in subimg: %d\n", curPicture.horizSubImages, curPicture.vertSubImages);
 
 	/*converts the char numbers from the header appvar into uint numbers
 	(uint24_t)imgWH[?]-'0')*100 covers the 100's place
@@ -429,8 +431,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	*/
 	uint24_t desiredWidthInSubimages{ (desiredWidthInPxl / SUBIMAGE_DIMENSIONS) };
 	uint24_t desiredHeightInSubimages{ (desiredHeightInPxl / SUBIMAGE_DIMENSIONS) };
-	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n",
-		desiredWidthInSubimages, curPicture.horizSubImages, desiredHeightInSubimages, curPicture.vertSubImages);
+	//dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n",
+	//	desiredWidthInSubimages, curPicture.horizSubImages, desiredHeightInSubimages, curPicture.vertSubImages);
 
 	//checks if it should scale an image horizontally or vertically.
 	if ((curPicture.horizSubImages * SUBIMAGE_DIMENSIONS) / LCD_WIDTH >= (curPicture.vertSubImages * SUBIMAGE_DIMENSIONS) / LCD_HEIGHT) {
@@ -465,7 +467,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	[MateoC] huh I didn't know about roundDiv
 	*/
 
-	dbg_sprintf(dbgout, "\n newWH: %d \n ScaleNum: %d \n scaleDenominator: %d \n xOffset: %d \n yOffset %d", subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
+	//dbg_sprintf(dbgout, "\n newWH: %d \n ScaleNum: %d \n scaleDenominator: %d \n xOffset: %d \n yOffset %d", subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
 
 	//pointer to memory where each unsized subimage will be stored
 	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
@@ -561,8 +563,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//Displays all the images
 	dbg_sprintf(dbgout, "\n-------------------------");
-	dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", curPicture.horizSubImages, curPicture.xOffset);
-	dbg_sprintf(dbgout, "\nhS: %d\nyO: %d", curPicture.vertSubImages, curPicture.yOffset);
+	//dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", curPicture.horizSubImages, curPicture.xOffset);
+	//dbg_sprintf(dbgout, "\nhS: %d\nyO: %d", curPicture.vertSubImages, curPicture.yOffset);
 
 
 	//This calculates the number of subimages you can fit in the screen horizontally
@@ -598,9 +600,9 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		bottomMostSubimg = curPicture.vertSubImages;
 	if (topMostSubimg < 0)
 		topMostSubimg = 0;
-
-	dbg_sprintf(dbgout, "\nrightMost %d\nLeftMost %d", rightMostSubimg, leftMostSubimg);
-	dbg_sprintf(dbgout, "\ntopMost %d\nbottomMost %d", topMostSubimg, bottomMostSubimg);
+	
+	//dbg_sprintf(dbgout, "\nrightMost %d\nLeftMost %d", rightMostSubimg, leftMostSubimg);
+	//dbg_sprintf(dbgout, "\ntopMost %d\nbottomMost %d", topMostSubimg, bottomMostSubimg);
 
 	/* Display final image */
 
@@ -613,21 +615,25 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	const uint24_t thumbnailOffsetX = fullScreenPic ? 0 : 150;
 	const uint24_t thumbnailOffsetY = fullScreenPic ? 0 : ((240 - (subimgScaledDim * bottomMostSubimg)) / 2);
 
-	dbg_sprintf(dbgout, "\nxFirstID %d \nxLastID %d", xFirstID, xLastID);
+	dbg_sprintf(dbgout, "\n Image Name: %s\n x-range: %d - %d\n y-range: %d - %d", curPicture.imgName, xFirstID, xLastID, yFirstID, yLastID);
 
 	int24_t xSubimgID{ 0 };
 	int24_t ySubimgID{ 0 };
+
 	// Loop through all subimages to create full image
-	while (iterate(xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID, bDrawVertical, bReverseDirection)) {
+	bool bFirstRun{ true };
+	while (iterate(xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID, bDrawVertical, bReverseDirection, bFirstRun)) {
+		
+		
 		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 
+		//dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl",xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
+
+
 		//a key interrupted output. Quit immediately
-		
 		if (keyHandler.scanKeys(fullScreenPic)) {
-			if (fullScreenPic) {
-				dbg_sprintf(dbgout, "\nRender aborted!");
-			}
+			dbg_sprintf(dbgout, "\nRender aborted!\n");
 			//free up source and output memory
 			free(srcImg);
 			free(outputImg);
@@ -694,6 +700,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//free up source and output memory
 	free(srcImg);
 	free(outputImg);
+	dbg_sprintf(dbgout, "\nDraw Finished.\n");
 	return 0;
 }
 
@@ -839,13 +846,22 @@ void drawMenu(uint24_t selectedName)
 	drawWatermark();
 }
 
-
-bool iterate(int24_t &xSubimgID, int24_t const &xFirstID, int24_t const &xLastID, int24_t &ySubimgID, int24_t const &yFirstID, int24_t const &yLastID, bool bDrawVertically, bool bDrawOppositeSideFirst)
+// Allows iterating a 2D grid in multiple different directions.
+// Returns true as long as there is still iterating to do.
+// Returns false when finished iterating.
+// Directions:
+// column then row (bDrawVertically = true)
+// row then column (bDrawVertically = false)
+// bDrawOppositeSide switches which side the function starts drawing on
+// xSubimgID and/or ySubimgID will be modified with the next x and y coordinate.
+// xFirstID and xLastID are the bounds for xSubimgID
+// yFirstID and yLastID are the bounds for ySubimgID
+// bFirstRun MUST be set to true. It will be changed to false after the first iteration.
+bool iterate(int24_t &xSubimgID, int24_t const &xFirstID, int24_t const &xLastID, int24_t &ySubimgID, int24_t const &yFirstID, int24_t const &yLastID, bool bDrawVertically, bool bDrawOppositeSideFirst, bool & bFirstRun)
 {
-	static bool bFirstRun{ true };
-
 	if (bDrawVertically) {
 		if (bDrawOppositeSideFirst) {
+			//draw columns starting at bottom left
 			if (bFirstRun) {
 				xSubimgID = xFirstID;
 				ySubimgID = yLastID;
@@ -863,6 +879,7 @@ bool iterate(int24_t &xSubimgID, int24_t const &xFirstID, int24_t const &xLastID
 			return true;
 		}
 		else {
+			//draw columns starting at bottom right
 			if (bFirstRun) {
 				xSubimgID = xLastID;
 				ySubimgID = yLastID;
@@ -883,6 +900,7 @@ bool iterate(int24_t &xSubimgID, int24_t const &xFirstID, int24_t const &xLastID
 	else {
 		if (bDrawOppositeSideFirst) //todo: top left corner not drawn sometimes
 		{
+			//draw rows starting at top right
 			if (bFirstRun) {
 				ySubimgID = yFirstID;
 				xSubimgID = xLastID;
@@ -900,6 +918,8 @@ bool iterate(int24_t &xSubimgID, int24_t const &xFirstID, int24_t const &xLastID
 			return true;
 		}
 		else {
+			//draw rows starting at bottom right?
+
 			if (bFirstRun) {
 				xSubimgID = xLastID;
 				ySubimgID = yLastID;
@@ -917,8 +937,6 @@ bool iterate(int24_t &xSubimgID, int24_t const &xFirstID, int24_t const &xLastID
 			return true;
 		}
 	}
-
-	bFirstRun = true;
 	return false;
 }
 

@@ -4,38 +4,22 @@
 #include <keypadc.h>
 #include "types/vector.h"
 
-enum keyPress
-{
-	on,
-	enter,
-	up,
-	down,
-	left,
-	right,
-	clear,
-	del,
-	mode,
-	graph,
-	yequ,
-	window,
-	zoom,
-	add,
-	sub
-};
-
 
 class KeyPressHandler
 {
 private:
 
 	// Private constructor to prevent instantiation from outside the class
-	KeyPressHandler() {}
+	KeyPressHandler() 
+	{
+		kb_EnableOnLatch();
+	}
 
 	// Private copy constructor and assignment operator to prevent copying
 	KeyPressHandler(const KeyPressHandler &) = delete;
 	KeyPressHandler &operator=(const KeyPressHandler &) = delete;
 
-	Vector<keyPress> vecKeysPressed;
+	Vector<kb_lkey_t> vecKeysPressed;
 
 
 public:
@@ -57,55 +41,54 @@ public:
 	// bInFullscreen will cause certain keypresses to be ignored when false.
 	bool scanKeys(bool bInFullscreen = true)
 	{
-		if (kb_On) //important we return immediately for ON
-		{
-			kb_ClearOnLatch();
-			vecKeysPressed.push_back(keyPress::on);
-			return true;
-		}
-		
+
 		reset();
 
 		kb_Scan();
-		if (kb_Data[6] & kb_Enter)
-			vecKeysPressed.push_back(keyPress::enter);
-		if (kb_Data[6] & kb_Clear)
-			vecKeysPressed.push_back(keyPress::clear);
-		if (kb_Data[1] & kb_Del)
-			vecKeysPressed.push_back(keyPress::del);
-		if (kb_Data[1] & kb_Mode)
-			vecKeysPressed.push_back(keyPress::mode);
-		if (kb_Data[7] & kb_Up)
-			vecKeysPressed.push_back(keyPress::up);
-		if (kb_Data[7] & kb_Down)
-			vecKeysPressed.push_back(keyPress::down);
-		if (bInFullscreen)
-		{
-			if (kb_Data[7] & kb_Left)
-				vecKeysPressed.push_back(keyPress::left);
-			if (kb_Data[7] & kb_Right)
-				vecKeysPressed.push_back(keyPress::right);
-			if (kb_Data[1] & kb_Graph)
-				vecKeysPressed.push_back(keyPress::graph);
-			if (kb_Data[1] & kb_Yequ)
-				vecKeysPressed.push_back(keyPress::yequ);
-			if (kb_Data[1] & kb_Window)
-				vecKeysPressed.push_back(keyPress::window);
-			if (kb_Data[1] & kb_Zoom)
-				vecKeysPressed.push_back(keyPress::zoom);
-			if (kb_Data[6] & kb_Add)
-				vecKeysPressed.push_back(keyPress::add);
-			if (kb_Data[6] & kb_Sub)
-				vecKeysPressed.push_back(keyPress::sub);
+		if (kb_IsDown(kb_KeyEnter))
+			vecKeysPressed.push_back(kb_KeyEnter);
+		if (kb_IsDown(kb_KeyClear))
+			vecKeysPressed.push_back(kb_KeyClear);
+		if (kb_IsDown(kb_KeyDel))
+			vecKeysPressed.push_back(kb_KeyDel);
+		if (kb_IsDown(kb_KeyMode))
+			vecKeysPressed.push_back(kb_KeyMode);
+		if (kb_IsDown(kb_KeyUp))
+			vecKeysPressed.push_back(kb_KeyUp);
+		if (kb_IsDown(kb_KeyDown))
+			vecKeysPressed.push_back(kb_KeyDown);
+		if (kb_IsDown(kb_KeyGraph))
+			vecKeysPressed.push_back(kb_KeyGraph);
+		if (kb_IsDown(kb_KeyYequ))
+			vecKeysPressed.push_back(kb_KeyYequ);
+		if (bInFullscreen) {
+			if (kb_IsDown(kb_KeyLeft))
+				vecKeysPressed.push_back(kb_KeyLeft);
+			if (kb_IsDown(kb_KeyRight))
+				vecKeysPressed.push_back(kb_KeyRight);
 			
+			if (kb_IsDown(kb_KeyWindow))
+				vecKeysPressed.push_back(kb_KeyWindow);
+			if (kb_IsDown(kb_KeyZoom))
+				vecKeysPressed.push_back(kb_KeyZoom);
+			if (kb_IsDown(kb_KeyAdd))
+				vecKeysPressed.push_back(kb_KeyAdd);
+			if (kb_IsDown(kb_KeySub))
+				vecKeysPressed.push_back(kb_KeySub);
 		}
-
-		while (kb_AnyKey() != 0); //wait for key lift
-		return !vecKeysPressed.isEmpty();
+		
+		// If a valid key was pressed, wait for it to be lifted
+		if (!vecKeysPressed.isEmpty())
+		{
+			while (kb_AnyKey() != 0);//wait for key lift
+			return true;
+		}
+		return false;
+		
 	}
 
 	//check if specific key was pressed
-	bool wasKeyPressed(keyPress key)
+	bool wasKeyPressed(kb_lkey_t key)
 	{
 
 		for (uint24_t i{ 0 }; i < vecKeysPressed.getSize(); i++) {
