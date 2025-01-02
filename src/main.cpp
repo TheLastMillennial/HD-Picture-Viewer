@@ -6,7 +6,6 @@
 
 #include <tice.h>
 #include <graphx.h>
-#include <keypadc.h>
 #include <string.h>
 #include <fileioc.h>
 #include <debug.h>
@@ -16,6 +15,7 @@
 
 #include "main.h"
 #include "loadingBarHandler.h"
+#include "keyPressHandler.h"
 #include "pictureDatabase.h"
 #include "globals.h"
 #include "guiUtils.h"
@@ -44,46 +44,7 @@ int main(void)
 	}
 }
 
-keyPress scanKeys(bool bInFullscreen)
-{
-	kb_Scan();
-	keyPress lastKey{ keyPress::null };
 
-	if (kb_On) //important we return immediately for ON
-		return keyPress::on;
-	if (kb_Data[1] & kb_Mode)
-		lastKey = keyPress::mode;
-	if (kb_Data[6] & kb_Enter)
-		lastKey = keyPress::enter;
-	if (kb_Data[6] & kb_Clear)
-		lastKey = keyPress::clear;
-	if (kb_Data[1] & kb_Graph && bInFullscreen)
-		lastKey = keyPress::graph;
-	if (kb_Data[1] & kb_Yequ && bInFullscreen)
-		lastKey = keyPress::yequ;
-	if (kb_Data[1] & kb_Window && bInFullscreen)
-		lastKey = keyPress::window;
-	if (kb_Data[1] & kb_Del)
-		lastKey = keyPress::del;
-	if (kb_Data[1] & kb_Zoom && bInFullscreen)
-		lastKey = keyPress::zoom;
-	if (kb_Data[6] & kb_Add && bInFullscreen)
-		lastKey = keyPress::add;
-	if (kb_Data[6] & kb_Sub && bInFullscreen)
-		lastKey = keyPress::sub;
-	if (kb_Data[7] & kb_Up)
-		lastKey = keyPress::up;
-	if (kb_Data[7] & kb_Down)
-		lastKey = keyPress::down;
-	if (kb_Data[7] & kb_Left && bInFullscreen)
-		lastKey = keyPress::left;
-	if (kb_Data[7] & kb_Right && bInFullscreen)
-		lastKey = keyPress::right;
-
-	//while (kb_AnyKey() != 0); //wait for key lift
-	return lastKey;
-
-}
 
 // Display UI to select an image
 void drawHomeScreen()
@@ -94,6 +55,8 @@ void drawHomeScreen()
 	//set up variable that checks if drawImage failed
 	uint8_t imageErr{ 0 };
 	PicDatabase &picDB = PicDatabase::getInstance();
+	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
+
 
 	/* main menu */
 	gfx_FillScreen(PALETTE_BLACK);
@@ -106,45 +69,42 @@ void drawHomeScreen()
 	bool quitProgram{ false };
 	uint8_t errorID = 0;
 
+	
+
 	do {
 		static bool fullScreenImage{ false };
 		bool resetPic{ false }, redrawPic{ false };
 
 		// Pressing on means halt immediately.
-		if (kb_On) {
-			kb_ClearOnLatch();
-			global_lastKey = keyPress::null;
+		if (keyHandler.wasKeyPressed(keyPress::on)) {
+			keyHandler.reset();
 			dbg_sprintf(dbgout, "\nRender aborted by ON.");
 			PrintCenteredX("Render Interrupted.", 10);
 			PrintCenteredX("Press [enter] to restart.", 215);
 			while (!os_GetCSC()); //wait for key press
 		}
 
-		//scans the keys for keypress
-		if (global_lastKey == keyPress::null) {
-			//dbg_sprintf(dbgout, "\npre-check: NULL");
+		//scans the keys for existing keypress.
+		if (!keyHandler.isAnyKeyPressed()) {
+			
 
-			//no key press is in the queue. Check for new keypress
-			global_lastKey = scanKeys(fullScreenImage);
-
-			if (global_lastKey == keyPress::null) {
-				//dbg_sprintf(dbgout, "\nPOST-check: NULL");
+			//no existing key press. Check for new keypress.
+			if (!keyHandler.scanKeys(fullScreenImage)) {
 
 				continue; // no new keypress. There is nothing to do.
 			}
 			else {
-				dbg_sprintf(dbgout, "\nPOST-check: %d", static_cast<uint8_t>(global_lastKey));
-
+				dbg_sprintf(dbgout, "\nNew Key press");
 			}
 		}
 		else {
-			dbg_sprintf(dbgout, "\nPre-check: %d", static_cast<uint8_t>(global_lastKey));
+			dbg_sprintf(dbgout, "\nExisting key press");
 		}
-		// A key press is in the queue or there's a new key press
+		// Key press detected
 
 
 			// clear. Go back.
-		if (global_lastKey == keyPress::clear) {
+		if (keyHandler.wasKeyPressed(keyPress::clear)) {
 			//If we're viewing an image, exit to menu. If we're already on menu, quit program.
 			if (fullScreenImage) {
 				fullScreenImage = false;
@@ -152,7 +112,6 @@ void drawHomeScreen()
 				redrawPic = true;
 				errorID = 1;
 				gfx_FillScreen(PALETTE_BLACK);
-				while (kb_AnyKey() != 0); //wait for key lift
 			}
 			else {
 				quitProgram = true;
@@ -161,7 +120,7 @@ void drawHomeScreen()
 		}
 
 		// enter. Fullscreen image
-		if (global_lastKey == keyPress::enter) {
+		if (keyHandler.wasKeyPressed(keyPress::enter)) {
 			if (!fullScreenImage)
 				resetPic = true;
 			fullScreenImage = true;
@@ -170,156 +129,17 @@ void drawHomeScreen()
 		}
 
 		// mode. Show help.
-		if (global_lastKey == keyPress::mode) {
+		if (keyHandler.wasKeyPressed(keyPress::mode)) {
 			drawHelp();
-			while (kb_AnyKey() != 0); //wait for key lift
-			while (!os_GetCSC()); //wait for key press
+			KeyPressHandler::waitForAnyKey();
 			gfx_FillScreen(PALETTE_BLACK);
 			resetPic = true;
 			redrawPic = true;
 		}
 
-		//left, right, up, down. Image panning.
-		if (fullScreenImage) {
-			if (global_lastKey == keyPress::left) {
-				errorID = 3;
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 1, 0);
-			}
-			if (global_lastKey == keyPress::right) {
-				errorID = 4;
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);
-			}
-			if (global_lastKey == keyPress::up) {
-				errorID = 5;
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);
-			}
-			if (global_lastKey == keyPress::down) {
-				errorID = 6;
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
-			}
-
-			if (imageErr != 0) {
-				PrintCenteredX("Error: ", 150);
-				gfx_PrintUInt(errorID, 3);
-				PrintCenteredX("Press any key to quit.", 160);
-				while (!os_GetCSC());
-				gfx_End();
-				return;
-			}
-		}
-
-		//Zoom key. Zoom in as far as possible while maintaining full quality
-		if (global_lastKey == keyPress::zoom && fullScreenImage) {
-			//pull image full dimensions from database
-			PicDatabase &picDB = PicDatabase::getInstance();
-
-			//convert subimg width to pixels width
-			desiredWidthInPxl = picDB.getPicture(selectedPicIndex).horizSubImages * SUBIMG_WIDTH_AND_HEIGHT;
-			desiredHeightInPxl = picDB.getPicture(selectedPicIndex).vertSubImages * SUBIMG_WIDTH_AND_HEIGHT;
-
-			imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-			//this means we can't zoom in any more. Zoom back out.
-			if (imageErr != 0) {
-				dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
-				desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
-				desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
-				dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-				//if zooming back out didn't fix it, abort.
-				if (imageErr != 0) {
-					dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
-
-					PrintCenteredX("Error zooming in.", 130);
-					PrintCenteredX("Press any key to quit.", 140);
-					while (!os_GetCSC());
-					gfx_End();
-					return;
-				}
-			}
-		}
-
-		//Plus key. Zoom in by double
-		if (global_lastKey == keyPress::add && fullScreenImage) {
-			if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomIn error"); }
-			//doubles zoom
-			desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
-			desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
-			//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-			imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-			//this means we can't zoom in any more. Zoom back out.
-			if (imageErr != 0) {
-				dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
-				desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
-				desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
-				dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-				//if zooming back out didn't fix it, abort.
-				if (imageErr != 0) {
-					dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
-
-					PrintCenteredX("Error zooming in.", 130);
-					PrintCenteredX("Press any key to quit.", 140);
-					while (!os_GetCSC());
-					gfx_End();
-					return;
-				}
-			}
-		}
-
-		//subtract key. Zoom out by double.
-		if (global_lastKey == keyPress::sub && fullScreenImage) {
-			//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom Out");
-			if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomOut error"); }
-
-			//ensure we can zoom out without desiredWidthInPxl or desiredHeightInPxl becoming 0
-			if (desiredWidthInPxl / ZOOM_SCALE != 0 && desiredHeightInPxl / ZOOM_SCALE != 0) {
-				//apply the zoom out to the width and height
-				desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
-				desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
-
-				//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-				//this means we can't zoom out any more. Zoom back in.
-				if (imageErr != 0) {
-					//dbg_sprintf(dbgout, "\nCant zoom out trying zooming in...");
-					desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
-					desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
-					//dbg_sprintf(dbgout, "\n Zoomed in\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-
-					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-					//if zooming back in didn't fix it, abort.
-					if (imageErr != 0) {
-						dbg_sprintf(dbgout, "\nERR: Cant zoom out!!");
-
-						PrintCenteredX("Error zooming out.", 130);
-						PrintCenteredX("Press any key to quit.", 140);
-						while (!os_GetCSC());
-						gfx_End();
-						return;
-					}
-				}
-			}
-			else {
-				//dbg_sprintf(dbgout, "\nmaxWidth or desiredHeightInPxl too small. \n Zoom out aborted.");
-				//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-				//redraw the image. If it fails, I dunno why. It should be the exact same image as was previously displayed
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-				//err handler
-				if (imageErr != 0) {
-					dbg_sprintf(dbgout, "\nERR: Issue displaying same image??");
-
-					PrintCenteredX("Error with zoom.", 130);
-					PrintCenteredX("Press any key to quit.", 140);
-					while (kb_AnyKey() != 0); //wait for key lift
-					while (!os_GetCSC());
-					gfx_End();
-					return;
-				}
-			}
-		}
 
 		//Delete. delete all appvars related to current image
-		if (global_lastKey == keyPress::del) {
+		if (keyHandler.wasKeyPressed(keyPress::del)) {
 			//the current palette is about to be deleted. Set the default palette
 			gfx_SetDefaultPalette(gfx_8bpp);
 			//we don't want the user seeing the horrors of their image with the wrong palette
@@ -335,8 +155,7 @@ void drawHomeScreen()
 
 			PrintCenteredX("Picture deleted.", 130);
 			PrintCenteredX("Press any key.", 140);
-			while (kb_AnyKey() != 0); //wait for key lift
-			while (!os_GetCSC());
+			KeyPressHandler::waitForAnyKey();
 
 			//set color for splash screen
 			gfx_SetTextFGColor(XLIBC_GREY);
@@ -345,8 +164,7 @@ void drawHomeScreen()
 			//check if all images were deleted. If so, just quit.
 			if (picDB.size() == 0) {
 				drawNoImagesFound();
-				while (kb_AnyKey() != 0); //wait for key lift
-				while (!os_GetCSC());
+				KeyPressHandler::waitForAnyKey();
 				gfx_End();
 				return;
 			}
@@ -366,10 +184,12 @@ void drawHomeScreen()
 		}
 
 		/* Graph or down. Increases the name to start on and redraws the text */
-		if (global_lastKey == keyPress::graph || (global_lastKey == keyPress::down && !fullScreenImage)) {
+		if (keyHandler.wasKeyPressed(keyPress::graph) || (keyHandler.wasKeyPressed(keyPress::down) && !fullScreenImage)) {
 			selectedPicIndex++;
 			//make sure user can't scroll down too far
 			if (selectedPicIndex > picDB.size() - 1) {
+				dbg_sprintf(dbgout, "\ntoo high %d -> 0", selectedPicIndex);
+
 				selectedPicIndex = 0;
 			}
 
@@ -379,10 +199,12 @@ void drawHomeScreen()
 		}
 
 		/* Y= or up. Decreases the name to start on and redraws the text */
-		if (global_lastKey == keyPress::yequ || (global_lastKey == keyPress::up && !fullScreenImage)) {
+		if (keyHandler.wasKeyPressed(keyPress::yequ) || (keyHandler.wasKeyPressed(keyPress::up) && !fullScreenImage)) {
 			selectedPicIndex--;
 			// Checks if selectedName underflowed. selectedName shouldn't be more than the max number of images possible.
 			if (selectedPicIndex > MAX_IMAGES) {
+				dbg_sprintf(dbgout, "\nunderflow: %d -> %d", selectedPicIndex, (picDB.size() - 1));
+
 				selectedPicIndex = picDB.size() - 1;
 			}
 			resetPic = fullScreenImage;
@@ -390,8 +212,148 @@ void drawHomeScreen()
 			errorID = 9; //if an error is thrown, then we've scrolled past the safety barrier somehow.
 		}
 
+		//left, right, up, down. Image panning.
+		if (fullScreenImage) {
+			if (keyHandler.wasKeyPressed(keyPress::left)) {
+				errorID = 3;
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 1, 0);
+			}
+			if (keyHandler.wasKeyPressed(keyPress::right)) {
+				errorID = 4;
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);
+			}
+			if (keyHandler.wasKeyPressed(keyPress::up)) {
+				errorID = 5;
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);
+			}
+			if (keyHandler.wasKeyPressed(keyPress::down)) {
+				errorID = 6;
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
+			}
+
+			if (imageErr != 0) {
+				PrintCenteredX("Error: ", 150);
+				gfx_PrintUInt(errorID, 3);
+				PrintCenteredX("Press any key to quit.", 160);
+				while (!os_GetCSC());
+				gfx_End();
+				return;
+			}
+
+
+			//Zoom key. Zoom in as far as possible while maintaining full quality
+			if (keyHandler.wasKeyPressed(keyPress::zoom)) {
+				//pull image full dimensions from database
+				PicDatabase &picDB = PicDatabase::getInstance();
+
+				//convert subimg width to pixels width
+				desiredWidthInPxl = picDB.getPicture(selectedPicIndex).horizSubImages * SUBIMAGE_DIMENSIONS;
+				desiredHeightInPxl = picDB.getPicture(selectedPicIndex).vertSubImages * SUBIMAGE_DIMENSIONS;
+
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+				//this means we can't zoom in any more. Zoom back out.
+				if (imageErr != 0) {
+					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
+					desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
+					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
+					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+					//if zooming back out didn't fix it, abort.
+					if (imageErr != 0) {
+						dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
+
+						PrintCenteredX("Error zooming in.", 130);
+						PrintCenteredX("Press any key to quit.", 140);
+						while (!os_GetCSC());
+						gfx_End();
+						return;
+					}
+				}
+			}
+
+			//Plus key. Zoom in by double
+			if (keyHandler.wasKeyPressed(keyPress::add)) {
+				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomIn error"); }
+				//doubles zoom
+				desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
+				desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
+				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+				//this means we can't zoom in any more. Zoom back out.
+				if (imageErr != 0) {
+					dbg_sprintf(dbgout, "\nCant zoom in trying zooming out...");
+					desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
+					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
+					dbg_sprintf(dbgout, "\n Zoomed out\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+					//if zooming back out didn't fix it, abort.
+					if (imageErr != 0) {
+						dbg_sprintf(dbgout, "\nERR: Cant zoom in!!");
+
+						PrintCenteredX("Error zooming in.", 130);
+						PrintCenteredX("Press any key to quit.", 140);
+						while (!os_GetCSC());
+						gfx_End();
+						return;
+					}
+				}
+			}
+
+			//subtract key. Zoom out by double.
+			if (keyHandler.wasKeyPressed(keyPress::sub)) {
+				//dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom Out");
+				if (imageErr != 0) { dbg_sprintf(dbgout, "\npre-zoomOut error"); }
+
+				//ensure we can zoom out without desiredWidthInPxl or desiredHeightInPxl becoming 0
+				if (desiredWidthInPxl / ZOOM_SCALE != 0 && desiredHeightInPxl / ZOOM_SCALE != 0) {
+					//apply the zoom out to the width and height
+					desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
+					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
+
+					//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+					//this means we can't zoom out any more. Zoom back in.
+					if (imageErr != 0) {
+						//dbg_sprintf(dbgout, "\nCant zoom out trying zooming in...");
+						desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
+						desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
+						//dbg_sprintf(dbgout, "\n Zoomed in\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+
+						imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+						//if zooming back in didn't fix it, abort.
+						if (imageErr != 0) {
+							dbg_sprintf(dbgout, "\nERR: Cant zoom out!!");
+
+							PrintCenteredX("Error zooming out.", 130);
+							PrintCenteredX("Press any key to quit.", 140);
+							while (!os_GetCSC());
+							gfx_End();
+							return;
+						}
+					}
+				}
+				else {
+					//dbg_sprintf(dbgout, "\nmaxWidth or desiredHeightInPxl too small. \n Zoom out aborted.");
+					//dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+					//redraw the image. If it fails, I dunno why. It should be the exact same image as was previously displayed
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+					//err handler
+					if (imageErr != 0) {
+						dbg_sprintf(dbgout, "\nERR: Issue displaying same image??");
+
+						PrintCenteredX("Error with zoom.", 130);
+						PrintCenteredX("Press any key to quit.", 140);
+						while (kb_AnyKey() != 0); //wait for key lift
+						while (!os_GetCSC());
+						gfx_End();
+						return;
+					}
+				}
+			}
+		}
+
 		//Window. Reset zoom and pan
-		if (resetPic || global_lastKey == keyPress::window) {
+		if (resetPic || keyHandler.wasKeyPressed(keyPress::window)) {
 			if (fullScreenImage) {
 
 				picDB.getPicture(selectedPicIndex).xOffset = 0;
@@ -414,7 +376,6 @@ void drawHomeScreen()
 			if (!fullScreenImage) {
 				drawMenu(selectedPicIndex);
 			}
-			while (kb_AnyKey() != 0); //wait for key lift
 			imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, fullScreenImage);
 			if (imageErr != 0) {
 				PrintCenteredX("Error: ", 150);
@@ -425,6 +386,7 @@ void drawHomeScreen()
 				return;
 			}
 		}
+
 		if (!fullScreenImage)
 			drawWatermark();
 
@@ -444,8 +406,10 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	dbg_sprintf(dbgout, "\n\n--IMAGE CHANGE--");
 	PicDatabase &picDB = PicDatabase::getInstance();
 	imageData const &curPicture = picDB.getPicture(picName);
+	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
 
-	int24_t scaleNum{ 1 }, scaleDen{ 1 }, newSubimgWidthHeight{ 0 };
+
+	int24_t scaleNumerator{ 1 }, scaleDenominator{ 1 }, subimgNewDimNumerator{ 0 };
 	if (!fullScreenPic) {
 		//used for thumbnails
 		gfx_SetColor(PALETTE_BLACK);
@@ -463,37 +427,36 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	(uint24_t)imgWH[?]-'0' covers the 1's place
 	+1 accounts for 0 being the starting number
 	*/
-	uint24_t desiredWidthInSubimages{ (desiredWidthInPxl / SUBIMG_WIDTH_AND_HEIGHT) };
-	uint24_t desiredHeightInSubimages{ (desiredHeightInPxl / SUBIMG_WIDTH_AND_HEIGHT) };
+	uint24_t desiredWidthInSubimages{ (desiredWidthInPxl / SUBIMAGE_DIMENSIONS) };
+	uint24_t desiredHeightInSubimages{ (desiredHeightInPxl / SUBIMAGE_DIMENSIONS) };
 	dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n",
 		desiredWidthInSubimages, curPicture.horizSubImages, desiredHeightInSubimages, curPicture.vertSubImages);
 
 	//checks if it should scale an image horizontally or vertically.
-	if ((curPicture.horizSubImages * 80) / 320 >= (curPicture.vertSubImages * 80) / 240) {
-		scaleNum = desiredWidthInSubimages;
-		scaleDen = curPicture.horizSubImages;
-		//dbg_sprintf(dbgout, "\nWidth too wide.");
+	if ((curPicture.horizSubImages * SUBIMAGE_DIMENSIONS) / LCD_WIDTH >= (curPicture.vertSubImages * SUBIMAGE_DIMENSIONS) / LCD_HEIGHT) {
+		//width too wide
+		scaleNumerator = desiredWidthInSubimages;
+		scaleDenominator = curPicture.horizSubImages;
 	}
 	else {
-		scaleNum = desiredHeightInSubimages;
-		scaleDen = curPicture.vertSubImages;
-		//dbg_sprintf(dbgout, "\nHeight too tall. ");
+		// Height too tall
+		scaleNumerator = desiredHeightInSubimages;
+		scaleDenominator = curPicture.vertSubImages;
 	}
 
-
-	if (scaleNum == 0 || scaleDen == 0) {
-		dbg_sprintf(dbgout, "\nERR: Cant zoom out\n scaleNum:%d\n scaleDen:%d", scaleNum, scaleDen);
+	// Check for invalid fractions
+	if (scaleNumerator == 0 || scaleDenominator == 0) {
+		dbg_sprintf(dbgout, "\nERR: Cant zoom out\n scaleNumerator:%d\n scaleDenominator:%d", scaleNumerator, scaleDenominator);
 		return 1;
 	}
-	newSubimgWidthHeight = SUBIMG_WIDTH_AND_HEIGHT * scaleNum;
 
 	/*
 	[jacobly] so now whenever we want to compute
 	`x * scale`
 	we instead want to compute
-	`x * (scaleNum / scaleDen)`
+	`x * (scaleNumerator / scaleDenominator)`
 	which can now be reordered to use strictly integer math as
-	`(x * scaleNum) / scaleDen`
+	`(x * scaleNumerator) / scaleDenominator`
 
 	[jacobly] if you don't know:
 	floorDiv(x, y) := x / y;
@@ -502,29 +465,28 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	[MateoC] huh I didn't know about roundDiv
 	*/
 
-	dbg_sprintf(dbgout, "\n newWH: %d \n ScaleNum: %d \n scaleDen: %d \n xOffset: %d \n yOffset %d", newSubimgWidthHeight, scaleNum, scaleDen, curPicture.xOffset, curPicture.yOffset);
+	dbg_sprintf(dbgout, "\n newWH: %d \n ScaleNum: %d \n scaleDenominator: %d \n xOffset: %d \n yOffset %d", subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
 
 	//pointer to memory where each unsized subimage will be stored
-	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMG_WIDTH_AND_HEIGHT, SUBIMG_WIDTH_AND_HEIGHT) };
+	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
 	if (!srcImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate src memory!");
-		//PrintCenteredX("ERR: Failed to allocate src memory!", 130);
 		return 1;
 	}
-	//scales the subimage width and height to the final output dimensions
-	int24_t newSubimgDim{ newSubimgWidthHeight / scaleDen };
+	//Final dimension of all subimages
+	subimgNewDimNumerator = SUBIMAGE_DIMENSIONS * scaleNumerator;
+	int24_t subimgScaledDim{ subimgNewDimNumerator / scaleDenominator };
+
 	//ensure the resized subimage will fit within the dimensions of the screen.
-	if (newSubimgDim > LCD_HEIGHT) {
-		dbg_sprintf(dbgout, "\nERR: Subimage will be too large: %d", newSubimgDim);
-		//PrintCenteredX("ERR: Output picture too large!", 130);
+	if (subimgScaledDim > LCD_HEIGHT) {
+		dbg_sprintf(dbgout, "\nERR: Subimage will be too large: %d", subimgScaledDim);
 		free(srcImg);
 		return 1;
 	}
 	//allocates memory for resized image
-	gfx_sprite_t *outputImg{ gfx_MallocSprite(newSubimgDim,newSubimgDim) };
+	gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim,subimgScaledDim) };
 	if (!outputImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate output memory!");
-		//PrintCenteredX("ERR: Failed to allocate output memory!", 130);
 		free(srcImg);
 		return 1;
 	}
@@ -559,11 +521,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	picDB.getPicture(picName).xOffset += shiftX;
 	picDB.getPicture(picName).yOffset += shiftY;
 
-	uint24_t const shift = newSubimgDim;
-
-	dbg_sprintf(dbgout, "\nshift: %d shiftX: %d shiftY: %d", shift, shiftX, shiftY);
-
-	//gfx_CopyRectangle(gfx_location_t src, gfx_location_t dst, uint24_t src_x, uint8_t src_y, uint24_t dst_x, uint8_t dst_y, uint24_t width, uint8_t height)
 	//Check if we need to pan the image. If so, shift the contents of the screen over so we don't need to redraw as many subimages.
 	if (shiftX != 0 || shiftY != 0) {
 		gfx_SetDrawBuffer();
@@ -572,25 +529,25 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		if (shiftX > 0) {
 			bReverseDirection = true;
 			bDrawVertical = true;
-			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, shift, 0, (320 - shift), 240);
+			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
 		}
 		// Shift screen to left
 		if (shiftX < 0) {
 			bReverseDirection = false;
 			bDrawVertical = true;
-			gfx_CopyRectangle(gfx_screen, gfx_buffer, shift, 0, 0, 0, (320 - shift), 240);
+			gfx_CopyRectangle(gfx_screen, gfx_buffer, subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
 		}
 		// Shift screen up
 		if (shiftY > 0) {
 			bReverseDirection = false;
 			bDrawVertical = false;
-			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, shift, 0, 0, 320, (240 - shift));
+			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
 		}
 		// Shift screen down
 		if (shiftY < 0) {
 			bReverseDirection = true;
 			bDrawVertical = false;
-			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, 0, shift, 320, (240 - shift));
+			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
 		}
 
 		gfx_BlitBuffer();
@@ -610,17 +567,17 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//This calculates the number of subimages you can fit in the screen horizontally
 	//we know the horizontal resolution of the screen is 320px. 
-	//We can get the width of each subimage by doing newSubimgWidthHeight/scaleDen
+	//We can get the width of each subimage by doing subimgNewDimNumerator/scaleDenominator
 	//ceilDiv since we don't want missing subimages.
-	int24_t rightMostSubimg{ ceilDiv(static_cast<int24_t>(LCD_WIDTH) , (newSubimgWidthHeight / scaleDen)) + 1 };
+	int24_t rightMostSubimg{ ceilDiv(static_cast<int24_t>(LCD_WIDTH) , (subimgNewDimNumerator / scaleDenominator)) + 1 };
 	//leftmost and topmost always starts at 0
 	int24_t leftMostSubimg{ 0 };
 	int24_t topMostSubimg{ 0 };
 	//This calculates the number of subimages you can fit in the screen vertically
 	//we know the vertical resolution of the screen is 240px. 
-	//We can get the width of each subimages by doing newSubimgWidthHeight/scaleDen
+	//We can get the width of each subimages by doing subimgNewDimNumerator/scaleDenominator
 	//ceilDiv since we don't want missing subimages. (Overflow is compensated for, if necessary, below)
-	int24_t bottomMostSubimg{ ceilDiv(static_cast<int24_t>(LCD_HEIGHT) , (newSubimgWidthHeight / scaleDen)) };
+	int24_t bottomMostSubimg{ ceilDiv(static_cast<int24_t>(LCD_HEIGHT) , (subimgNewDimNumerator / scaleDenominator)) };
 
 
 	/* Apply pan offsets */
@@ -654,7 +611,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	const int24_t yFirstID{ (topMostSubimg) }, yLastID{ (bottomMostSubimg)-1 };
 
 	const uint24_t thumbnailOffsetX = fullScreenPic ? 0 : 150;
-	const uint24_t thumbnailOffsetY = fullScreenPic ? 0 : ((240 - (newSubimgDim * bottomMostSubimg)) / 2);
+	const uint24_t thumbnailOffsetY = fullScreenPic ? 0 : ((240 - (subimgScaledDim * bottomMostSubimg)) / 2);
 
 	dbg_sprintf(dbgout, "\nxFirstID %d \nxLastID %d", xFirstID, xLastID);
 
@@ -662,12 +619,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	int24_t ySubimgID{ 0 };
 	// Loop through all subimages to create full image
 	while (iterate(xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID, bDrawVertical, bReverseDirection)) {
-		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (newSubimgWidthHeight / scaleDen)) };
-		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (newSubimgWidthHeight / scaleDen)) };
+		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (subimgNewDimNumerator / scaleDenominator)) };
+		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 
 		//a key interrupted output. Quit immediately
-		global_lastKey = scanKeys(fullScreenPic);
-		if (global_lastKey != keyPress::null) {
+		
+		if (keyHandler.scanKeys(fullScreenPic)) {
 			if (fullScreenPic) {
 				dbg_sprintf(dbgout, "\nRender aborted!");
 			}
@@ -677,7 +634,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			return 0;
 		}
 
-		if (subimgPxlPosX > 320 || subimgPxlPosX < 0 || subimgPxlPosY > 240 || subimgPxlPosY < 0)
+		if (subimgPxlPosX > LCD_WIDTH || subimgPxlPosX < 0 || subimgPxlPosY > LCD_HEIGHT || subimgPxlPosY < 0)
 			continue;
 
 		//combines the separate parts into one name to search for
@@ -703,7 +660,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 			//displays subimage
 			//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
-			if (subimgPxlPosX < 0 || subimgPxlPosX + newSubimgDim > 320 || subimgPxlPosY < 0 || subimgPxlPosY + newSubimgDim > 240)
+			if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT)
 
 				//if (xSubimgID >= xLastID -1 || ySubimgID >= yLastID -1 || xSubimgID <= xFirstID +1 || ySubimgID <= yFirstID +1) 
 			{
@@ -719,12 +676,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			//subimage does not exist, display error image
 			dbg_sprintf(dbgout, "\nERR: Subimage doesn't exist!");
 			dbg_sprintf(dbgout, "\n %s", picAppvarToFind);
-			//dbg_sprintf(dbgout,"\nERR: \nxsubimage: %d \newSubimgWidthHeight: %d \nscaleDen: %d",xSubimage,newSubimgWidthHeight,scaleDen);
+			//dbg_sprintf(dbgout,"\nERR: \nxsubimage: %d \subimgNewDimNumerator: %d \nscaleDen: %d",xSubimage,subimgNewDimNumerator,scaleDenominator);
 			zx7_Decompress(srcImg, errorTriangle_compressed);
 			//resizes it to outputImg size
 			gfx_ScaleSprite(srcImg, outputImg);
 			//displays the output image
-			//dbg_sprintf(dbgout,"\nxsubimage: %d \newSubimgWidthHeight: %d \nscaleDen: %d\n",xSubimage,newSubimgWidthHeight,scaleDen);
+			//dbg_sprintf(dbgout,"\nxsubimage: %d \subimgNewDimNumerator: %d \nscaleDen: %d\n",xSubimage,subimgNewDimNumerator,scaleDenominator);
 			gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
 			//while(!os_GetCSC());
 			continue;
