@@ -2,6 +2,23 @@
 
 #include "globals.h"
 #include "types/vector.h"
+#include "types/pair.h"
+#include "types/map.h"
+
+struct imageData
+{
+	char imgName[9];
+	char palletName[9];
+	char ID[3];
+	double zoomScale{ 1.0 };
+	int24_t xOffset{ 0 };
+	int24_t yOffset{ 0 };
+	int24_t horizSubImages{ 0 };
+	int24_t vertSubImages{ 0 };
+
+	//When we find a subimage, store the pointer to it here.
+	Map< uint24_t, Map< uint24_t, void*>> cache;
+};
 
 class PicDatabase
 {
@@ -28,7 +45,7 @@ public:
 	// Resets all memory this db uses
 	void resetPicDB()
 	{
-		allImages.clear();
+		allImages.clear_deallocate();
 	}
 
 	uint24_t size()
@@ -47,6 +64,17 @@ public:
 	{
 		allImages.push_back(img);
 	}
+
+	void* searchCache(imageData & img,  uint24_t imgXID, uint24_t imgYID) const
+	{
+		return img.cache.find(imgXID)->find(imgYID);
+		
+	}
+
+	//void addToCache(imageData& img, uint24_t imgXID, uint24_t imgYID, void *VATptr)
+	//{
+		//img.cache
+	//}
 
 	imageData &getPicture(uint24_t index)
 	{

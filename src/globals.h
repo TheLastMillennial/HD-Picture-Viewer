@@ -38,14 +38,6 @@
 #define PALETTE_BLACK 0 //the xlibc palette and all hdpic generated palettes will have black as 0
 #define PALETTE_WHITE 255 //the xlibc palette and all hdpic generated palettes will have white as 255
 
-struct imageData
-{
-	char imgName[9];
-	char palletName[9];
-	char ID[3];
-	double zoomScale{ 1.0 };
-	int24_t xOffset{ 0 };
-	int24_t yOffset{ 0 };
-	int24_t horizSubImages{ 0 };
-	int24_t vertSubImages{ 0 };
-};
+
+
+

@@ -117,6 +117,15 @@ public:
 		//capacity = 0;   // Reset capacity
 	}
 
+	// Function to clear all elements from the vector
+	void clear_deallocate()
+	{
+		size = 0;
+		delete[] data;  // Free the memory
+		data = NULL;    // Reset the data pointer to NULL
+		capacity = 0;   // Reset capacity
+	}
+
 
 
 private:

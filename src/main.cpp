@@ -28,6 +28,8 @@ int main(void)
 	gfx_Begin();
 	gfx_SetTextTransparentColor(254);
 
+
+
 	drawSplashScreen();
 	if (findPictures() == 0) {
 		drawNoImagesFound();
@@ -68,7 +70,7 @@ void drawHomeScreen()
 
 	/* UI */
 	bool quitProgram{ false };
-	uint8_t errorID = 0;	
+	uint8_t errorID = 0;
 
 	do {
 		static bool fullScreenImage{ false };
@@ -407,7 +409,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 {
 	dbg_sprintf(dbgout, "\n\n--DRAW IMAGE--");
 	PicDatabase &picDB = PicDatabase::getInstance();
-	imageData const &curPicture = picDB.getPicture(picName);
+	imageData &curPicture = picDB.getPicture(picName);
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
 
 
@@ -512,7 +514,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	ti_Close(palSlot);
 
 
-	/* Apply Offset */
+	/* Apply Pan Offset */
 
 	// Which direction to draw the subimages. 
 	// By default it's the percieved most performant option
@@ -561,11 +563,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	}
 
 
-	//Displays all the images
+	/* Set up to display all the subimages */
 	dbg_sprintf(dbgout, "\n-------------------------");
-	//dbg_sprintf(dbgout, "\nwS: %d\nxO: %d", curPicture.horizSubImages, curPicture.xOffset);
-	//dbg_sprintf(dbgout, "\nhS: %d\nyO: %d", curPicture.vertSubImages, curPicture.yOffset);
-
 
 	//This calculates the number of subimages you can fit in the screen horizontally
 	//we know the horizontal resolution of the screen is 320px. 
@@ -581,7 +580,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//ceilDiv since we don't want missing subimages. (Overflow is compensated for, if necessary, below)
 	int24_t bottomMostSubimg{ ceilDiv(static_cast<int24_t>(LCD_HEIGHT) , (subimgNewDimNumerator / scaleDenominator)) };
 
-
 	/* Apply pan offsets */
 	//if we're panning horizontally, shift the rightmost and leftmost subimages (xOffset is negative in this case)
 	rightMostSubimg -= curPicture.xOffset;
@@ -589,7 +587,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//if we're panning vertically, shift the topmost and bottommost subimages (yOffset is negative in this case)
 	bottomMostSubimg += curPicture.yOffset;
 	topMostSubimg += curPicture.yOffset;
-
 
 	/* Ensure we don't try to display more subimages than exist */
 	if (rightMostSubimg > curPicture.horizSubImages)
@@ -600,14 +597,10 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		bottomMostSubimg = curPicture.vertSubImages;
 	if (topMostSubimg < 0)
 		topMostSubimg = 0;
-	
-	//dbg_sprintf(dbgout, "\nrightMost %d\nLeftMost %d", rightMostSubimg, leftMostSubimg);
-	//dbg_sprintf(dbgout, "\ntopMost %d\nbottomMost %d", topMostSubimg, bottomMostSubimg);
 
 	/* Display final image */
 
-	//the -1 is to account for both the
-	//the +1 is to prevent underflow which would cause an infinite loop
+	//the -1 is to account for some loop wierdness. Specifically in the iterate() function.
 	//this for loop outputs pic right to left, top to bottom
 	const int24_t xFirstID{ (leftMostSubimg) }, xLastID{ (rightMostSubimg)-1 };
 	const int24_t yFirstID{ (topMostSubimg) }, yLastID{ (bottomMostSubimg)-1 };
@@ -617,19 +610,17 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	dbg_sprintf(dbgout, "\n Image Name: %s\n x-range: %d - %d\n y-range: %d - %d", curPicture.imgName, xFirstID, xLastID, yFirstID, yLastID);
 
-	int24_t xSubimgID{ 0 };
-	int24_t ySubimgID{ 0 };
-
 	// Loop through all subimages to create full image
 	bool bFirstRun{ true };
+	int24_t xSubimgID{ 0 };
+	int24_t ySubimgID{ 0 };
 	while (iterate(xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID, bDrawVertical, bReverseDirection, bFirstRun)) {
-		
-		
+
+		// Figure out exactly which pixel the subimage need to be displayed
 		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 
 		//dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl",xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
-
 
 		//a key interrupted output. Quit immediately
 		if (keyHandler.scanKeys(fullScreenPic)) {
@@ -645,52 +636,55 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		//combines the separate parts into one name to search for
 		char picAppvarToFind[9];
-		sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
-		//dbg_sprintf(dbgout, "\n%.2s%03u%03u @ %d x %d", curPicture.ID, xSubimgID, ySubimgID, subimgPxlPosX, subimgPxlPosY);
-		/*
-		* This opens the variable with the name that was just assembled.
-		* It then gets the pointer to that and stores it in a graphics variable
-		*/
-		const ti_var_t subimgSlot{ ti_Open(picAppvarToFind,"r") };
-		//checks if the subimage exists
-		if (subimgSlot) {
-			//subimage exists, load it
-			//seeks past header
-			ti_Seek(16, SEEK_CUR, subimgSlot);
-			//store the original image into srcImg
-			//srcImg = (gfx_sprite_t*)ti_GetDataPtr(subimgSlot);
 
-			zx0_Decompress(srcImg, ti_GetDataPtr(subimgSlot));
-			//resizes it to outputImg size
-			gfx_ScaleSprite(srcImg, outputImg);
+		//Pull pointer to the subimage from the cache
+		//dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
+		void *subimgPtr = curPicture.cache[xSubimgID][ySubimgID];
 
-			//displays subimage
-			//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
-			if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT)
+		//Check for cache miss
+		ti_var_t subimgSlot = NULL;
+		if (subimgPtr == nullptr) {
+			dbg_sprintf(dbgout, "\nCache miss");
 
-				//if (xSubimgID >= xLastID -1 || ySubimgID >= yLastID -1 || xSubimgID <= xFirstID +1 || ySubimgID <= yFirstID +1) 
-			{
-				//dbg_sprintf(dbgout, "\n\nCLIPPED");
-				gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
+			//cache miss. Find the appvar by name
+			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
+
+			subimgSlot = ti_Open(picAppvarToFind, "r");
+			if (subimgSlot) {
+				//seeks past header
+				ti_Seek(16, SEEK_CUR, subimgSlot);
+				//cache the pointer to the subimage for next time
+				//todo: does this update the map?
+				subimgPtr = ti_GetDataPtr(subimgSlot);
+				curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
 			}
 			else {
-				//dbg_sprintf(dbgout, "\nnoclip");
-				gfx_Sprite_NoClip(outputImg, subimgPxlPosX, subimgPxlPosY);
+				//subimage does not exist, display error image
+				dbg_sprintf(dbgout, "\nERR: Subimage doesn't exist!");
+				dbg_sprintf(dbgout, "\n %s", picAppvarToFind);
+				zx7_Decompress(srcImg, errorTriangle_compressed);
+				gfx_ScaleSprite(srcImg, outputImg);
+				gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
+				continue;
 			}
 		}
-		else {
-			//subimage does not exist, display error image
-			dbg_sprintf(dbgout, "\nERR: Subimage doesn't exist!");
-			dbg_sprintf(dbgout, "\n %s", picAppvarToFind);
-			//dbg_sprintf(dbgout,"\nERR: \nxsubimage: %d \subimgNewDimNumerator: %d \nscaleDen: %d",xSubimage,subimgNewDimNumerator,scaleDenominator);
-			zx7_Decompress(srcImg, errorTriangle_compressed);
-			//resizes it to outputImg size
-			gfx_ScaleSprite(srcImg, outputImg);
-			//displays the output image
-			//dbg_sprintf(dbgout,"\nxsubimage: %d \subimgNewDimNumerator: %d \nscaleDen: %d\n",xSubimage,subimgNewDimNumerator,scaleDenominator);
+		/* subimage exists, display it */
+
+		//decompress subimage into srcImg
+		zx0_Decompress(srcImg, subimgPtr);
+		//resizes it to outputImg size
+		gfx_ScaleSprite(srcImg, outputImg);
+
+		//displays subimage
+		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
+		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT)
+		{
+			//dbg_sprintf(dbgout, "\nCLIPPED");
 			gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
-			//while(!os_GetCSC());
-			continue;
+		}
+		else {
+			//dbg_sprintf(dbgout, "\nnoclip");
+			gfx_Sprite_NoClip(outputImg, subimgPxlPosX, subimgPxlPosY);
 		}
 
 		//cleans up
@@ -857,7 +851,7 @@ void drawMenu(uint24_t selectedName)
 // xFirstID and xLastID are the bounds for xSubimgID
 // yFirstID and yLastID are the bounds for ySubimgID
 // bFirstRun MUST be set to true. It will be changed to false after the first iteration.
-bool iterate(int24_t &xSubimgID, int24_t const &xFirstID, int24_t const &xLastID, int24_t &ySubimgID, int24_t const &yFirstID, int24_t const &yLastID, bool bDrawVertically, bool bDrawOppositeSideFirst, bool & bFirstRun)
+bool iterate(int24_t &xSubimgID, int24_t const &xFirstID, int24_t const &xLastID, int24_t &ySubimgID, int24_t const &yFirstID, int24_t const &yLastID, bool bDrawVertically, bool bDrawOppositeSideFirst, bool &bFirstRun)
 {
 	if (bDrawVertically) {
 		if (bDrawOppositeSideFirst) {
