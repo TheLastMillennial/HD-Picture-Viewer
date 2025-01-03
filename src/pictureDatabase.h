@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+
 #include "globals.h"
 #include "types/vector.h"
 #include "types/pair.h"
@@ -17,7 +19,7 @@ struct imageData
 	int24_t vertSubImages{ 0 };
 
 	//When we find a subimage, store the pointer to it here.
-	Map< uint24_t, Map< uint24_t, void*>> cache;
+	Map< uint24_t, Map< uint24_t, void *>> cache;
 };
 
 class PicDatabase
@@ -62,13 +64,39 @@ public:
 	//Add a picture to the database
 	void addPicture(imageData const img)
 	{
+
+		if (allImages.getSize() == 1) {
+			int24_t result = std::strcmp(img.imgName, allImages[0].imgName);
+			//dbg_sprintf(dbgout, "\n(1)Compare result %d for %s : %s", result, img.imgName, allImages[0].imgName);
+
+			if (result < 0) {
+				allImages.insert(0, img);
+				//dbg_sprintf(dbgout, "\nCompare: found match");
+
+				return;
+			}
+		}
+		for (int24_t i = 0; i < static_cast<int24_t>(allImages.getSize()) - 2; i++) {
+			int24_t result = std::strcmp(img.imgName, allImages[i].imgName);
+			//dbg_sprintf(dbgout, "\nCompare result %d for %s : %s", result, img.imgName, allImages[0].imgName);
+			if (result < 0) {
+				allImages.insert(i, img);
+				//dbg_sprintf(dbgout, "\nCompare: found match");
+
+				return;
+			}
+		}
+		//dbg_sprintf(dbgout, "\nCompare: no results");
+
 		allImages.push_back(img);
+
+
 	}
 
-	void* searchCache(imageData & img,  uint24_t imgXID, uint24_t imgYID) const
+	void *searchCache(imageData &img, uint24_t imgXID, uint24_t imgYID) const
 	{
 		return img.cache.find(imgXID)->find(imgYID);
-		
+
 	}
 
 	//void addToCache(imageData& img, uint24_t imgXID, uint24_t imgYID, void *VATptr)

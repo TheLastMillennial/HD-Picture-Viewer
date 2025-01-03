@@ -37,6 +37,31 @@ public:
 		return size == 0;
 	}
 
+	// Function to insert an element at a specific position
+	void insert(uint24_t index, const T &value)
+	{
+		if (index > size) {
+			dbg_sprintf(dbgout, "\nIndex out of range.\n Index: %d\n Vector Size: %d\n", index, size);
+			return;
+		}
+
+		// Resize the vector if it's full
+		if (size == capacity) {
+			resize(capacity == 0 ? 1 : capacity * 2);
+		}
+
+		// Shift elements to make space for the new element
+		for (size_t i = size; i > index; --i) {
+			data[i] = data[i - 1];
+		}
+
+		// Insert the new element
+		data[index] = value;
+
+		// Increment size
+		++size;
+	}
+
 	// Function to add an element to the vector
 	void push_back(const T &value)
 	{

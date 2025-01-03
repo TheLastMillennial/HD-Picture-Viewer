@@ -373,8 +373,6 @@ void drawHomeScreen()
 
 		// If necessary, draw the image with new settings.
 		if (redrawPic) {
-			dbg_sprintf(dbgout, "\nredrawPic Call");
-
 			if (!fullScreenImage) {
 				drawMenu(selectedPicIndex);
 			}
@@ -644,7 +642,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//Check for cache miss
 		ti_var_t subimgSlot = NULL;
 		if (subimgPtr == nullptr) {
-			dbg_sprintf(dbgout, "\nCache miss");
+			//dbg_sprintf(dbgout, "\nCache miss");
 
 			//cache miss. Find the appvar by name
 			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
@@ -677,8 +675,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		//displays subimage
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
-		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT)
-		{
+		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT) {
 			//dbg_sprintf(dbgout, "\nCLIPPED");
 			gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
 		}
