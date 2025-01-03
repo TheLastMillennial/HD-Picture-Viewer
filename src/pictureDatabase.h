@@ -148,7 +148,6 @@ public:
 				loadingBar.increment();
 			}
 		}
-
 		allImages.removeAt(picName);
 	}
 };

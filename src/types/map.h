@@ -230,5 +230,10 @@ public:
 		return node != nullptr;
 
 	}
+
+	bool isEmpty()
+	{
+		return root == nullptr;
+	}
 };
 

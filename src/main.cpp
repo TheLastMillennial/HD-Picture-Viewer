@@ -155,6 +155,7 @@ void drawHomeScreen()
 			PrintCenteredX("Picture deleted.", 130);
 			PrintCenteredX("Press any key.", 140);
 			KeyPressHandler::waitForAnyKey();
+			keyHandler.reset();
 
 			//set color for splash screen
 			gfx_SetTextFGColor(XLIBC_GREY);
@@ -608,8 +609,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	dbg_sprintf(dbgout, "\n Image Name: %s\n x-range: %d - %d\n y-range: %d - %d", curPicture.imgName, xFirstID, xLastID, yFirstID, yLastID);
 
-	// Loop through all subimages to create full image
+	/* Loop through all subimages to create full image */
 	bool bFirstRun{ true };
+	//If there's no cache yet, don't bother even checking it.
+	bool bDisableCache{ curPicture.cache.isEmpty() }; 
+	dbg_sprintf(dbgout, "\nbDisableCache: %d", bDisableCache);
+
 	int24_t xSubimgID{ 0 };
 	int24_t ySubimgID{ 0 };
 	while (iterate(xSubimgID, xFirstID, xLastID, ySubimgID, yFirstID, yLastID, bDrawVertical, bReverseDirection, bFirstRun)) {
@@ -635,9 +640,13 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//combines the separate parts into one name to search for
 		char picAppvarToFind[9];
 
-		//Pull pointer to the subimage from the cache
 		//dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
-		void *subimgPtr = curPicture.cache[xSubimgID][ySubimgID];
+
+
+		//Pull pointer to the subimage from the cache
+		void *subimgPtr{ nullptr };
+		if (!bDisableCache)
+			subimgPtr = curPicture.cache[xSubimgID][ySubimgID];
 
 		//Check for cache miss
 		ti_var_t subimgSlot = NULL;

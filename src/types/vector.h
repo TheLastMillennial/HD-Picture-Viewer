@@ -126,10 +126,6 @@ public:
 
 		// Decrease the size
 		--size;
-
-		//This is slower, but frees up precious memory.
-		// HD Pic only adds elements at startup so resizing smaller can make sense.
-		resize(size);
 	}
 
 	// Function to clear all elements from the vector
