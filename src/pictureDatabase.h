@@ -61,24 +61,43 @@ public:
 		allImages.reserve(size);
 	}
 
+	void toLower(const char strIn[9], char strOut[9])
+	{
+		for (int i = 0; i < 9; ++i) {
+			if (strIn[i] >= 'A' && strIn[i] <= 'Z') {
+				strOut[i] = strIn[i] + ('a' - 'A'); // Convert to lowercase
+			}
+			else {
+				strOut[i] = strIn[i];
+			}
+		}
+	}
+
 	//Add a picture to the database
 	void addPicture(imageData const img)
 	{
 
 		if (allImages.getSize() == 1) {
-			int24_t result = std::strcmp(img.imgName, allImages[0].imgName);
-			//dbg_sprintf(dbgout, "\n(1)Compare result %d for %s : %s", result, img.imgName, allImages[0].imgName);
+			char left[9], right[9];
+			toLower(img.imgName, left);
+			toLower(allImages[0].imgName, right);
+
+			int24_t result = std::strcmp(left, right);
+			//dbg_sprintf(dbgout, "\n(1)Compare result %d for %s : %s", result, left, right);
 
 			if (result < 0) {
 				allImages.insert(0, img);
 				//dbg_sprintf(dbgout, "\nCompare: found match");
-
 				return;
 			}
 		}
 		for (int24_t i = 0; i < static_cast<int24_t>(allImages.getSize()) - 2; i++) {
-			int24_t result = std::strcmp(img.imgName, allImages[i].imgName);
-			//dbg_sprintf(dbgout, "\nCompare result %d for %s : %s", result, img.imgName, allImages[0].imgName);
+			char left[9], right[9];
+			toLower(img.imgName, left);
+			toLower(allImages[i].imgName, right);
+
+			int24_t result = std::strcmp(left, right);
+		    //dbg_sprintf(dbgout, "\nCompare result %d for %s : %s", result, left, right);
 			if (result < 0) {
 				allImages.insert(i, img);
 				//dbg_sprintf(dbgout, "\nCompare: found match");
@@ -87,10 +106,7 @@ public:
 			}
 		}
 		//dbg_sprintf(dbgout, "\nCompare: no results");
-
 		allImages.push_back(img);
-
-
 	}
 
 	void *searchCache(imageData &img, uint24_t imgXID, uint24_t imgYID) const

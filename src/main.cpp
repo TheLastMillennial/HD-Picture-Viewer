@@ -613,7 +613,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	bool bFirstRun{ true };
 	//If there's no cache yet, don't bother even checking it.
 	bool bDisableCache{ curPicture.cache.isEmpty() }; 
-	dbg_sprintf(dbgout, "\nbDisableCache: %d", bDisableCache);
+	//dbg_sprintf(dbgout, "\nbDisableCache: %d", bDisableCache);
 
 	int24_t xSubimgID{ 0 };
 	int24_t ySubimgID{ 0 };
