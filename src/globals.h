@@ -10,8 +10,8 @@
 * ticalc.org
 */
 #define OBTAINED_FROM "GitHub Bin Folder"
-#define VERSION "2.0.1 from " OBTAINED_FROM
-#define YEAR "2024"
+#define VERSION "2.1.0-beta.1 from " OBTAINED_FROM
+#define YEAR "2025"
 #define TUTORIAL_LINK "https://youtu.be/uixL9t5ZTJs"
 
 
