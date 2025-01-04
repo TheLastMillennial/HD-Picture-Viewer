@@ -19,7 +19,6 @@
 #include "pictureDatabase.h"
 #include "globals.h"
 #include "guiUtils.h"
-#include "gfx/errorgfx.h"
 #include "types/vector.h"
 
 
@@ -76,6 +75,7 @@ void drawHomeScreen()
 
 	do {
 		static bool fullScreenImage{ false };
+		static uint8_t existingKeypressCount{ 0 };
 		bool resetPic{ false }, redrawPic{ false };
 
 		// Pressing on means halt immediately.
@@ -95,13 +95,19 @@ void drawHomeScreen()
 				continue; // no new keypress. There is nothing to do.
 			}
 			else {
+				existingKeypressCount = 0;
 				dbg_sprintf(dbgout, "\nNew Key press");
 			}
 		}
 		else {
+			// an existing key should not be held for this many times in a row
+			if (existingKeypressCount++ > 10)
+				keyHandler.reset();
 			dbg_sprintf(dbgout, "\nExisting key press");
 		}
 		// Key press detected
+
+
 
 
 			// clear. Go back.
@@ -253,8 +259,8 @@ void drawHomeScreen()
 					desiredWidthInPxl = prevWidth;
 					desiredHeightInPxl = prevHeight;
 					redrawPic = true;
-					errorID = kb_KeyZoom; //260
 				}
+				errorID = kb_KeyZoom; //260
 			}
 
 			//Plus key. Zoom in by double
@@ -264,26 +270,27 @@ void drawHomeScreen()
 				desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
 				desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
 				dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-				//this means we can't zoom in any more. Zoom back out.
-				if (imageErr != 0) {
-					dbg_sprintf(dbgout, "\nCant zoom in. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
-					desiredWidthInPxl = prevWidth;
-					desiredHeightInPxl = prevHeight;
-					redrawPic = true;
-					errorID = kb_KeyAdd; //1538
-				}
+				//if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
+
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+					//this means we can't zoom in any more. Zoom back out.
+					if (imageErr != 0) {
+						dbg_sprintf(dbgout, "\nCant zoom in. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
+						desiredWidthInPxl = prevWidth;
+						desiredHeightInPxl = prevHeight;
+					}
+				//}
+				errorID = kb_KeyAdd; //1538
 			}
 
 			//subtract key. Zoom out by double.
 			if (keyHandler.wasKeyPressed(kb_KeySub)) {
-				//ensure we can zoom out without desiredWidthInPxl or desiredHeightInPxl becoming 0
-				if (desiredWidthInPxl / ZOOM_SCALE != 0 && desiredHeightInPxl / ZOOM_SCALE != 0) {
-					//apply the zoom out to the width and height
-					uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
-					desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
-					desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
+				//apply the zoom out to the width and height
+				uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
+				desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
+				desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
 
+				if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
 					dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
 					//this means we can't zoom out any more. Zoom back in.
@@ -291,10 +298,9 @@ void drawHomeScreen()
 						dbg_sprintf(dbgout, "\nCant zoom out. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
 						desiredWidthInPxl = prevWidth;
 						desiredHeightInPxl = prevHeight;
-						redrawPic = true;
-						errorID = kb_KeySub; //1540
 					}
 				}
+				errorID = kb_KeySub; //1540
 			}
 		}
 
@@ -357,40 +363,17 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	imageData &curPicture = picDB.getPicture(picName);
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
 
-
-	int24_t scaleNumerator{ 1 }, scaleDenominator{ 1 }, subimgNewDimNumerator{ 0 };
-	if (!fullScreenPic) {
-		//used for thumbnails
-		gfx_SetColor(PALETTE_BLACK);
-		gfx_FillRectangle_NoClip(150, 0, 170, 240);
-	}
-
-
-	//Converts the width/height from a char array into two integers by converting char into decimal value
-	//then subtracting 48 to get the actual number.
-	//dbg_sprintf(dbgout, "\nimg width in subimg: %d \nimg height in subimg: %d\n", curPicture.horizSubImages, curPicture.vertSubImages);
-
-	/*converts the char numbers from the header appvar into uint numbers
-	(uint24_t)imgWH[?]-'0')*100 covers the 100's place
-	(uint24_t)imgWH[?]-'0')*10 covers the 10's place
-	(uint24_t)imgWH[?]-'0' covers the 1's place
-	+1 accounts for 0 being the starting number
-	*/
-	uint24_t desiredWidthInSubimages{ (desiredWidthInPxl / SUBIMAGE_DIMENSIONS) };
-	uint24_t desiredHeightInSubimages{ (desiredHeightInPxl / SUBIMAGE_DIMENSIONS) };
-	//dbg_sprintf(dbgout, "\n maxWS: %d\n widthS: %d\n maxHS: %d\n heightS: %d\n",
-	//	desiredWidthInSubimages, curPicture.horizSubImages, desiredHeightInSubimages, curPicture.vertSubImages);
-
 	//checks if it should scale an image horizontally or vertically.
+	int24_t scaleNumerator{ 1 }, scaleDenominator{ 1 }, subimgNewDimNumerator{ 0 };
 	if ((curPicture.horizSubImages * SUBIMAGE_DIMENSIONS) / LCD_WIDTH >= (curPicture.vertSubImages * SUBIMAGE_DIMENSIONS) / LCD_HEIGHT) {
 		//width too wide
-		scaleNumerator = desiredWidthInSubimages;
-		scaleDenominator = curPicture.horizSubImages;
+		scaleNumerator = desiredWidthInPxl;
+		scaleDenominator = curPicture.horizSubImages * SUBIMAGE_DIMENSIONS;
 	}
 	else {
 		// Height too tall
-		scaleNumerator = desiredHeightInSubimages;
-		scaleDenominator = curPicture.vertSubImages;
+		scaleNumerator = desiredHeightInPxl;
+		scaleDenominator = curPicture.vertSubImages * SUBIMAGE_DIMENSIONS;
 	}
 
 	// Check for invalid fractions
@@ -414,7 +397,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	[MateoC] huh I didn't know about roundDiv
 	*/
 
-	//dbg_sprintf(dbgout, "\n newWH: %d \n ScaleNum: %d \n scaleDenominator: %d \n xOffset: %d \n yOffset %d", subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
 
 	//pointer to memory where each unsized subimage will be stored
 	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
@@ -426,12 +408,22 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	subimgNewDimNumerator = SUBIMAGE_DIMENSIONS * scaleNumerator;
 	int24_t subimgScaledDim{ subimgNewDimNumerator / scaleDenominator };
 
+	//dbg_sprintf(dbgout, "\n subimgScaledDim %d\n subimgNewDimNumerator: %d \n ScaleNum: %d \n scaleDenominator: %d \n xOffset: %d \n yOffset %d", subimgScaledDim, subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
+
+
 	//ensure the resized subimage will fit within the dimensions of the screen.
 	if (subimgScaledDim > LCD_HEIGHT) {
 		dbg_sprintf(dbgout, "\nERR: Subimage will be too large: %d", subimgScaledDim);
 		free(srcImg);
 		return 1;
 	}
+
+	if (subimgScaledDim < 2) 		{
+		dbg_sprintf(dbgout, "\nERR: Subimage will be too small: %d", subimgScaledDim);
+		free(srcImg);
+		return 1;
+	}
+
 	//allocates memory for resized image
 	gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim,subimgScaledDim) };
 	if (!outputImg) {
@@ -555,6 +547,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	dbg_sprintf(dbgout, "\n Image Name: %s\n x-range: %d - %d\n y-range: %d - %d", curPicture.imgName, xFirstID, xLastID, yFirstID, yLastID);
 
+	// If displaying thumbnail, cover up the last image
+	if (!fullScreenPic) {
+		gfx_SetColor(PALETTE_BLACK);
+		gfx_FillRectangle_NoClip(150, 0, 170, 240);
+	}
+
 	/* Loop through all subimages to create full image */
 	bool bFirstRun{ true };
 	//If there's no cache yet, don't bother even checking it.
@@ -615,9 +613,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 				//subimage does not exist, display error image
 				dbg_sprintf(dbgout, "\nERR: Subimage doesn't exist!");
 				dbg_sprintf(dbgout, "\n %s", picAppvarToFind);
-				zx7_Decompress(srcImg, errorTriangle_compressed);
-				gfx_ScaleSprite(srcImg, outputImg);
-				gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
 				continue;
 			}
 		}
