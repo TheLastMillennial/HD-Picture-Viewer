@@ -10,7 +10,7 @@ class KeyPressHandler
 private:
 
 	// Private constructor to prevent instantiation from outside the class
-	KeyPressHandler() 
+	KeyPressHandler()
 	{
 		kb_EnableOnLatch();
 	}
@@ -66,7 +66,7 @@ public:
 				vecKeysPressed.push_back(kb_KeyLeft);
 			if (kb_IsDown(kb_KeyRight))
 				vecKeysPressed.push_back(kb_KeyRight);
-			
+
 			if (kb_IsDown(kb_KeyWindow))
 				vecKeysPressed.push_back(kb_KeyWindow);
 			if (kb_IsDown(kb_KeyZoom))
@@ -76,15 +76,14 @@ public:
 			if (kb_IsDown(kb_KeySub))
 				vecKeysPressed.push_back(kb_KeySub);
 		}
-		
+
 		// If a valid key was pressed, wait for it to be lifted
-		if (!vecKeysPressed.isEmpty())
-		{
+		if (!vecKeysPressed.isEmpty()) {
 			while (kb_AnyKey() != 0);//wait for key lift
 			return true;
 		}
 		return false;
-		
+
 	}
 
 	//check if specific key was pressed
