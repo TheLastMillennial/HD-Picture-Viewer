@@ -9,8 +9,8 @@ By TheLastMillennial
 https://youtu.be/uixL9t5ZTJs
 
 ### Converting Pictures:
-Convert an picture using the HD Picture Viewer Converter: https://github.com/TheLastMillennial/HDPictureViewerConverter2/releases
-Refer to the HD Picture Viewer Converter's readme.md file for instructions on converting an picture. 
+Convert a picture using the HD Picture Viewer Converter: https://github.com/TheLastMillennial/HDPictureViewerConverter2/releases
+Refer to the HD Picture Viewer Converter's readme.md file for instructions on converting a picture. 
 
 Alternatively, you can use a web converter created and maintained by Peter Marheine: https://taricorp.gitlab.io/hdpictureconverter-rs/
 Please note I cannot guarantee the web converter's compatibility with this program.
@@ -23,7 +23,7 @@ Please note I cannot guarantee the web converter's compatibility with this progr
 - New OS version will require the HDPICV program to be run through the Artifice Jailbreak:
   - https://www.youtube.com/watch?v=abB0ZEdQ1rs
 - When the program is run, if any pictures are on the calculator, you will see a list of picture names on the main menu.
-- Press Enter to open an image in full screen.
+- Press Enter to open an image in fullscreen.
 - Press Clear to exit.
 
 #### Buttons:
@@ -40,7 +40,7 @@ Mode _______ Open help.
 Y= _________ Show previous.
 Graph ______ Show next.    
 Arrow Keys _ Pan picture.    
-Del ________ Permenantly delete picture."
+Del ________ Permanently delete picture.
 + __________ Zoom in. 
 - __________ Zoom out.
 Zoom _______ Maximum zoom.
@@ -48,7 +48,7 @@ Window _____ Reset picture zoom.
 
 #### Example picture:
 - Sending all the files from one of the `Example` folders is a good start. They are known to work with this program.
-- The example photo is of a cute puppy! It was photographed by Alex Glanville. Used with permission. You can see more of his work on his instagram: @alex.takes.pics
+- The example photo is of a cute puppy! It was photographed by Alex Glanville. Used with permission. You can see more of his work on his Instagram: @alex.takes.pics
 
 ## FAQ
 
@@ -66,6 +66,19 @@ This is because not all of the files actually sent to the calculator, or they we
 
 ## Changelog
 *Most recent update first*
+
+### v2.1.0
+- Polish for full release
+
+### v2.1.0-beta.1
+- Added alphabetical sorting to picture names list
+- Added caching to improve re-drawing performance by over 40%
+- Added screen shifting to significantly improve panning performance
+- Added rollover scrolling when reaching the end of a list
+- Fixed bug where the zoom function was zooming too far
+- Updated backend significantly
+- Removed HDPICDB appvar
+- Replaced error icon with black square
 
 ### v2.0.1
 - Updated help

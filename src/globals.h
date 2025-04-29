@@ -9,8 +9,8 @@
 * tiplanet.org
 * ticalc.org
 */
-#define OBTAINED_FROM "GitHub Bin Folder"
-#define VERSION "2.1.0-beta.1 from " OBTAINED_FROM
+#define OBTAINED_FROM " from github bin folder"
+#define VERSION "2.1.0" OBTAINED_FROM
 #define YEAR "2025"
 #define TUTORIAL_LINK "https://youtu.be/uixL9t5ZTJs"
 
@@ -37,7 +37,4 @@
 #define XLIBC_RED 192 //xlibc red
 #define PALETTE_BLACK 0 //the xlibc palette and all hdpic generated palettes will have black as 0
 #define PALETTE_WHITE 255 //the xlibc palette and all hdpic generated palettes will have white as 255
-
-
-
 

@@ -1,7 +1,10 @@
 /*HD Picture Viewer
 * By TheLastMillennial
 * https://github.com/TheLastMillennial/HD-Picture-Viewer
-* Build With:    ./make debug --directory="path/to/HD-Picture-Viewer"
+* To build: 
+* 1. Open command prompt.
+* 2. cd to root HD-Picture-Viewer folder.
+* 3. run `make debug --directory=./`
 */
 
 #include <tice.h>

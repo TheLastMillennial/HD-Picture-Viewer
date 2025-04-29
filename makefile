@@ -4,7 +4,7 @@
 
 NAME = HDPICV
 ICON = icon.png
-DESCRIPTION = "High Definition Picture Viewer 5                 By TLM"
+DESCRIPTION = "High Definition Picture Viewer                   By TLM"
 COMPRESSED = YES
 ARCHIVED = YES
 
