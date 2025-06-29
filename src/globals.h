@@ -10,7 +10,7 @@
 * ticalc.org
 */
 #define OBTAINED_FROM " from github bin folder"
-#define VERSION "2.1.0" OBTAINED_FROM
+#define VERSION "3.0.0-alpha" OBTAINED_FROM
 #define YEAR "2025"
 #define TUTORIAL_LINK "https://youtu.be/uixL9t5ZTJs"
 
@@ -37,4 +37,21 @@
 #define XLIBC_RED 192 //xlibc red
 #define PALETTE_BLACK 0 //the xlibc palette and all hdpic generated palettes will have black as 0
 #define PALETTE_WHITE 255 //the xlibc palette and all hdpic generated palettes will have white as 255
+
+#define GFX16_WHITE 0xffff
+#define GFX16_BLACK 0x0
+#define GFX16_RED 0xf800
+#define GFX16_LIGHT_GREY 0xbdf7
+
+/* Color scheme based off DuckDuckGo
+* Useful color visualizers:
+*  https://rgbcolorpicker.com/565
+*  https://roccoloxprograms.github.io/XlibcColorPicker/ */
+
+// background levels, higher number is brighter.
+#define GFX16_BG_0 0x0
+#define GFX16_BG_1 0x18e3
+
+#define GFX16_TEXT 0xad55
+#define GFX16_TEXT_ERROR 0xdac6
 

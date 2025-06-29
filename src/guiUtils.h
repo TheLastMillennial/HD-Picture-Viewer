@@ -3,6 +3,7 @@ void drawWatermark();
 void drawHelp();
 void drawNoImagesFound();
 void PrintCentered(const char *str);
+void gfx16_PrintCenteredX(const char *str, uint24_t y);
 void PrintCenteredX(const char *str, uint24_t y);
 void PrintCenteredY(const char *str, uint8_t x);
 void PrintText(const int8_t xpos, const int8_t ypos, const char *text);

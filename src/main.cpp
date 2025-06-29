@@ -13,6 +13,7 @@
 #include <fileioc.h>
 #include <debug.h>
 #include <compression.h>
+#include <gfx16.h>
 #include <cstring>
 #include <cmath>
 
@@ -27,8 +28,9 @@
 
 int main(void)
 {
-	gfx_Begin();
+	gfx16_Begin();
 	gfx_SetTextTransparentColor(254);
+	gfx16_SetTextTransparentColor(0xfffe);
 
 	//draw loading screen
 	drawSplashScreen();
@@ -37,9 +39,12 @@ int main(void)
 	if (findPictures() == 0) {
 		drawNoImagesFound();
 		KeyPressHandler::waitForAnyKey();
-		gfx_End();
+		gfx16_End();
 		return 0;
 	}
+	gfx16_End();
+
+	gfx_Begin();
 
 	//display the list of images
 	drawHomeScreen();

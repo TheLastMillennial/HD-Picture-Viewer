@@ -1,5 +1,6 @@
 #include <tice.h>
 #include <graphx.h>
+#include <gfx16.h>
 #include "guiUtils.h"
 #include "globals.h"
 
@@ -12,6 +13,12 @@ void drawWatermark()
 	gfx_SetTextBGColor(PALETTE_BLACK);
 	gfx_PrintStringXY("HD Picture Viewer", 2, 2);
 	gfx_PrintStringXY("[mode] = help", 2, 232);
+}
+
+/* Prints a X centered string */
+void gfx16_PrintCenteredX(const char *str, const uint24_t y)
+{
+	gfx16_PutStringXY(str, (LCD_WIDTH - gfx_GetStringWidth(str)) / 2, y);
 }
 
 /* Prints a screen centered string */
@@ -48,16 +55,16 @@ void PrintHelpText(const char *button, const char *help, uint24_t yPos)
 //creates a simple splash screen when program starts
 void drawSplashScreen()
 {
-	//gfx_SetColor(PALETTE_BLACK);
-	//gfx_FillRectangle_NoClip(60, 80, LCD_WIDTH - 120, LCD_HEIGHT - 160);
-	gfx_FillScreen(PALETTE_BLACK);
-	gfx_SetColor(PALETTE_WHITE);
-	gfx_Rectangle_NoClip(60, 80, LCD_WIDTH - 120, LCD_HEIGHT - 160);
-	gfx_SetTextFGColor(PALETTE_WHITE);
-	gfx_SetTextBGColor(PALETTE_BLACK);
+	gfx16_FillScreen(GFX16_BLACK);
+	gfx16_SetColor(GFX16_BG_1);
+	gfx16_FillRectangle_NoClip(40, 80, 240, 80); //size: 2/3 screen width, 1/3 screen height
+	
 	/* Print title screen */
-	PrintCenteredX(VERSION, 125);
-	PrintCenteredX("HD Picture Viewer", 110);
+	gfx16_SetTextBGColor(GFX16_BG_1);
+	gfx16_SetTextFGColor(0xf7be); //not sure why GFX16_WHITE is transparent here.
+	gfx16_PrintCenteredX("HD Picture Viewer", 116);
+	gfx16_SetTextFGColor(GFX16_TEXT);
+	gfx16_PrintCenteredX(VERSION, 147);
 }
 
 // Display full help screen
@@ -100,21 +107,26 @@ void drawHelp()
 // Draw screen that informs user that no picture were detected.
 void drawNoImagesFound()
 {
-	gfx_SetTextBGColor(PALETTE_BLACK);
-	gfx_SetTextFGColor(XLIBC_RED);
-	PrintCenteredX("No Pictures Detected!", 15);
-	gfx_SetTextFGColor(PALETTE_WHITE);
-	PrintCenteredX("Convert some images and send them to your", 30);
-	PrintCenteredX("calculator using the HD Pic converter!", 40);
-	PrintCenteredX("Tutorial: https://youtu.be/uixL9t5ZTJs", 50);
+	gfx16_SetTextBGColor(GFX16_BLACK);
+	gfx16_SetTextFGColor(GFX16_TEXT_ERROR);
+	gfx16_PrintCenteredX("No Pictures Detected!", 15);
+	gfx16_SetTextFGColor(GFX16_TEXT);
+	gfx16_PrintCenteredX("Convert some images and send them to", 30);
+	gfx16_PrintCenteredX("your calculator using the converter!", 40);
+	
+	gfx16_SetTextFGColor(0xae1f); //URL blue
+	gfx16_PrintCenteredX("Tutorial: https://youtu.be/uixL9t5ZTJs", 50);
 
-	PrintCenteredX("If you keep getting this error:", 180);
-	PrintCenteredX(" Go to home screen.", 190);
-	PrintCenteredX(" Press 2nd then + then select 'AppVars'. ", 200);
-	PrintCenteredX(" Ensure all picture files are present. ", 210);
-	PrintCenteredX("Press any key to quit.", 230);
+	gfx16_SetTextFGColor(GFX16_TEXT);
+	gfx16_PrintCenteredX("If you keep getting this error:", 180);
+	gfx16_PrintCenteredX(" Go to home screen.", 190);
+	gfx16_PrintCenteredX(" Press 2nd then + then select 'AppVars'. ", 200);
+	gfx16_PrintCenteredX(" Ensure all picture files are present. ", 210);
+	
+	gfx16_SetTextFGColor(GFX16_TEXT_ERROR);
+	gfx16_PrintCenteredX("Press any key to quit.", 230);
 
-	gfx_SetColor(PALETTE_WHITE);
-	gfx_HorizLine_NoClip(0, 60, 320);
-	gfx_HorizLine_NoClip(0, 177, 320);
+	gfx16_SetColor(GFX16_WHITE);
+	gfx16_HorizLine_NoClip(0, 60, LCD_WIDTH);
+	gfx16_HorizLine_NoClip(0, 177, LCD_WIDTH);
 }
