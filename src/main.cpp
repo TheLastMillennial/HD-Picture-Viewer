@@ -83,12 +83,19 @@ void drawHomeScreen()
 	drawMenu(selectedPicIndex);
 
 
-	gfx16_End();
+	//thumbnail
+	dbg_sprintf(dbgout, "\n drawImage");
 
+	drawImage(selectedPicIndex, 180, 120, false);
+
+
+
+	dbg_sprintf(dbgout, "\n Press any key...");
+
+	while (!os_GetCSC());
+	gfx16_End();
 	gfx_Begin();
 
-	//thumbnail
-	drawImage(selectedPicIndex, 180, 120, false);
 
 	/* UI */
 	bool quitProgram{ false };
@@ -420,6 +427,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 
 	//pointer to memory where each unsized subimage will be stored
+	//todo: gfx16_mallocsprite necessary?
 	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
 	if (!srcImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate src memory!");
@@ -484,41 +492,41 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	picDB.getPicture(picName).yOffset += shiftY;
 
 	//Check if we need to pan the image. If so, shift the contents of the screen over so we don't need to redraw as many subimages.
-	if (shiftX != 0 || shiftY != 0) {
-		gfx_SetDrawBuffer();
-		gfx_FillScreen(0);
-		// Shift screen to right
-		if (shiftX > 0) {
-			bReverseDirection = true;
-			bDrawVertical = true;
-			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
-		}
-		// Shift screen to left
-		if (shiftX < 0) {
-			bReverseDirection = false;
-			bDrawVertical = true;
-			gfx_CopyRectangle(gfx_screen, gfx_buffer, subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
-		}
-		// Shift screen up
-		if (shiftY > 0) {
-			bReverseDirection = false;
-			bDrawVertical = false;
-			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
-		}
-		// Shift screen down
-		if (shiftY < 0) {
-			bReverseDirection = true;
-			bDrawVertical = false;
-			gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
-		}
+	//if (shiftX != 0 || shiftY != 0) {
+	//	gfx_SetDrawBuffer();
+	//	gfx_FillScreen(0);
+	//	// Shift screen to right
+	//	if (shiftX > 0) {
+	//		bReverseDirection = true;
+	//		bDrawVertical = true;
+	//		gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+	//	}
+	//	// Shift screen to left
+	//	if (shiftX < 0) {
+	//		bReverseDirection = false;
+	//		bDrawVertical = true;
+	//		gfx_CopyRectangle(gfx_screen, gfx_buffer, subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+	//	}
+	//	// Shift screen up
+	//	if (shiftY > 0) {
+	//		bReverseDirection = false;
+	//		bDrawVertical = false;
+	//		gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+	//	}
+	//	// Shift screen down
+	//	if (shiftY < 0) {
+	//		bReverseDirection = true;
+	//		bDrawVertical = false;
+	//		gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+	//	}
 
-		gfx_BlitBuffer();
-		gfx_SetDrawScreen();
-	}
-	else if (fullScreenPic) {
+	//	gfx_BlitBuffer();
+	//	gfx_SetDrawScreen();
+	//}
+	//else if (fullScreenPic) {
 		//If there's no panning, then we need to re-draw the entire image. 
-		gfx_FillScreen(PALETTE_BLACK);
-	}
+		//gfx_FillScreen(PALETTE_BLACK);
+	//}
 
 
 	/* Set up to display all the subimages */
@@ -570,8 +578,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	// If displaying thumbnail, cover up the last image
 	if (!fullScreenPic) {
-		gfx_SetColor(PALETTE_BLACK);
-		gfx_FillRectangle_NoClip(150, 0, 170, 240);
+		gfx16_SetColor(GFX16_BLACK);
+		gfx16_FillRectangle_NoClip(150, 0, 170, 240);
 	}
 
 	/* Loop through all subimages to create full image */
@@ -616,7 +624,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//Check for cache miss
 		ti_var_t subimgSlot = NULL;
 		if (subimgPtr == nullptr) {
-			//dbg_sprintf(dbgout, "\nCache miss");
+			dbg_sprintf(dbgout, "\nCache miss");
 
 			//cache miss. Find the appvar by name
 			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
@@ -624,7 +632,14 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			subimgSlot = ti_Open(picAppvarToFind, "r");
 			if (subimgSlot) {
 				//seeks past header
-				ti_Seek(16, SEEK_CUR, subimgSlot);
+				char *test = (char*) malloc(25);
+				//ti_Read(test,24, 1, subimgSlot);
+				
+				//dbg_sprintf(dbgout, "\n subimgSlot: %.24s", test);
+
+				ti_Seek(24, SEEK_CUR, subimgSlot);
+
+
 				//cache the pointer to the subimage for next time
 				//todo: does this update the map?
 				subimgPtr = ti_GetDataPtr(subimgSlot);
@@ -642,15 +657,15 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//decompress subimage into srcImg
 		zx0_Decompress(srcImg, subimgPtr);
 		//resizes it to outputImg size
-		gfx_ScaleSprite(srcImg, outputImg);
+		//gfx_ScaleSprite(srcImg, outputImg);
 
 		//displays subimage
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
 		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT) {
-			gfx_Sprite(outputImg, subimgPxlPosX, subimgPxlPosY);
+			gfx16_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
 		}
 		else {
-			gfx_Sprite_NoClip(outputImg, subimgPxlPosX, subimgPxlPosY);
+			gfx16_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
 		}
 
 		//cleans up

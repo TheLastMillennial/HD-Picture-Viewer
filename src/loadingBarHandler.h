@@ -55,8 +55,6 @@ public:
 		tasksFinished += amount;
 		if (amount > tasksToFinish)
 			amount = tasksFinished;
-		dbg_sprintf(dbgout, "\n test2");
-
 		draw();
 	}
 };
