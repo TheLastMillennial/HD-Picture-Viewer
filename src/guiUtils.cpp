@@ -8,11 +8,11 @@
 // Simple text that displays program name and how to open help.
 void drawWatermark()
 {
-	gfx_SetTextScale(1, 1);
-	gfx_SetTextFGColor(PALETTE_WHITE);
-	gfx_SetTextBGColor(PALETTE_BLACK);
-	gfx_PrintStringXY("HD Picture Viewer", 2, 2);
-	gfx_PrintStringXY("[mode] = help", 2, 232);
+	gfx16_SetTextScale(1, 1);
+	gfx16_SetTextFGColor(GFX16_WHITE);
+	gfx16_SetTextBGColor(GFX16_BLACK);
+	gfx16_PutStringXY("HD Picture Viewer", 2, 2);
+	gfx16_PutStringXY("[mode] = help", 2, 232);
 }
 
 /* Prints a X centered string */
@@ -115,7 +115,7 @@ void drawNoImagesFound()
 	gfx16_PrintCenteredX("your calculator using the converter!", 40);
 	
 	gfx16_SetTextFGColor(0xae1f); //URL blue
-	gfx16_PrintCenteredX("Tutorial: https://youtu.be/uixL9t5ZTJs", 50);
+	gfx16_PrintCenteredX("https://youtu.be/uixL9t5ZTJs", 50);
 
 	gfx16_SetTextFGColor(GFX16_TEXT);
 	gfx16_PrintCenteredX("If you keep getting this error:", 180);

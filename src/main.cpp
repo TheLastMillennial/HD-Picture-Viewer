@@ -28,26 +28,34 @@
 
 int main(void)
 {
+	dbg_sprintf(dbgout, "\nStart");
+
 	gfx16_Begin();
 	gfx_SetTextTransparentColor(254);
 	gfx16_SetTextTransparentColor(0xfffe);
 
+	dbg_sprintf(dbgout, "\nSplash Screen");
+
 	//draw loading screen
 	drawSplashScreen();
 
+	dbg_sprintf(dbgout, "\nFinding pictures");
+
 	//Detect pictures on the calculator
 	if (findPictures() == 0) {
+		dbg_sprintf(dbgout, "\nNo pictures");
+
 		drawNoImagesFound();
 		KeyPressHandler::waitForAnyKey();
 		gfx16_End();
 		return 0;
 	}
-	gfx16_End();
+	dbg_sprintf(dbgout, "\nHome screen ");
 
-	gfx_Begin();
 
 	//display the list of images
 	drawHomeScreen();
+
 
 	//quit
 	gfx_End();
@@ -71,8 +79,13 @@ void drawHomeScreen()
 
 
 	/* main menu */
-	gfx_FillScreen(PALETTE_BLACK);
+	gfx16_FillScreen(GFX16_BLACK);
 	drawMenu(selectedPicIndex);
+
+
+	gfx16_End();
+
+	gfx_Begin();
 
 	//thumbnail
 	drawImage(selectedPicIndex, 180, 120, false);
@@ -441,7 +454,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	}
 
 	//sets correct palettes
-	char palName[9];
+	/*char palName[9];
 	sprintf(palName, "HP%.2s0000", curPicture.ID);
 	ti_var_t palSlot{ ti_Open(palName,"r") };
 	if (!palSlot) {
@@ -456,7 +469,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	}
 	ti_Seek(24, SEEK_SET, palSlot);
 	gfx_SetPalette(ti_GetDataPtr(palSlot), 512, 0);
-	ti_Close(palSlot);
+	ti_Close(palSlot);*/
 
 
 	/* Apply Pan Offset */
@@ -665,13 +678,14 @@ uint24_t findPictures()
 	LoadingBar &loadingBar = LoadingBar::getInstance();
 	loadingBar.resetLoadingBar(MAX_IMAGES);
 	/*
-	* Searches for palettes. This is a lot easier than searching for every single
-	* subimage because there is guaranteed to only be one palette per image.
-	* The palette contains all the useful information such as the image size and
-	* the two letter ID for each appvar. This makes it easy to find every subimage via a loop.
+	* Searches for first sub-image. 
+	* It contains all the useful information such as the image size and
+	* the two letter ID for each appvar. 
+	* This makes it easy to find the other subimages via a loop.
 	*/
 
-	while ((var_name = ti_DetectVar(&search_pos, "HDPALV10", OS_TYPE_APPVAR)) != NULL) {
+
+	while ((var_name = ti_DetectVar(&search_pos, "HDPIC16A", OS_TYPE_APPVAR)) != NULL) {
 		imagesFound++;
 		loadingBar.increment();
 	}
@@ -681,10 +695,12 @@ uint24_t findPictures()
 
 	loadingBar.resetLoadingBar(imagesFound);
 	search_pos = NULL;
-	while ((var_name = ti_DetectVar(&search_pos, "HDPALV10", OS_TYPE_APPVAR)) != NULL) {
+
+	while ((var_name = ti_DetectVar(&search_pos, "HDPIC16A", OS_TYPE_APPVAR)) != NULL) {
+
 		constexpr uint8_t ID_SIZE{ 2 };
 		constexpr uint8_t HORIZ_VERT_SIZE{ 3 };
-		constexpr uint8_t PALETTE_NAME_SIZE{ 8 };
+		//constexpr uint8_t PALETTE_NAME_SIZE{ 8 };
 		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
 		constexpr uint8_t HEADER_SIZE{ 16 };
 
@@ -693,22 +709,24 @@ uint24_t findPictures()
 		imageData imgData;
 		//sets progress of how many images were found
 		//finds the name, letter ID, and size of entire image this palette belongs to.
-		ti_var_t  palette;
-		palette = ti_Open(var_name, "r");
+		ti_var_t  firstPic;
+		dbg_sprintf(dbgout, "\nfirstPic %.8s",var_name);
+
+		firstPic = ti_Open(var_name, "r");
 		//seeks past HDPALV10
-		ti_Seek(8, SEEK_CUR, palette);
+		ti_Seek(8, SEEK_CUR, firstPic);
 		//reads the important info (16 bytes)
 		//e.g. poppy___JT003002
-		ti_Read(&imgInfo, HEADER_SIZE, 1, palette);
+		ti_Read(&imgInfo, HEADER_SIZE, 1, firstPic);
 
 		char charArrImgInfo[16];
 		std::strncpy(charArrImgInfo, imgInfo, HEADER_SIZE);
-		std::strncpy(imgData.palletName, var_name, PALETTE_NAME_SIZE);
+		//std::strncpy(imgData.palletName, var_name, PALETTE_NAME_SIZE);
 		std::strncpy(imgData.imgName, charArrImgInfo, IMAGE_NAME_SIZE);
 		std::strncpy(imgData.ID, charArrImgInfo + IMAGE_NAME_SIZE, ID_SIZE);
 
 		imgData.imgName[8] = '\0';
-		imgData.palletName[8] = '\0';
+		//imgData.palletName[8] = '\0';
 		imgData.ID[2] = '\0';
 
 		// Get width of whole image. Then convert the number from a char representation to a int24_t
@@ -723,9 +741,7 @@ uint24_t findPictures()
 		picDB.addPicture(imgData);
 
 		//closes palette for next iteration
-		ti_Close(palette);
-
-
+		ti_Close(firstPic);
 	}
 
 	drawSplashScreen();
@@ -738,26 +754,26 @@ uint24_t findPictures()
 /* This UI keeps the user selection in the middle of the screen. */
 void drawMenu(uint24_t selectedName)
 {
-	gfx_SetColor(PALETTE_WHITE);
-	gfx_VertLine(140, 20, 200);
+	gfx16_SetColor(PALETTE_WHITE);
+	gfx16_VertLine(140, 20, 200);
 
 	uint24_t yPxlPos{ 0 };
 
 	//clears old text and sets prev for new text
-	gfx_SetTextScale(2, 2);
-	gfx_SetColor(PALETTE_BLACK);
-	gfx_FillRectangle_NoClip(0, 0, 140, 240);
-	gfx_SetColor(PALETTE_WHITE);
-	gfx_SetTextFGColor(PALETTE_WHITE);
-	gfx_SetTextBGColor(PALETTE_BLACK);
+	gfx16_SetTextScale(2, 2);
+	gfx16_SetColor(GFX16_BLACK);
+	gfx16_FillRectangle_NoClip(0, 0, 140, 240);
+	gfx16_SetColor(GFX16_WHITE);
+	gfx16_SetTextFGColor(GFX16_WHITE);
+	gfx16_SetTextBGColor(GFX16_BLACK);
 
 	//re-draws UI lines
-	gfx_HorizLine_NoClip(0, 120, 6);
-	gfx_HorizLine_NoClip(136, 120, 5);
-	gfx_HorizLine_NoClip(6, 110, 130);
-	gfx_HorizLine_NoClip(6, 130, 130);
-	gfx_VertLine_NoClip(6, 110, 20);
-	gfx_VertLine_NoClip(136, 110, 21);
+	gfx16_HorizLine_NoClip(0, 120, 6);
+	gfx16_HorizLine_NoClip(136, 120, 5);
+	gfx16_HorizLine_NoClip(6, 110, 130);
+	gfx16_HorizLine_NoClip(6, 130, 130);
+	gfx16_VertLine_NoClip(6, 110, 20);
+	gfx16_VertLine_NoClip(136, 110, 21);
 
 	PicDatabase &picDB = PicDatabase::getInstance();
 
@@ -771,13 +787,13 @@ void drawMenu(uint24_t selectedName)
 
 			dbg_sprintf(dbgout, "\ncurImg: %d", curImg);
 			//Prints out the correct name
-			gfx_PrintStringXY(picDB.getPicture(curImg).imgName, X_MARGIN, yPxlPos);
+			gfx16_PutStringXY(picDB.getPicture(curImg).imgName, X_MARGIN, yPxlPos);
 		}
 	}
 
 	//display selected image name in center of screen
 	yPxlPos = Y_MARGIN + 75;
-	gfx_PrintStringXY(picDB.getPicture(selectedName).imgName, X_MARGIN, yPxlPos);
+	gfx16_PutStringXY(picDB.getPicture(selectedName).imgName, X_MARGIN, yPxlPos);
 
 	/* Draw image names below selected name.
 	* Iterates until out of pics or about to draw off the screen */
@@ -787,7 +803,7 @@ void drawMenu(uint24_t selectedName)
 			yPxlPos += Y_SPACING;
 
 			//Prints out the correct name
-			gfx_PrintStringXY(picDB.getPicture(curName).imgName, X_MARGIN, yPxlPos);
+			gfx16_PutStringXY(picDB.getPicture(curName).imgName, X_MARGIN, yPxlPos);
 		}
 	}
 	drawWatermark();

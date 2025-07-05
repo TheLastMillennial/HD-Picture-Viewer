@@ -24,8 +24,8 @@ private:
 		constexpr double maxPixelWidth{ 200.0 };
 		const double progress = (static_cast<double>(tasksFinished) / static_cast<double>(tasksToFinish)) * maxPixelWidth;
 
-		gfx_SetColor(PALETTE_WHITE);
-		gfx_FillRectangle_NoClip(60, 153, progress, 7);
+		gfx16_SetColor(GFX16_WHITE);
+		gfx16_FillRectangle_NoClip(60, 153, progress, 7);
 
 	}
 
@@ -55,6 +55,8 @@ public:
 		tasksFinished += amount;
 		if (amount > tasksToFinish)
 			amount = tasksFinished;
+		dbg_sprintf(dbgout, "\n test2");
+
 		draw();
 	}
 };
