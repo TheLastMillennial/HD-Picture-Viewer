@@ -132,8 +132,8 @@ public:
 		imageData *imgToDelete{ &allImages[picName] };
 
 		//sets up loading bar finish line
-		gfx_SetColor(PALETTE_WHITE);
-		gfx_VertLine_NoClip(260, 153, 7);
+		gfx16_SetColor(GFX16_WHITE);
+		gfx16_VertLine_NoClip(260, 153, 7);
 
 		int24_t const &picWidthInSubimages{ imgToDelete->horizSubImages };
 		int24_t const &picHeightInSubimages{ imgToDelete->vertSubImages };

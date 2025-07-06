@@ -124,15 +124,11 @@ void drawHomeScreen()
 				keyHandler.reset();
 			dbg_sprintf(dbgout, "\nExisting key press");
 		}
-		// Key press detected
 
+		/* Key press detected */
 
-
-
-			// clear. Go back.
+		// clear. Go back.
 		if (keyHandler.wasKeyPressed(kb_KeyClear)) {
-			dbg_sprintf(dbgout, "\nCLEAR");
-
 			//If we're viewing an image, exit to menu. If we're already on menu, quit program.
 			if (fullScreenImage) {
 				fullScreenImage = false;
@@ -242,85 +238,85 @@ void drawHomeScreen()
 		}
 
 		//left, right, up, down. Image panning.
-		if (fullScreenImage) {
-			if (keyHandler.wasKeyPressed(kb_KeyLeft)) {
-				errorID = kb_KeyLeft; //1794
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 1, 0);
-			}
-			if (keyHandler.wasKeyPressed(kb_KeyRight)) {
-				errorID = kb_KeyRight; //1796
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);
-			}
-			if (keyHandler.wasKeyPressed(kb_KeyUp)) {
-				errorID = kb_KeyUp; //1800
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);
-			}
-			if (keyHandler.wasKeyPressed(kb_KeyDown)) {
-				errorID = kb_KeyDown; //1793
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
-			}
+		//if (fullScreenImage) {
+		//	if (keyHandler.wasKeyPressed(kb_KeyLeft)) {
+		//		errorID = kb_KeyLeft; //1794
+		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 1, 0);
+		//	}
+		//	if (keyHandler.wasKeyPressed(kb_KeyRight)) {
+		//		errorID = kb_KeyRight; //1796
+		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);
+		//	}
+		//	if (keyHandler.wasKeyPressed(kb_KeyUp)) {
+		//		errorID = kb_KeyUp; //1800
+		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);
+		//	}
+		//	if (keyHandler.wasKeyPressed(kb_KeyDown)) {
+		//		errorID = kb_KeyDown; //1793
+		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
+		//	}
 
-			//Zoom key. Zoom in as far as possible while maintaining full quality
-			if (keyHandler.wasKeyPressed(kb_KeyZoom)) {
-				//pull image full dimensions from database
-				PicDatabase &picDB = PicDatabase::getInstance();
+		//	//Zoom key. Zoom in as far as possible while maintaining full quality
+		//	if (keyHandler.wasKeyPressed(kb_KeyZoom)) {
+		//		//pull image full dimensions from database
+		//		PicDatabase &picDB = PicDatabase::getInstance();
 
-				//convert subimg width to pixels width
-				uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
-				desiredWidthInPxl = picDB.getPicture(selectedPicIndex).horizSubImages * SUBIMAGE_DIMENSIONS;
-				desiredHeightInPxl = picDB.getPicture(selectedPicIndex).vertSubImages * SUBIMAGE_DIMENSIONS;
+		//		//convert subimg width to pixels width
+		//		uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
+		//		desiredWidthInPxl = picDB.getPicture(selectedPicIndex).horizSubImages * SUBIMAGE_DIMENSIONS;
+		//		desiredHeightInPxl = picDB.getPicture(selectedPicIndex).vertSubImages * SUBIMAGE_DIMENSIONS;
 
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-				//this means we can't zoom in any more. Zoom back out.
-				if (imageErr != 0) {
-					dbg_sprintf(dbgout, "\nCant zoom in to Max. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
-					desiredWidthInPxl = prevWidth;
-					desiredHeightInPxl = prevHeight;
-					redrawPic = true;
-				}
-				errorID = kb_KeyZoom; //260
-			}
+		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+		//		//this means we can't zoom in any more. Zoom back out.
+		//		if (imageErr != 0) {
+		//			dbg_sprintf(dbgout, "\nCant zoom in to Max. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
+		//			desiredWidthInPxl = prevWidth;
+		//			desiredHeightInPxl = prevHeight;
+		//			redrawPic = true;
+		//		}
+		//		errorID = kb_KeyZoom; //260
+		//	}
 
 			//Plus key. Zoom in by double
-			if (keyHandler.wasKeyPressed(kb_KeyAdd)) {
-				uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
-				//calculate increased zoom
-				desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
-				desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
-				dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-				//if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
+			//if (keyHandler.wasKeyPressed(kb_KeyAdd)) {
+			//	uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
+			//	//calculate increased zoom
+			//	desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
+			//	desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
+			//	dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+			//	//if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
 
-					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-					//this means we can't zoom in any more. Zoom back out.
-					if (imageErr != 0) {
-						dbg_sprintf(dbgout, "\nCant zoom in. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
-						desiredWidthInPxl = prevWidth;
-						desiredHeightInPxl = prevHeight;
-					}
-				//}
-				errorID = kb_KeyAdd; //1538
-			}
+			//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+			//		//this means we can't zoom in any more. Zoom back out.
+			//		if (imageErr != 0) {
+			//			dbg_sprintf(dbgout, "\nCant zoom in. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
+			//			desiredWidthInPxl = prevWidth;
+			//			desiredHeightInPxl = prevHeight;
+			//		}
+			//	//}
+			//	errorID = kb_KeyAdd; //1538
+			//}
 
 			//subtract key. Zoom out by double.
-			if (keyHandler.wasKeyPressed(kb_KeySub)) {
-				//apply the zoom out to the width and height
-				uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
-				desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
-				desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
+			//if (keyHandler.wasKeyPressed(kb_KeySub)) {
+			//	//apply the zoom out to the width and height
+			//	uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
+			//	desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
+			//	desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
 
-				if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
-					dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-					//this means we can't zoom out any more. Zoom back in.
-					if (imageErr != 0) {
-						dbg_sprintf(dbgout, "\nCant zoom out. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
-						desiredWidthInPxl = prevWidth;
-						desiredHeightInPxl = prevHeight;
-					}
-				}
-				errorID = kb_KeySub; //1540
-			}
-		}
+			//	if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
+			//		dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+			//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+			//		//this means we can't zoom out any more. Zoom back in.
+			//		if (imageErr != 0) {
+			//			dbg_sprintf(dbgout, "\nCant zoom out. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
+			//			desiredWidthInPxl = prevWidth;
+			//			desiredHeightInPxl = prevHeight;
+			//		}
+			//	}
+			//	errorID = kb_KeySub; //1540
+			//}
+		//}
 
 		//Window. Reset zoom and pan
 		if (resetPic || keyHandler.wasKeyPressed(kb_KeyWindow)) {
@@ -486,39 +482,34 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//Check if we need to pan the image. If so, shift the contents of the screen over so we don't need to redraw as many subimages.
 	//if (shiftX != 0 || shiftY != 0) {
-	//	gfx_SetDrawBuffer();
-	//	gfx_FillScreen(0);
 	//	// Shift screen to right
 	//	if (shiftX > 0) {
 	//		bReverseDirection = true;
 	//		bDrawVertical = true;
-	//		gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+	//		gfx_CopyRectangle(gfx_screen, gfx_screen, 0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
 	//	}
 	//	// Shift screen to left
 	//	if (shiftX < 0) {
 	//		bReverseDirection = false;
 	//		bDrawVertical = true;
-	//		gfx_CopyRectangle(gfx_screen, gfx_buffer, subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+	//		gfx_CopyRectangle(gfx_screen, gfx_screen, subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
 	//	}
 	//	// Shift screen up
 	//	if (shiftY > 0) {
 	//		bReverseDirection = false;
 	//		bDrawVertical = false;
-	//		gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+	//		gfx_CopyRectangle(gfx_screen, gfx_screen, 0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
 	//	}
 	//	// Shift screen down
 	//	if (shiftY < 0) {
 	//		bReverseDirection = true;
 	//		bDrawVertical = false;
-	//		gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+	//		gfx_CopyRectangle(gfx_screen, gfx_screen, 0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
 	//	}
-
-	//	gfx_BlitBuffer();
-	//	gfx_SetDrawScreen();
 	//}
 	//else if (fullScreenPic) {
-		//If there's no panning, then we need to re-draw the entire image. 
-		//gfx_FillScreen(PALETTE_BLACK);
+	//	//If there's no panning, then we need to re-draw the entire image. 
+	//	gfx16_FillScreen(GFX16_BLACK);
 	//}
 
 
@@ -617,30 +608,24 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//Check for cache miss
 		ti_var_t subimgSlot = NULL;
 		if (subimgPtr == nullptr) {
-			dbg_sprintf(dbgout, "\nCache miss");
-
 			//cache miss. Find the appvar by name
 			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
 
-			dbg_sprintf(dbgout, "\npicAppvarToFind: %.8s", picAppvarToFind);
+			dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
 
 			subimgSlot = ti_Open(picAppvarToFind, "r");
+			dbg_sprintf(dbgout, "\nsubImgSlot: %d", (int)subimgSlot);
 
 			if (subimgSlot) {
 				//seeks past header
-				dbg_sprintf(dbgout, "\nseeking");
-
 				ti_Seek(24, SEEK_CUR, subimgSlot);
 
 				//cache the pointer to the subimage for next time
-				//todo: does this update the map?
-				dbg_sprintf(dbgout, "\ngetDataPtr");
-
 				subimgPtr = ti_GetDataPtr(subimgSlot);
-				dbg_sprintf(dbgout, "\ntest");
 
 				//curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
-				dbg_sprintf(dbgout, "\nYAY");
+				dbg_sprintf(dbgout, "\nsecond insert" );
+				//curPicture.cache.dbg_printInOrder();
 
 			}
 			else {
@@ -650,10 +635,10 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			}
 		}
 		/* subimage exists, display it */
-		dbg_sprintf(dbgout, "\nDecompressing");
 
 		//decompress subimage into srcImg
 		zx0_Decompress(srcImg, subimgPtr);
+
 		//resizes it to outputImg size
 		//gfx_ScaleSprite(srcImg, outputImg);
 
