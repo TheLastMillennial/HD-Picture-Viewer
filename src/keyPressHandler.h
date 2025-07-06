@@ -36,6 +36,15 @@ public:
 		while (!os_GetCSC()); // wait for key press
 	}
 
+	/*void dbg_printKeys()
+	{
+		for (uint24_t i{ 0 }; i < vecKeysPressed.getSize(); i++) 
+		{
+			dbg_sprintf(dbgout, "\nKey[%d]: %d", i, vecKeysPressed[i]);
+
+		}
+	}*/
+
 	//scans for new keypress and stores the pressed keys.
 	// Returns true if any key was pressed
 	// bInFullscreen will cause certain keypresses to be ignored when false.

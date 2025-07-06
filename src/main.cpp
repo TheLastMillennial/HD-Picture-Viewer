@@ -31,7 +31,6 @@ int main(void)
 	dbg_sprintf(dbgout, "\nStart");
 
 	gfx16_Begin();
-	gfx_SetTextTransparentColor(254);
 	gfx16_SetTextTransparentColor(0xfffe);
 
 	dbg_sprintf(dbgout, "\nSplash Screen");
@@ -58,7 +57,7 @@ int main(void)
 
 
 	//quit
-	gfx_End();
+	gfx16_End();
 	kb_ClearOnLatch();
 	return 0;
 
@@ -87,14 +86,6 @@ void drawHomeScreen()
 	dbg_sprintf(dbgout, "\n drawImage");
 
 	drawImage(selectedPicIndex, 180, 120, false);
-
-
-
-	dbg_sprintf(dbgout, "\n Press any key...");
-
-	while (!os_GetCSC());
-	gfx16_End();
-	gfx_Begin();
 
 
 	/* UI */
@@ -140,13 +131,15 @@ void drawHomeScreen()
 
 			// clear. Go back.
 		if (keyHandler.wasKeyPressed(kb_KeyClear)) {
+			dbg_sprintf(dbgout, "\nCLEAR");
+
 			//If we're viewing an image, exit to menu. If we're already on menu, quit program.
 			if (fullScreenImage) {
 				fullScreenImage = false;
 				resetPic = true;
 				redrawPic = true;
 				errorID = kb_KeyClear; //1600
-				gfx_FillScreen(PALETTE_BLACK);
+				gfx16_FillScreen(GFX16_BLACK);
 			}
 			else {
 				quitProgram = true;
@@ -167,7 +160,7 @@ void drawHomeScreen()
 		if (keyHandler.wasKeyPressed(kb_KeyMode)) {
 			drawHelp();
 			KeyPressHandler::waitForAnyKey();
-			gfx_FillScreen(PALETTE_BLACK);
+			gfx16_FillScreen(GFX16_BLACK);
 			resetPic = true;
 			redrawPic = true;
 			errorID = kb_KeyMode; //320
@@ -176,13 +169,10 @@ void drawHomeScreen()
 
 		//Delete. delete all appvars related to current image
 		if (keyHandler.wasKeyPressed(kb_KeyDel)) {
-			//the current palette is about to be deleted. Set the default palette
-			gfx_SetDefaultPalette(gfx_8bpp);
 			//we don't want the user seeing the horrors of their image with the wrong palette
-			gfx_FillScreen(PALETTE_BLACK);
-			gfx_SetTextFGColor(XLIBC_GREY);
-			gfx_SetTextBGColor(PALETTE_BLACK);
-			gfx_SetTextScale(1, 1);
+			gfx16_FillScreen(GFX16_BLACK);
+			gfx16_SetTextFGColor(GFX16_TEXT);
+			gfx16_SetTextBGColor(GFX16_BLACK);
 			PrintCenteredX("Deleting Picture...", 120);
 
 			//delete the palette and all subimages
@@ -195,14 +185,14 @@ void drawHomeScreen()
 			keyHandler.reset();
 
 			//set color for splash screen
-			gfx_SetTextFGColor(XLIBC_GREY);
-			gfx_SetTextBGColor(PALETTE_BLACK);
+			gfx16_SetTextFGColor(GFX16_TEXT);
+			gfx16_SetTextBGColor(GFX16_BLACK);
 
 			//check if all images were deleted. If so, just quit.
 			if (picDB.size() == 0) {
 				drawNoImagesFound();
 				KeyPressHandler::waitForAnyKey();
-				gfx_End();
+				gfx16_End();
 				return;
 			}
 
@@ -213,9 +203,9 @@ void drawHomeScreen()
 
 			//ensure text is readable
 			//re construct the GUI
-			gfx_SetTextFGColor(XLIBC_GREY);
-			gfx_SetTextBGColor(PALETTE_BLACK);
-			gfx_FillScreen(PALETTE_BLACK);
+			gfx16_SetTextFGColor(GFX16_TEXT);
+			gfx16_SetTextBGColor(GFX16_BLACK);
+			gfx16_FillScreen(GFX16_BLACK);
 			resetPic = true;
 			redrawPic = true;
 			errorID = kb_KeyDel; //384
@@ -360,9 +350,12 @@ void drawHomeScreen()
 			keyHandler.reset();
 			imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, fullScreenImage);
 			if (imageErr != 0) {
-				PrintCenteredX("Error: ", 150);
+				gfx16_End();
+				gfx_Begin();
+				
+				gfx_PrintStringXY("Error: ", (LCD_WIDTH - gfx_GetStringWidth("Error: ")) / 2, 150);
 				gfx_PrintUInt(errorID, 6);
-				PrintCenteredX("Press any key to quit.", 160);
+				gfx_PrintStringXY("Press any key to quit.", (LCD_WIDTH - gfx_GetStringWidth("Press any key to quit.")) / 2, 160);
 				KeyPressHandler::waitForAnyKey();
 				gfx_End();
 				return;
@@ -596,7 +589,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 
-		//dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl",xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
+		dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl",xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
 
 		//a key interrupted output. Quit immediately
 		if (kb_On || keyHandler.scanKeys(fullScreenPic)) {
@@ -613,7 +606,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//combines the separate parts into one name to search for
 		char picAppvarToFind[9];
 
-		//dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
+		dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
 
 
 		//Pull pointer to the subimage from the cache
@@ -629,30 +622,35 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			//cache miss. Find the appvar by name
 			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
 
+			dbg_sprintf(dbgout, "\npicAppvarToFind: %.8s", picAppvarToFind);
+
 			subimgSlot = ti_Open(picAppvarToFind, "r");
+
 			if (subimgSlot) {
 				//seeks past header
-				char *test = (char*) malloc(25);
-				//ti_Read(test,24, 1, subimgSlot);
-				
-				//dbg_sprintf(dbgout, "\n subimgSlot: %.24s", test);
+				dbg_sprintf(dbgout, "\nseeking");
 
 				ti_Seek(24, SEEK_CUR, subimgSlot);
 
-
 				//cache the pointer to the subimage for next time
 				//todo: does this update the map?
+				dbg_sprintf(dbgout, "\ngetDataPtr");
+
 				subimgPtr = ti_GetDataPtr(subimgSlot);
-				curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
+				dbg_sprintf(dbgout, "\ntest");
+
+				//curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
+				dbg_sprintf(dbgout, "\nYAY");
+
 			}
 			else {
 				//subimage does not exist, display error image
-				dbg_sprintf(dbgout, "\nERR: Subimage doesn't exist!");
-				dbg_sprintf(dbgout, "\n %s", picAppvarToFind);
+				dbg_sprintf(dbgout, "\nERR: Subimage doesn't exist: %s", picAppvarToFind);
 				continue;
 			}
 		}
 		/* subimage exists, display it */
+		dbg_sprintf(dbgout, "\nDecompressing");
 
 		//decompress subimage into srcImg
 		zx0_Decompress(srcImg, subimgPtr);
@@ -662,9 +660,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//displays subimage
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
 		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT) {
+			dbg_sprintf(dbgout, "\nSprite");
 			gfx16_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
 		}
 		else {
+			dbg_sprintf(dbgout, "\nSprite noclip");
+
 			gfx16_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
 		}
 
@@ -751,7 +752,7 @@ uint24_t findPictures()
 		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE, HORIZ_VERT_SIZE);
 		imgData.vertSubImages = (((static_cast<int24_t>(buffer[0]) - '0') * 100 + (static_cast<int24_t>(buffer[1]) - '0') * 10 + static_cast<int24_t>(buffer[2]) - '0') + 1);
 
-		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n palletName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n", imgData.imgName, imgData.palletName, imgData.ID, imgData.horizSubImages, imgData.vertSubImages);
+		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n", imgData.imgName, imgData.ID, imgData.horizSubImages, imgData.vertSubImages);
 
 		picDB.addPicture(imgData);
 

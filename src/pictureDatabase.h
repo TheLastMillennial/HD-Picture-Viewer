@@ -10,7 +10,6 @@
 struct imageData
 {
 	char imgName[9];
-	char palletName[9];
 	char ID[3];
 	double zoomScale{ 1.0 };
 	int24_t xOffset{ 0 };
@@ -132,11 +131,6 @@ public:
 
 		imageData *imgToDelete{ &allImages[picName] };
 
-		//deletes palette
-		int delSuccess{ ti_Delete(imgToDelete->palletName) };
-		if (delSuccess == 0) {
-			dbg_sprintf(dbgout, "\nERR: Issue deleting palette");
-		}
 		//sets up loading bar finish line
 		gfx_SetColor(PALETTE_WHITE);
 		gfx_VertLine_NoClip(260, 153, 7);
@@ -153,7 +147,7 @@ public:
 
 				//combines the separate parts into one name to search for
 				sprintf(picAppvarToFind, "%.2s%03u%03u", imgToDelete->ID, xSubimage, ySubimage);
-				delSuccess = ti_Delete(picAppvarToFind);
+				int delSuccess = ti_Delete(picAppvarToFind);
 
 				//checks if the subimage does not exist
 				if (delSuccess == 0) {
