@@ -210,6 +210,8 @@ void drawHomeScreen()
 		/* Graph or down. Increases the name to start on and redraws the text */
 		if (keyHandler.wasKeyPressed(kb_KeyGraph) || (keyHandler.wasKeyPressed(kb_KeyDown) && !fullScreenImage)) {
 			selectedPicIndex++;
+			dbg_sprintf(dbgout, "\nIndex: %d Max: %d -1", selectedPicIndex, picDB.size());
+
 			//make sure user can't scroll down too far
 			if (selectedPicIndex > picDB.size() - 1) {
 				dbg_sprintf(dbgout, "\ntoo high %d -> 0", selectedPicIndex);
@@ -335,7 +337,8 @@ void drawHomeScreen()
 				desiredHeightInPxl = MAX_THUMBNAIL_HEIGHT;
 			}
 			redrawPic = true;
-			errorID = kb_KeyWindow; //264
+			//this can cover up other errors so append it
+			errorID = errorID * 1000 + kb_KeyWindow; //264
 		}
 
 		// If necessary, draw the image with new settings.
@@ -443,12 +446,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	}
 
 	//allocates memory for resized image
-	gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim,subimgScaledDim) };
-	if (!outputImg) {
-		dbg_sprintf(dbgout, "\nERR: Failed to allocate output memory!");
-		free(srcImg);
-		return 1;
-	}
+	//gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim,subimgScaledDim) };
+	//if (!outputImg) {
+	//	dbg_sprintf(dbgout, "\nERR: Failed to allocate output memory!");
+	//	free(srcImg);
+	//	return 1;
+	//}
 
 	//sets correct palettes
 	/*char palName[9];
@@ -580,14 +583,14 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 
-		dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl",xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
+		//dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl",xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
 
 		//a key interrupted output. Quit immediately
 		if (kb_On || keyHandler.scanKeys(fullScreenPic)) {
 			dbg_sprintf(dbgout, "\nRender aborted!\n");
 			//free up source and output memory
 			free(srcImg);
-			free(outputImg);
+			//free(outputImg);
 			return 0;
 		}
 
@@ -611,10 +614,10 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			//cache miss. Find the appvar by name
 			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
 
-			dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
+			//dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
 
 			subimgSlot = ti_Open(picAppvarToFind, "r");
-			dbg_sprintf(dbgout, "\nsubImgSlot: %d", (int)subimgSlot);
+			//dbg_sprintf(dbgout, "\nsubImgSlot: %d", (int)subimgSlot);
 
 			if (subimgSlot) {
 				//seeks past header
@@ -624,9 +627,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 				subimgPtr = ti_GetDataPtr(subimgSlot);
 
 				//curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
-				dbg_sprintf(dbgout, "\nsecond insert" );
-				//curPicture.cache.dbg_printInOrder();
-
 			}
 			else {
 				//subimage does not exist, display error image
@@ -645,22 +645,19 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//displays subimage
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
 		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT) {
-			dbg_sprintf(dbgout, "\nSprite");
 			gfx16_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
 		}
 		else {
-			dbg_sprintf(dbgout, "\nSprite noclip");
-
 			gfx16_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
 		}
 
 		//cleans up
 		ti_Close(subimgSlot);
-
 	}
 	//free up source and output memory
 	free(srcImg);
-	free(outputImg);
+	//free(outputImg);
+
 	dbg_sprintf(dbgout, "\nDraw Finished.\n");
 	return 0;
 }
