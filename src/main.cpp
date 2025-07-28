@@ -175,8 +175,8 @@ void drawHomeScreen()
 			PicDatabase &picDB = PicDatabase::getInstance();
 			picDB.deleteImage(selectedPicIndex);
 
-			PrintCenteredX("Picture deleted.", 130);
-			PrintCenteredX("Press any key.", 140);
+			gfx16_PrintCenteredX("Picture deleted.", 130);
+			gfx16_PrintCenteredX("Press any key.", 140);
 			KeyPressHandler::waitForAnyKey();
 			keyHandler.reset();
 
@@ -210,8 +210,6 @@ void drawHomeScreen()
 		/* Graph or down. Increases the name to start on and redraws the text */
 		if (keyHandler.wasKeyPressed(kb_KeyGraph) || (keyHandler.wasKeyPressed(kb_KeyDown) && !fullScreenImage)) {
 			selectedPicIndex++;
-			dbg_sprintf(dbgout, "\nIndex: %d Max: %d -1", selectedPicIndex, picDB.size());
-
 			//make sure user can't scroll down too far
 			if (selectedPicIndex > picDB.size() - 1) {
 				dbg_sprintf(dbgout, "\ntoo high %d -> 0", selectedPicIndex);
@@ -752,7 +750,7 @@ uint24_t findPictures()
 /* This UI keeps the user selection in the middle of the screen. */
 void drawMenu(uint24_t selectedName)
 {
-	gfx16_SetColor(PALETTE_WHITE);
+	gfx16_SetColor(GFX16_WHITE);
 	gfx16_VertLine(140, 20, 200);
 
 	uint24_t yPxlPos{ 0 };
@@ -762,7 +760,7 @@ void drawMenu(uint24_t selectedName)
 	gfx16_SetColor(GFX16_BLACK);
 	gfx16_FillRectangle_NoClip(0, 0, 140, 240);
 	gfx16_SetColor(GFX16_WHITE);
-	gfx16_SetTextFGColor(GFX16_WHITE);
+	gfx16_SetTextFGColor(GFX16_TEXT);
 	gfx16_SetTextBGColor(GFX16_BLACK);
 
 	//re-draws UI lines

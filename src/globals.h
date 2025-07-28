@@ -33,8 +33,8 @@
 #define SUBIMAGE_DIMENSIONS 80
 #define MAX_UINT 16777215
 //colors
-#define XLIBC_GREY 181 //the best grey xlibc has to offer
-#define XLIBC_RED 192 //xlibc red
+//#define XLIBC_GREY 181 //the best grey xlibc has to offer
+//#define XLIBC_RED 192 //xlibc red
 #define PALETTE_BLACK 0 //the xlibc palette and all hdpic generated palettes will have black as 0
 #define PALETTE_WHITE 255 //the xlibc palette and all hdpic generated palettes will have white as 255
 
