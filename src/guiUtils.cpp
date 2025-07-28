@@ -47,61 +47,68 @@ void PrintText(const int8_t xpos, const int8_t ypos, const char *text)
 /* Easy way to align help with a horizontal separator */
 void PrintHelpText(const char *button, const char *help, uint24_t yPos)
 {
-	gfx_PrintStringXY(button, 10, yPos);
-	gfx_PrintStringXY(help, 120, yPos);
-	gfx_HorizLine_NoClip(10, yPos + 8, 301);
+	gfx16_PutStringXY(button, 10, yPos);
+	gfx16_PutStringXY(help, 120, yPos);
+	gfx16_HorizLine_NoClip(10, yPos + 8, 301);
 }
 
 //creates a simple splash screen when program starts
 void drawSplashScreen()
 {
 	gfx16_FillScreen(GFX16_BLACK);
-	gfx16_SetColor(GFX16_BG_1);
+	gfx16_SetColor(GFX16_BG_BLUE);
 	gfx16_FillRectangle_NoClip(40, 80, 240, 80); //size: 2/3 screen width, 1/3 screen height
 	
 	/* Print title screen */
-	gfx16_SetTextBGColor(GFX16_BG_1);
-	gfx16_SetTextFGColor(0xf7be); //not sure why GFX16_WHITE is transparent here.
+	gfx16_SetTextBGColor(GFX16_BG_BLUE);
+	gfx16_SetTextFGColor(GFX16_TEXT_TITLE);
 	gfx16_PrintCenteredX("HD Picture Viewer", 116);
-	gfx16_SetTextFGColor(GFX16_TEXT);
 	gfx16_PrintCenteredX(VERSION, 147);
 }
 
 // Display full help screen
 void drawHelp()
 {
-	gfx_FillScreen(PALETTE_BLACK);
-	gfx_SetTextBGColor(PALETTE_BLACK);
-	gfx_SetTextFGColor(PALETTE_WHITE);
-	gfx_SetColor(PALETTE_WHITE);
-	PrintCenteredX("HD Picture Viewer Help", 6);
-	gfx_PrintStringXY("Keymap in Menu:", 1, 20);
+	gfx16_FillScreen(GFX16_BG_0);
+	gfx16_SetTextBGColor(GFX16_BG_0);
+	gfx16_SetColor(GFX16_TEXT);
 
+	gfx16_SetTextFGColor(GFX16_TEXT_TITLE);
+	gfx16_PrintCenteredX("HD Picture Viewer Help", 6);
+	gfx16_PutStringXY("Keymap in Menu:", 1, 20);
+
+	gfx16_SetTextFGColor(GFX16_TEXT);
 	PrintHelpText("Clear", "Quit program.", 30);
 	PrintHelpText("Enter", "Open picture fullscreen.", 40);
 	PrintHelpText("Up   ", "Select previous.", 50);
 	PrintHelpText("Down ", "Select next.", 60);
 
-	gfx_PrintStringXY("Keymap in Fullscreen:", 1, 80);
+	gfx16_SetTextFGColor(GFX16_TEXT_TITLE);
+	gfx16_PutStringXY("Keymap in Fullscreen:", 1, 80);
+	gfx16_SetTextFGColor(GFX16_TEXT);
 	PrintHelpText("Clear ", " Quit to menu.", 90);
 	PrintHelpText("Y= ", " Show previous.", 100);
 	PrintHelpText("Graph ", " Show next.", 110);
-	PrintHelpText("Arrow Keys", " Pan picture.", 120);
-	PrintHelpText("Del ", " Delete picture permanently.", 130);
-	PrintHelpText("+ ", " Zoom in.", 140);
-	PrintHelpText("- ", " Zoom out.", 150);
-	PrintHelpText("Zoom ", " Maximum zoom.", 160);
-	PrintHelpText("Window", " Default zoom.", 170);
+	PrintHelpText("Del ", " Delete picture permanently.", 120);
+	//PrintHelpText("Arrow Keys", " Pan picture.", 130);
+	//PrintHelpText("+ ", " Zoom in.", 140);
+	//PrintHelpText("- ", " Zoom out.", 150);
+	//PrintHelpText("Zoom ", " Maximum zoom.", 160);
+	//PrintHelpText("Window", " Default zoom.", 170);
 
-	PrintCenteredX("Press any key to return.", 190);
+	gfx16_SetTextFGColor(GFX16_TEXT_TITLE);
+	gfx16_PrintCenteredX("Press any key to return.", 190);
 
-	gfx_PrintStringXY("Author:", 1, 220);
-	gfx_PrintStringXY("TheLastMillennial", 64, 220);
-	gfx_PrintStringXY("Tutorial:", 1, 210);
-	gfx_PrintStringXY(TUTORIAL_LINK, 64, 210);
-	gfx_PrintStringXY("Version:", 1, 230);
-	gfx_PrintStringXY(VERSION, 64, 230);
-	gfx_PrintStringXY(YEAR, 288, 230);
+	gfx16_SetTextFGColor(GFX16_TEXT);
+	gfx16_PutStringXY("Author:", 1, 220);
+	gfx16_PutStringXY("TheLastMillennial", 64, 220);
+	gfx16_PutStringXY("Tutorial:", 1, 210);
+	gfx16_PutStringXY("Version:", 1, 230);
+
+	gfx16_SetTextFGColor(GFX16_TEXT_BLUE);
+	gfx16_PutStringXY(TUTORIAL_LINK, 64, 210);
+	gfx16_PutStringXY(VERSION, 64, 230);
+	gfx16_PutStringXY(YEAR, 288, 230);
 }
 
 // Draw screen that informs user that no picture were detected.

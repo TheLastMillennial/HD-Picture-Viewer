@@ -64,7 +64,6 @@ int main(void)
 }
 
 
-
 // Display UI to select an image
 void drawHomeScreen()
 {
@@ -102,8 +101,10 @@ void drawHomeScreen()
 			kb_ClearOnLatch();
 			keyHandler.reset();
 			dbg_sprintf(dbgout, "\nRender aborted by ON.");
-			PrintCenteredX("Render Interrupted.", 10);
-			PrintCenteredX("Press any key to continue.", 215);
+			gfx16_SetTextBGColor(GFX16_BG_0);
+			gfx16_SetTextFGColor(GFX16_TEXT_ERROR);
+			gfx16_PrintCenteredX("Render Interrupted.", 10);
+			gfx16_PrintCenteredX("Press enter to continue.", 215);
 			KeyPressHandler::waitForAnyKey();
 		}
 
@@ -169,13 +170,15 @@ void drawHomeScreen()
 			gfx16_FillScreen(GFX16_BLACK);
 			gfx16_SetTextFGColor(GFX16_TEXT);
 			gfx16_SetTextBGColor(GFX16_BLACK);
-			PrintCenteredX("Deleting Picture...", 120);
+			gfx16_PrintCenteredX("Deleting Picture...", 120);
 
 			//delete the palette and all subimages
 			PicDatabase &picDB = PicDatabase::getInstance();
 			picDB.deleteImage(selectedPicIndex);
 
+			gfx16_SetTextFGColor(GFX16_TEXT_SUCCESS);
 			gfx16_PrintCenteredX("Picture deleted.", 130);
+			gfx16_SetTextFGColor(GFX16_TEXT);
 			gfx16_PrintCenteredX("Press any key.", 140);
 			KeyPressHandler::waitForAnyKey();
 			keyHandler.reset();
@@ -237,6 +240,7 @@ void drawHomeScreen()
 			errorID = kb_KeyYequ; //272 if an error is thrown, then we've scrolled past the safety barrier somehow.
 		}
 
+		/* DISABLED until zoom feature implemented */
 		//left, right, up, down. Image panning.
 		//if (fullScreenImage) {
 		//	if (keyHandler.wasKeyPressed(kb_KeyLeft)) {
@@ -256,6 +260,7 @@ void drawHomeScreen()
 		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
 		//	}
 
+	    /* DISABLED until gfx16 lib supports resizing sprite */
 		//	//Zoom key. Zoom in as far as possible while maintaining full quality
 		//	if (keyHandler.wasKeyPressed(kb_KeyZoom)) {
 		//		//pull image full dimensions from database
@@ -277,6 +282,7 @@ void drawHomeScreen()
 		//		errorID = kb_KeyZoom; //260
 		//	}
 
+			/* DISABLED until gfx16 lib supports resizing sprite */
 			//Plus key. Zoom in by double
 			//if (keyHandler.wasKeyPressed(kb_KeyAdd)) {
 			//	uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
@@ -297,6 +303,7 @@ void drawHomeScreen()
 			//	errorID = kb_KeyAdd; //1538
 			//}
 
+			/* DISABLED until gfx16 lib supports resizing sprite */
 			//subtract key. Zoom out by double.
 			//if (keyHandler.wasKeyPressed(kb_KeySub)) {
 			//	//apply the zoom out to the width and height
@@ -361,8 +368,6 @@ void drawHomeScreen()
 
 		if (!fullScreenImage)
 			drawWatermark();
-
-
 	} while (!quitProgram);
 
 }
@@ -417,7 +422,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 
 	//pointer to memory where each unsized subimage will be stored
-	//todo: gfx16_mallocsprite necessary?
 	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
 	if (!srcImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate src memory!");
@@ -428,7 +432,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	int24_t subimgScaledDim{ subimgNewDimNumerator / scaleDenominator };
 
 	//dbg_sprintf(dbgout, "\n subimgScaledDim %d\n subimgNewDimNumerator: %d \n ScaleNum: %d \n scaleDenominator: %d \n xOffset: %d \n yOffset %d", subimgScaledDim, subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
-
 
 	//ensure the resized subimage will fit within the dimensions of the screen.
 	if (subimgScaledDim > LCD_HEIGHT) {
@@ -443,6 +446,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		return 1;
 	}
 
+	/* DISABLED until gfx16 lib supports resizing sprite */
 	//allocates memory for resized image
 	//gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim,subimgScaledDim) };
 	//if (!outputImg) {
@@ -451,6 +455,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//	return 1;
 	//}
 
+	/* DISABLED until support for bpp other than 16 is implemented */
 	//sets correct palettes
 	/*char palName[9];
 	sprintf(palName, "HP%.2s0000", curPicture.ID);
@@ -470,6 +475,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	ti_Close(palSlot);*/
 
 
+	/* DISABLED until zoom feature implemented */
 	/* Apply Pan Offset */
 
 	// Which direction to draw the subimages. 
@@ -531,13 +537,14 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//ceilDiv since we don't want missing subimages. (Overflow is compensated for, if necessary, below)
 	int24_t bottomMostSubimg{ ceilDiv(static_cast<int24_t>(LCD_HEIGHT) , (subimgNewDimNumerator / scaleDenominator)) };
 
+	/* DISABLED until zoom feature implemented */
 	/* Apply pan offsets */
 	//if we're panning horizontally, shift the rightmost and leftmost subimages (xOffset is negative in this case)
-	rightMostSubimg -= curPicture.xOffset;
-	leftMostSubimg -= curPicture.xOffset;
+	//rightMostSubimg -= curPicture.xOffset;
+	//leftMostSubimg -= curPicture.xOffset;
 	//if we're panning vertically, shift the topmost and bottommost subimages (yOffset is negative in this case)
-	bottomMostSubimg += curPicture.yOffset;
-	topMostSubimg += curPicture.yOffset;
+	//bottomMostSubimg += curPicture.yOffset;
+	//topMostSubimg += curPicture.yOffset;
 
 	/* Ensure we don't try to display more subimages than exist */
 	if (rightMostSubimg > curPicture.horizSubImages)
