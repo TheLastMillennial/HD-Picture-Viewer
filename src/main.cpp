@@ -1,7 +1,7 @@
 /*HD Picture Viewer
 * By TheLastMillennial
 * https://github.com/TheLastMillennial/HD-Picture-Viewer
-* To build: 
+* To build:
 * 1. Open command prompt.
 * 2. cd to root HD-Picture-Viewer folder.
 * 3. run `make debug --directory=./`
@@ -260,7 +260,7 @@ void drawHomeScreen()
 		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
 		//	}
 
-	    /* DISABLED until gfx16 lib supports resizing sprite */
+		/* DISABLED until gfx16 lib supports resizing sprite */
 		//	//Zoom key. Zoom in as far as possible while maintaining full quality
 		//	if (keyHandler.wasKeyPressed(kb_KeyZoom)) {
 		//		//pull image full dimensions from database
@@ -356,7 +356,7 @@ void drawHomeScreen()
 			if (imageErr != 0) {
 				gfx16_End();
 				gfx_Begin();
-				
+
 				gfx_PrintStringXY("Error: ", (LCD_WIDTH - gfx_GetStringWidth("Error: ")) / 2, 150);
 				gfx_PrintUInt(errorID, 6);
 				gfx_PrintStringXY("Press any key to quit.", (LCD_WIDTH - gfx_GetStringWidth("Press any key to quit.")) / 2, 160);
@@ -440,7 +440,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		return 1;
 	}
 
-	if (subimgScaledDim < 2) 		{
+	if (subimgScaledDim < 2) {
 		dbg_sprintf(dbgout, "\nERR: Subimage will be too small: %d", subimgScaledDim);
 		free(srcImg);
 		return 1;
@@ -681,9 +681,9 @@ uint24_t findPictures()
 	LoadingBar &loadingBar = LoadingBar::getInstance();
 	loadingBar.resetLoadingBar(MAX_IMAGES);
 	/*
-	* Searches for first sub-image. 
+	* Searches for first sub-image.
 	* It contains all the useful information such as the image size and
-	* the two letter ID for each appvar. 
+	* the two letter ID for each appvar.
 	* This makes it easy to find the other subimages via a loop.
 	*/
 
@@ -713,7 +713,7 @@ uint24_t findPictures()
 		//sets progress of how many images were found
 		//finds the name, letter ID, and size of entire image this palette belongs to.
 		ti_var_t  firstPic;
-		dbg_sprintf(dbgout, "\nfirstPic %.8s",var_name);
+		dbg_sprintf(dbgout, "\nfirstPic %.8s", var_name);
 
 		firstPic = ti_Open(var_name, "r");
 		//seeks past HDPALV10
@@ -735,9 +735,9 @@ uint24_t findPictures()
 		// Get width of whole image. Then convert the number from a char representation to a int24_t
 		char buffer[3];
 		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE, HORIZ_VERT_SIZE);
-		imgData.horizSubImages = (((static_cast<int24_t>(buffer[0]) - '0') * 100 + (static_cast<int24_t>(buffer[1]) - '0') * 10 + static_cast<int24_t>(buffer[2]) - '0') + 1);
+		imgData.horizSubImages = charToInt(buffer[0]) * 100 + charToInt(buffer[1]) * 10 + charToInt(buffer[2]) + 1;
 		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE, HORIZ_VERT_SIZE);
-		imgData.vertSubImages = (((static_cast<int24_t>(buffer[0]) - '0') * 100 + (static_cast<int24_t>(buffer[1]) - '0') * 10 + static_cast<int24_t>(buffer[2]) - '0') + 1);
+		imgData.vertSubImages = charToInt(buffer[0]) * 100 + charToInt(buffer[1]) * 10 + charToInt(buffer[2]) + 1;
 
 		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n", imgData.imgName, imgData.ID, imgData.horizSubImages, imgData.vertSubImages);
 
@@ -910,4 +910,10 @@ bool iterate(int24_t &xSubimgID, int24_t const &xFirstID, int24_t const &xLastID
 int24_t ceilDiv(int24_t x, int24_t y)
 {
 	return (x + y - 1) / y;
+}
+
+//converts number character to int24_t i.e. '5' -> 5
+int24_t charToInt(char c)
+{
+	return static_cast<int24_t>(c) - '0';
 }
