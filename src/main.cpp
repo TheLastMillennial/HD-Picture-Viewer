@@ -84,7 +84,7 @@ void drawHomeScreen()
 	//thumbnail
 	dbg_sprintf(dbgout, "\n drawImage");
 
-	drawImage(selectedPicIndex, 180, 120, false);
+	//drawImage(selectedPicIndex, 180, 120, false);
 
 
 	/* UI */
@@ -386,6 +386,14 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	imageData &curPicture = picDB.getPicture(picName);
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
 
+	dbg_sprintf(dbgout, "\nINFO: Changing BPP to ");
+	dbg_sprintf(dbgout, "\n BPP: %d", curPicture.BPP);
+
+	if (curPicture.BPP != 16) {
+		gfx16_End();
+		gfx_Begin();
+	}
+
 	//checks if it should scale an image horizontally or vertically.
 	int24_t scaleNumerator{ 1 }, scaleDenominator{ 1 }, subimgNewDimNumerator{ 0 };
 	if ((curPicture.horizSubImages * SUBIMAGE_DIMENSIONS) / LCD_WIDTH >= (curPicture.vertSubImages * SUBIMAGE_DIMENSIONS) / LCD_HEIGHT) {
@@ -399,6 +407,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		scaleDenominator = curPicture.vertSubImages * SUBIMAGE_DIMENSIONS;
 	}
 
+	dbg_sprintf(dbgout, "\n horizSubImages: %d\n vertSubImages: %d",
+		curPicture.horizSubImages, curPicture.vertSubImages);
 	// Check for invalid fractions
 	if (scaleNumerator == 0 || scaleDenominator == 0) {
 		dbg_sprintf(dbgout, "\nERR: Cant zoom out\n scaleNumerator:%d\n scaleDenominator:%d", scaleNumerator, scaleDenominator);
@@ -431,7 +441,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	subimgNewDimNumerator = SUBIMAGE_DIMENSIONS * scaleNumerator;
 	int24_t subimgScaledDim{ subimgNewDimNumerator / scaleDenominator };
 
-	//dbg_sprintf(dbgout, "\n subimgScaledDim %d\n subimgNewDimNumerator: %d \n ScaleNum: %d \n scaleDenominator: %d \n xOffset: %d \n yOffset %d", subimgScaledDim, subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
+	dbg_sprintf(dbgout, "\n subimgScaledDim %d\n subimgNewDimNumerator: %d \n ScaleNum: %d \n scaleDenominator: %d \n xOffset: %d \n yOffset %d",
+		subimgScaledDim, subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
 
 	//ensure the resized subimage will fit within the dimensions of the screen.
 	if (subimgScaledDim > LCD_HEIGHT) {
@@ -455,24 +466,25 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//	return 1;
 	//}
 
-	/* DISABLED until support for bpp other than 16 is implemented */
 	//sets correct palettes
-	/*char palName[9];
-	sprintf(palName, "HP%.2s0000", curPicture.ID);
-	ti_var_t palSlot{ ti_Open(palName,"r") };
-	if (!palSlot) {
-		PrintCenteredX(palName, 110);
-		PrintCenteredX("ERR: Palette does not exist!", 120);
-		PrintCenteredX("Image may have recently been deleted.", 130);
-		PrintCenteredX("Try restarting the program.", 140);
-		KeyPressHandler::waitForAnyKey();
-		free(srcImg);
-		free(outputImg);
-		return 1;
+	if (curPicture.BPP != 16) {
+		char palName[9];
+		sprintf(palName, "HP%.2s0000", curPicture.ID);
+		ti_var_t palSlot{ ti_Open(palName,"r") };
+		if (!palSlot) {
+			PrintCenteredX(palName, 110);
+			PrintCenteredX("ERR: Palette does not exist!", 120);
+			PrintCenteredX("Image may have recently been deleted.", 130);
+			PrintCenteredX("Try restarting the program.", 140);
+			KeyPressHandler::waitForAnyKey();
+			free(srcImg);
+			//free(outputImg);
+			return 1;
+		}
+		ti_Seek(24, SEEK_SET, palSlot);
+		gfx_SetPalette(ti_GetDataPtr(palSlot), 512, 0);
+		ti_Close(palSlot);
 	}
-	ti_Seek(24, SEEK_SET, palSlot);
-	gfx_SetPalette(ti_GetDataPtr(palSlot), 512, 0);
-	ti_Close(palSlot);*/
 
 
 	/* DISABLED until zoom feature implemented */
@@ -558,7 +570,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	/* Display final image */
 
-	//the -1 is to account for some loop wierdness. Specifically in the iterate() function.
+	//the -1 is to account for some loop weirdness. Specifically in the iterate() function.
 	//this for loop outputs pic right to left, top to bottom
 	const int24_t xFirstID{ (leftMostSubimg) }, xLastID{ (rightMostSubimg)-1 };
 	const int24_t yFirstID{ (topMostSubimg) }, yLastID{ (bottomMostSubimg)-1 };
@@ -570,8 +582,15 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	// If displaying thumbnail, cover up the last image
 	if (!fullScreenPic) {
-		gfx16_SetColor(GFX16_BLACK);
-		gfx16_FillRectangle_NoClip(150, 0, 170, 240);
+		if (curPicture.BPP == 16) {
+			gfx16_SetColor(GFX16_BLACK);
+			gfx16_FillRectangle_NoClip(150, 0, 170, 240);
+		}
+		else {
+			gfx_SetColor(1);//temp magic number
+			gfx_FillRectangle_NoClip(150, 0, 170, 240);
+		}
+
 	}
 
 	/* Loop through all subimages to create full image */
@@ -588,7 +607,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 
-		//dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl",xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
+		dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl", xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
 
 		//a key interrupted output. Quit immediately
 		if (kb_On || keyHandler.scanKeys(fullScreenPic)) {
@@ -619,17 +638,23 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			//cache miss. Find the appvar by name
 			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
 
-			//dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
+			dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
 
 			subimgSlot = ti_Open(picAppvarToFind, "r");
 			//dbg_sprintf(dbgout, "\nsubImgSlot: %d", (int)subimgSlot);
 
 			if (subimgSlot) {
 				//seeks past header
-				ti_Seek(24, SEEK_CUR, subimgSlot);
+				if (curPicture.BPP == 16) {
+					ti_Seek(24, SEEK_CUR, subimgSlot);
+				}
+				else 					{
+					ti_Seek(26, SEEK_CUR, subimgSlot);
+				}
 
 				//cache the pointer to the subimage for next time
 				subimgPtr = ti_GetDataPtr(subimgSlot);
+				dbg_sprintf(dbgout, "\nsubimgPtr: %p", (void *)&subimgPtr);
 
 				//curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
 			}
@@ -649,11 +674,21 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		//displays subimage
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
+		dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
+
 		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT) {
-			gfx16_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
+			if (curPicture.BPP == 16)
+				gfx16_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
+			else
+				gfx_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
 		}
 		else {
-			gfx16_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
+			if (curPicture.BPP == 16)
+				gfx16_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
+			else
+				gfx_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
+
+
 		}
 
 		//cleans up
@@ -664,6 +699,11 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//free(outputImg);
 
 	dbg_sprintf(dbgout, "\nDraw Finished.\n");
+	if (curPicture.BPP != 16) {
+		while (!os_GetCSC());
+		gfx_End();
+		gfx16_Begin();
+	}
 	return 0;
 }
 
@@ -687,8 +727,13 @@ uint24_t findPictures()
 	* This makes it easy to find the other subimages via a loop.
 	*/
 
-
+	//find 16 bit pictures
 	while ((var_name = ti_DetectVar(&search_pos, "HDPIC16A", OS_TYPE_APPVAR)) != NULL) {
+		imagesFound++;
+		loadingBar.increment();
+	}
+	// find 1,2,4,8 bit pictures
+	while ((var_name = ti_DetectVar(&search_pos, "HDPALV11", OS_TYPE_APPVAR)) != NULL) {
 		imagesFound++;
 		loadingBar.increment();
 	}
@@ -703,33 +748,30 @@ uint24_t findPictures()
 
 		constexpr uint8_t ID_SIZE{ 2 };
 		constexpr uint8_t HORIZ_VERT_SIZE{ 3 };
-		//constexpr uint8_t PALETTE_NAME_SIZE{ 8 };
 		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
-		constexpr uint8_t HEADER_SIZE{ 16 };
+		constexpr uint8_t HEADER_SIZE{ 18 };
 
 		loadingBar.increment();
 
 		imageData imgData;
-		//sets progress of how many images were found
-		//finds the name, letter ID, and size of entire image this palette belongs to.
+		//finds the name, letter ID, and size of entire image this picture belongs to.
 		ti_var_t  firstPic;
 		dbg_sprintf(dbgout, "\nfirstPic %.8s", var_name);
 
 		firstPic = ti_Open(var_name, "r");
-		//seeks past HDPALV10
+		//seeks past HDPIC16A
 		ti_Seek(8, SEEK_CUR, firstPic);
-		//reads the important info (16 bytes)
+		//reads the important info
 		//e.g. poppy___JT003002
 		ti_Read(&imgInfo, HEADER_SIZE, 1, firstPic);
 
-		char charArrImgInfo[16];
+		char charArrImgInfo[HEADER_SIZE];
 		std::strncpy(charArrImgInfo, imgInfo, HEADER_SIZE);
-		//std::strncpy(imgData.palletName, var_name, PALETTE_NAME_SIZE);
 		std::strncpy(imgData.imgName, charArrImgInfo, IMAGE_NAME_SIZE);
 		std::strncpy(imgData.ID, charArrImgInfo + IMAGE_NAME_SIZE, ID_SIZE);
 
+		imgData.BPP = 16; //Images in this section will always be 16 BPP
 		imgData.imgName[8] = '\0';
-		//imgData.palletName[8] = '\0';
 		imgData.ID[2] = '\0';
 
 		// Get width of whole image. Then convert the number from a char representation to a int24_t
@@ -743,8 +785,62 @@ uint24_t findPictures()
 
 		picDB.addPicture(imgData);
 
-		//closes palette for next iteration
+		//closes pic for next iteration
 		ti_Close(firstPic);
+	}
+
+	while ((var_name = ti_DetectVar(&search_pos, "HDPALV11", OS_TYPE_APPVAR)) != NULL) {
+
+		constexpr uint8_t ID_SIZE{ 2 };
+		constexpr uint8_t HORIZ_VERT_SIZE{ 3 };
+		constexpr uint8_t PALETTE_NAME_SIZE{ 8 };
+		constexpr uint8_t BITS_PER_PIXEL_SIZE{ 2 };
+		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
+		constexpr uint8_t HEADER_SIZE{ 18 };
+
+		loadingBar.increment();
+
+		imageData imgData;
+		//finds the name, letter ID, and size of entire image this palette belongs to.
+		ti_var_t  palette;
+		dbg_sprintf(dbgout, "\npalette %.8s", var_name);
+
+		palette = ti_Open(var_name, "r");
+		//seeks past HDPALV11
+		ti_Seek(8, SEEK_CUR, palette);
+		//reads the important info
+		//e.g. 08poppy___JT003002
+		ti_Read(&imgInfo, HEADER_SIZE, 1, palette);
+
+		char charArrImgInfo[HEADER_SIZE];
+		char BPPbuffer[BITS_PER_PIXEL_SIZE];
+		std::strncpy(charArrImgInfo, imgInfo, HEADER_SIZE);
+		dbg_sprintf(dbgout, "\n charArrImgInfo\n BPP: %.18s", charArrImgInfo);
+		std::strncpy(BPPbuffer, charArrImgInfo, BITS_PER_PIXEL_SIZE);
+		std::strncpy(imgData.imgName, charArrImgInfo + BITS_PER_PIXEL_SIZE, IMAGE_NAME_SIZE);
+		std::strncpy(imgData.ID, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE, ID_SIZE);
+		std::strncpy(imgData.paletteName, var_name, PALETTE_NAME_SIZE);
+
+		imgData.imgName[8] = '\0';
+		imgData.paletteName[8] = '\0';
+		imgData.ID[2] = '\0';
+
+		// Get width of whole image. Then convert the number from a char representation to a int24_t
+		char dimBuffer[3];
+		std::strncpy(dimBuffer, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE + ID_SIZE, HORIZ_VERT_SIZE);
+		imgData.horizSubImages = charToInt(dimBuffer[0]) * 100 + charToInt(dimBuffer[1]) * 10 + charToInt(dimBuffer[2]) + 1;
+		std::strncpy(dimBuffer, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE, HORIZ_VERT_SIZE);
+		imgData.vertSubImages = charToInt(dimBuffer[0]) * 100 + charToInt(dimBuffer[1]) * 10 + charToInt(dimBuffer[2]) + 1;
+
+		//convert the char BPP to a uint8_t
+		imgData.BPP = static_cast<uint8_t>(charToInt(BPPbuffer[0]) * 10 + charToInt(BPPbuffer[1]));
+
+		dbg_sprintf(dbgout, "\nPicture found:\n BPP: %.2s\n imgName: %.8s\n palName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n", BPPbuffer, imgData.imgName, imgData.paletteName, imgData.ID, imgData.horizSubImages, imgData.vertSubImages);
+
+		picDB.addPicture(imgData);
+
+		//closes palette for next iteration
+		ti_Close(palette);
 	}
 
 	drawSplashScreen();

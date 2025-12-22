@@ -56,7 +56,7 @@
 // Text intended for use on dark backgrounds
 #define GFX16_TEXT 0xad55        // default text, grey
 #define GFX16_TEXT_TITLE 0xef7d  // slightly lighter than default text
-#define GFX16_TEXT_SUCCESS 0x4ec8//for use as success message or inconsequential hint
+#define GFX16_TEXT_SUCCESS 0x4ec8// for use as success message or inconsequential hint
 #define GFX16_TEXT_ERROR 0xdac6  // for use as error message or danger hint
 #define GFX16_TEXT_BLUE 0xae1f   // for use on links and version numbers
 #define GFX16_TEXT_PURPLE 0xa49b
