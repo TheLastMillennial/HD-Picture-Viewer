@@ -431,7 +431,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	*/
 
 
-	
+
 	//Final dimension of all subimages
 	subimgNewDimNumerator = SUBIMAGE_DIMENSIONS * scaleNumerator;
 	int24_t subimgScaledDim{ subimgNewDimNumerator / scaleDenominator };
@@ -465,7 +465,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			return 1;
 		}
 		ti_Seek(26, SEEK_SET, palSlot);
-		gfx_SetPalette(ti_GetDataPtr(palSlot), 512, 0);
+		uint24_t numPaletteEntries{ static_cast<uint24_t>(pow(2.0, static_cast<double>(curPicture.BPP)) * 2) };
+		gfx_SetPalette(ti_GetDataPtr(palSlot), numPaletteEntries, 0);
 		ti_Close(palSlot);
 	}
 
@@ -627,8 +628,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		//Pull pointer to the subimage from the cache
 		void *subimgPtr{ nullptr };
-		if (!bDisableCache)
-		{
+		if (!bDisableCache) {
 			//dbg_sprintf(dbgout, "\n Cache Hit.");
 			subimgPtr = curPicture.cache[xSubimgID][ySubimgID];
 		}
@@ -648,8 +648,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 				if (curPicture.BPP == 16) {
 					ti_Seek(24, SEEK_CUR, subimgSlot);
 				}
-				else 	
-				{
+				else {
 					ti_Seek(16, SEEK_CUR, subimgSlot);
 				}
 
@@ -678,38 +677,33 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
 
 		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT) {
-			if (curPicture.BPP == 16)
-			{
+			if (curPicture.BPP == 16) {
 				gfx16_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
 			}
-			else
-			{
+			else {
 				gfx_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
 			}
 		}
 		else {
-			if (curPicture.BPP == 16)
-			{
+			if (curPicture.BPP == 16) {
 				gfx16_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
 			}
-			else
-			{
+			else {
 				gfx_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
 			}
-
-
 		}
 
 		//cleans up
 		ti_Close(subimgSlot);
 	}
-	
+
 	//free up source and output memory
 	free(srcImg);
 	//free(outputImg);
 
 	dbg_sprintf(dbgout, "\nDraw Finished.\n");
 	if (curPicture.BPP != 16) {
+		while (!os_GetCSC());
 		gfx_End();
 		gfx16_Begin();
 	}
