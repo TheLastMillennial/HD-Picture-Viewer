@@ -431,12 +431,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	*/
 
 
-	//pointer to memory where each unsized subimage will be stored
-	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
-	if (!srcImg) {
-		dbg_sprintf(dbgout, "\nERR: Failed to allocate src memory!");
-		return 1;
-	}
+	
 	//Final dimension of all subimages
 	subimgNewDimNumerator = SUBIMAGE_DIMENSIONS * scaleNumerator;
 	int24_t subimgScaledDim{ subimgNewDimNumerator / scaleDenominator };
@@ -447,24 +442,14 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//ensure the resized subimage will fit within the dimensions of the screen.
 	if (subimgScaledDim > LCD_HEIGHT) {
 		dbg_sprintf(dbgout, "\nERR: Subimage will be too large: %d", subimgScaledDim);
-		free(srcImg);
 		return 1;
 	}
 
 	if (subimgScaledDim < 2) {
 		dbg_sprintf(dbgout, "\nERR: Subimage will be too small: %d", subimgScaledDim);
-		free(srcImg);
 		return 1;
 	}
 
-	/* DISABLED until gfx16 lib supports resizing sprite */
-	//allocates memory for resized image
-	//gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim,subimgScaledDim) };
-	//if (!outputImg) {
-	//	dbg_sprintf(dbgout, "\nERR: Failed to allocate output memory!");
-	//	free(srcImg);
-	//	return 1;
-	//}
 
 	//sets correct palettes
 	if (curPicture.BPP != 16) {
@@ -477,11 +462,9 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			PrintCenteredX("Image may have recently been deleted.", 130);
 			PrintCenteredX("Try restarting the program.", 140);
 			KeyPressHandler::waitForAnyKey();
-			free(srcImg);
-			//free(outputImg);
 			return 1;
 		}
-		ti_Seek(24, SEEK_SET, palSlot);
+		ti_Seek(26, SEEK_SET, palSlot);
 		gfx_SetPalette(ti_GetDataPtr(palSlot), 512, 0);
 		ti_Close(palSlot);
 	}
@@ -593,6 +576,21 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	}
 
+	/* DISABLED until gfx16 lib supports resizing sprite */
+	//allocates memory for resized image
+	//gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim,subimgScaledDim) };
+	//if (!outputImg) {
+	//	dbg_sprintf(dbgout, "\nERR: Failed to allocate output memory!");
+	//	return 1;
+	//}
+
+	//pointer to memory where each unsized subimage will be stored
+	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
+	if (!srcImg) {
+		dbg_sprintf(dbgout, "\nERR: Failed to allocate src memory!");
+		return 1;
+	}
+
 	/* Loop through all subimages to create full image */
 	bool bFirstRun{ true };
 	//If there's no cache yet, don't bother even checking it.
@@ -630,7 +628,10 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//Pull pointer to the subimage from the cache
 		void *subimgPtr{ nullptr };
 		if (!bDisableCache)
+		{
+			//dbg_sprintf(dbgout, "\n Cache Hit.");
 			subimgPtr = curPicture.cache[xSubimgID][ySubimgID];
+		}
 
 		//Check for cache miss
 		ti_var_t subimgSlot = NULL;
@@ -641,15 +642,15 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
 
 			subimgSlot = ti_Open(picAppvarToFind, "r");
-			//dbg_sprintf(dbgout, "\nsubImgSlot: %d", (int)subimgSlot);
 
 			if (subimgSlot) {
 				//seeks past header
 				if (curPicture.BPP == 16) {
 					ti_Seek(24, SEEK_CUR, subimgSlot);
 				}
-				else 					{
-					ti_Seek(26, SEEK_CUR, subimgSlot);
+				else 	
+				{
+					ti_Seek(16, SEEK_CUR, subimgSlot);
 				}
 
 				//cache the pointer to the subimage for next time
@@ -678,15 +679,23 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT) {
 			if (curPicture.BPP == 16)
+			{
 				gfx16_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
+			}
 			else
+			{
 				gfx_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
+			}
 		}
 		else {
 			if (curPicture.BPP == 16)
+			{
 				gfx16_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
+			}
 			else
+			{
 				gfx_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
+			}
 
 
 		}
@@ -694,13 +703,13 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//cleans up
 		ti_Close(subimgSlot);
 	}
+	
 	//free up source and output memory
 	free(srcImg);
 	//free(outputImg);
 
 	dbg_sprintf(dbgout, "\nDraw Finished.\n");
 	if (curPicture.BPP != 16) {
-		while (!os_GetCSC());
 		gfx_End();
 		gfx16_Begin();
 	}
@@ -835,7 +844,7 @@ uint24_t findPictures()
 		//convert the char BPP to a uint8_t
 		imgData.BPP = static_cast<uint8_t>(charToInt(BPPbuffer[0]) * 10 + charToInt(BPPbuffer[1]));
 
-		dbg_sprintf(dbgout, "\nPicture found:\n BPP: %.2s\n imgName: %.8s\n palName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n", BPPbuffer, imgData.imgName, imgData.paletteName, imgData.ID, imgData.horizSubImages, imgData.vertSubImages);
+		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n palName: %.8s\n ID: %.2s\n BPP: %d\n subImgHoriz: %d\n subImgVert: %d\n", imgData.imgName, imgData.paletteName, imgData.ID, imgData.BPP, imgData.horizSubImages, imgData.vertSubImages);
 
 		picDB.addPicture(imgData);
 
