@@ -592,6 +592,13 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		return 1;
 	}
 
+	//pointer to memory where each unsized subimage will be stored
+	gfx_sprite_t *tempImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
+	if (!tempImg) {
+		dbg_sprintf(dbgout, "\nERR: Failed to allocate tempImg src memory!");
+		return 1;
+	}
+
 	/* Loop through all subimages to create full image */
 	bool bFirstRun{ true };
 	//If there's no cache yet, don't bother even checking it.
@@ -613,6 +620,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			dbg_sprintf(dbgout, "\nRender aborted!\n");
 			//free up source and output memory
 			free(srcImg);
+			free(tempImg);
 			//free(outputImg);
 			return 0;
 		}
@@ -676,20 +684,58 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
 		dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
 
+		uint8_t pixelsPerByte = 8 / curPicture.BPP;
+		uint24_t dataToRead = (SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS) / pixelsPerByte;
+		uint24_t out{ 0 };
+
 		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT) {
-			if (curPicture.BPP == 16) {
-				gfx16_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
-			}
-			else {
+			switch (curPicture.BPP) {
+			case 1:
+				dbg_sprintf(dbgout, "\nClip 1 BPP");
+				
+				for (size_t i = 0; i < dataToRead; i++) {
+					uint8_t byte = static_cast<uint8_t>( srcImg->data[i]);
+
+					/* MSB first: bit 7 -> bit 0 */
+					for (int bit = 7; bit >= 0; bit--) {
+						tempImg->data[out++] = (byte >> bit) & 0x01;
+					}
+				}
+				gfx_Sprite(tempImg, subimgPxlPosX, subimgPxlPosY);
+				break;
+			case 2:
+			case 4:
+			case 8:
 				gfx_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
+				break;
+			case 16:
+				gfx16_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
+				break;
 			}
 		}
 		else {
-			if (curPicture.BPP == 16) {
-				gfx16_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
-			}
-			else {
+			switch (curPicture.BPP) {
+			case 1:
+				dbg_sprintf(dbgout, "\nNo-Clip 1 BPP");
+
+					for (size_t i = 0; i < dataToRead; i++) {
+						uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+
+						/* MSB first: bit 7 -> bit 0 */
+						for (int bit = 7; bit >= 0; bit--) {
+							tempImg->data[out++] = (byte >> bit) & 0x01;
+						}
+					}
+				gfx_Sprite(tempImg, subimgPxlPosX, subimgPxlPosY);
+				break;
+			case 2:
+			case 4:
+			case 8:
 				gfx_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
+				break;
+			case 16:
+				gfx16_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
+				break;
 			}
 		}
 
@@ -699,6 +745,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//free up source and output memory
 	free(srcImg);
+	free(tempImg);
 	//free(outputImg);
 
 	dbg_sprintf(dbgout, "\nDraw Finished.\n");
