@@ -691,23 +691,47 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT) {
 			switch (curPicture.BPP) {
 			case 1:
-				dbg_sprintf(dbgout, "\nClip 1 BPP");
-				
 				for (size_t i = 0; i < dataToRead; i++) {
-					uint8_t byte = static_cast<uint8_t>( srcImg->data[i]);
+					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
 
-					/* MSB first: bit 7 -> bit 0 */
-					for (int bit = 7; bit >= 0; bit--) {
-						tempImg->data[out++] = (byte >> bit) & 0x01;
-					}
+					tempImg->data[out++] = (byte >> 7) & 0x01;
+					tempImg->data[out++] = (byte >> 6) & 0x01;
+					tempImg->data[out++] = (byte >> 5) & 0x01;
+					tempImg->data[out++] = (byte >> 4) & 0x01;
+					tempImg->data[out++] = (byte >> 3) & 0x01;
+					tempImg->data[out++] = (byte >> 2) & 0x01;
+					tempImg->data[out++] = (byte >> 1) & 0x01;
+					tempImg->data[out++] = byte & 0x01;
 				}
 				gfx_Sprite(tempImg, subimgPxlPosX, subimgPxlPosY);
 				break;
+
 			case 2:
+				for (size_t i = 0; i < dataToRead; i++) {
+					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+
+					tempImg->data[out++] = (byte >> 6) & 0x03;
+					tempImg->data[out++] = (byte >> 4) & 0x03;
+					tempImg->data[out++] = (byte >> 2) & 0x03;
+					tempImg->data[out++] = byte & 0x03;
+				}
+				gfx_Sprite(tempImg, subimgPxlPosX, subimgPxlPosY);
+				break;
+
 			case 4:
+				for (size_t i = 0; i < dataToRead; i++) {
+					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+
+					tempImg->data[out++] = (byte >> 4) & 0x0F;
+					tempImg->data[out++] = byte & 0x0F;
+				}
+				gfx_Sprite(tempImg, subimgPxlPosX, subimgPxlPosY);
+				break;
+
 			case 8:
 				gfx_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
 				break;
+
 			case 16:
 				gfx16_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
 				break;
@@ -716,23 +740,44 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		else {
 			switch (curPicture.BPP) {
 			case 1:
-				dbg_sprintf(dbgout, "\nNo-Clip 1 BPP");
-
-					for (size_t i = 0; i < dataToRead; i++) {
-						uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
-
-						/* MSB first: bit 7 -> bit 0 */
-						for (int bit = 7; bit >= 0; bit--) {
-							tempImg->data[out++] = (byte >> bit) & 0x01;
-						}
-					}
-				gfx_Sprite(tempImg, subimgPxlPosX, subimgPxlPosY);
+				for (size_t i = 0; i < dataToRead; i++) {
+					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+					tempImg->data[out++] = (byte >> 7) & 0x01;
+					tempImg->data[out++] = (byte >> 6) & 0x01;
+					tempImg->data[out++] = (byte >> 5) & 0x01;
+					tempImg->data[out++] = (byte >> 4) & 0x01;
+					tempImg->data[out++] = (byte >> 3) & 0x01;
+					tempImg->data[out++] = (byte >> 2) & 0x01;
+					tempImg->data[out++] = (byte >> 1) & 0x01;
+					tempImg->data[out++] = byte & 0x01;
+				}
+				gfx_Sprite_NoClip(tempImg, subimgPxlPosX, subimgPxlPosY);
 				break;
+
 			case 2:
+				for (size_t i = 0; i < dataToRead; i++) {
+					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+					tempImg->data[out++] = (byte >> 6) & 0x03;
+					tempImg->data[out++] = (byte >> 4) & 0x03;
+					tempImg->data[out++] = (byte >> 2) & 0x03;
+					tempImg->data[out++] = byte & 0x03;
+				}
+				gfx_Sprite_NoClip(tempImg, subimgPxlPosX, subimgPxlPosY);
+				break;
+
 			case 4:
+				for (size_t i = 0; i < dataToRead; i++) {
+					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+					tempImg->data[out++] = (byte >> 4) & 0x0F;
+					tempImg->data[out++] = byte & 0x0F;
+				}
+				gfx_Sprite_NoClip(tempImg, subimgPxlPosX, subimgPxlPosY);
+				break;
+
 			case 8:
 				gfx_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
 				break;
+
 			case 16:
 				gfx16_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
 				break;
@@ -898,7 +943,6 @@ uint24_t findPictures()
 	loadingBar.increment();
 	return imagesFound;
 }
-
 
 /* This UI keeps the user selection in the middle of the screen. */
 void drawMenu(uint24_t selectedName)
