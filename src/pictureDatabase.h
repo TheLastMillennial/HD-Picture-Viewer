@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "globals.h"
+#include "gfxCompatibility.h"
 #include "types/vector.h"
 #include "types/pair.h"
 #include "types/map.h"
@@ -98,7 +99,7 @@ public:
 			toLower(allImages[i].imgName, right);
 
 			int24_t result = std::strcmp(left, right);
-		    //dbg_sprintf(dbgout, "\nCompare result %d for %s : %s", result, left, right);
+			//dbg_sprintf(dbgout, "\nCompare result %d for %s : %s", result, left, right);
 			if (result < 0) {
 				allImages.insert(i, img);
 				//dbg_sprintf(dbgout, "\nCompare: found match");
@@ -130,18 +131,40 @@ public:
 	void deleteImage(uint24_t picName)
 	{
 		char picAppvarToFind[9];
-
 		imageData *imgToDelete{ &allImages[picName] };
 
+		HDpicGFX &gfx = HDpicGFX::getInstance();
+
 		//sets up loading bar finish line
-		gfx16_SetColor(GFX16_WHITE);
-		gfx16_VertLine_NoClip(260, 153, 7);
+		if (gfx.is16bppMode())
+		{
+			gfx16_SetColor(GFX16_WHITE);
+			gfx16_VertLine_NoClip(260, 153, 7);
+		}
+		else 			{
+			gfx_SetColor(PALETTE_WHITE);
+			gfx_VertLine_NoClip(260, 153, 7);
+		}
 
 		int24_t const &picWidthInSubimages{ imgToDelete->horizSubImages };
 		int24_t const &picHeightInSubimages{ imgToDelete->vertSubImages };
 
 		LoadingBar &loadingBar = LoadingBar::getInstance();
 		loadingBar.resetLoadingBar(picWidthInSubimages * picHeightInSubimages);
+
+		// 1,2,4, & 8 bpp pictures use a palette
+		if (imgToDelete->BPP != 16) {
+			// find the palette
+			sprintf(picAppvarToFind, "HP%.2s0000", imgToDelete->ID);
+			int delSuccess = ti_Delete(picAppvarToFind);
+
+			//checks if the palette does not exist
+			if (delSuccess == 0) {
+				//subimage does not exist
+				dbg_sprintf(dbgout, "\nERR: Issue deleting palette");
+				dbg_sprintf(dbgout, "\nHP%.2s0000", imgToDelete->ID);
+			}
+		}
 
 		//delete every subimage
 		for (uint24_t xSubimage = (picWidthInSubimages - 1); xSubimage < MAX_UINT; xSubimage--) {

@@ -50,7 +50,6 @@ public:
 	// bInFullscreen will cause certain keypresses to be ignored when false.
 	bool scanKeys(bool bInFullscreen = true)
 	{
-
 		reset();
 
 		kb_Scan();

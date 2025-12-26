@@ -4,15 +4,42 @@
 #include "guiUtils.h"
 #include "globals.h"
 
+// Simple text that displays program name and how to open help.
+void drawWatermark_8bpp()
+{
+	gfx_SetTextScale(1, 1);
+	gfx_SetTextFGColor(PALETTE_WHITE);
+	gfx_SetTextBGColor(PALETTE_BLACK);
+	gfx_PrintStringXY("HD Picture Viewer", 2, 2);
+	gfx_PrintStringXY("[mode] = help", 2, 232);
+}
 
 // Simple text that displays program name and how to open help.
-void drawWatermark()
+void drawWatermark_16bpp()
 {
 	gfx16_SetTextScale(1, 1);
 	gfx16_SetTextFGColor(GFX16_WHITE);
 	gfx16_SetTextBGColor(GFX16_BLACK);
 	gfx16_PutStringXY("HD Picture Viewer", 2, 2);
 	gfx16_PutStringXY("[mode] = help", 2, 232);
+}
+
+// Change gfx libraries if the image has changed to/from 16bpp
+// Requires that gfx_Begin() or gfx16_Begin() has already been called.
+// Returns the Now16bpp status
+bool handleBppModeChange(bool bPreviously16bpp, bool bCurrently16bpp)
+{
+	if (bPreviously16bpp != bCurrently16bpp) {
+		if (bPreviously16bpp) {
+			gfx16_End();
+			gfx_Begin();
+		}
+		else {
+			gfx_End();
+			gfx16_Begin();
+		}
+	}
+	return bCurrently16bpp;
 }
 
 /* Prints a X centered string */
@@ -44,7 +71,7 @@ void PrintText(const int8_t xpos, const int8_t ypos, const char *text)
 	os_PutStrFull(text);
 }
 
-/* Easy way to align help with a horizontal separator */
+/* 16bpp Easy way to align help with a horizontal separator */
 void PrintHelpText(const char *button, const char *help, uint24_t yPos)
 {
 	gfx16_PutStringXY(button, 10, yPos);
@@ -52,7 +79,7 @@ void PrintHelpText(const char *button, const char *help, uint24_t yPos)
 	gfx16_HorizLine_NoClip(10, yPos + 8, 301);
 }
 
-//creates a simple splash screen when program starts
+// 16bpp creates a simple splash screen when program starts
 void drawSplashScreen()
 {
 	gfx16_FillScreen(GFX16_BLACK);
@@ -66,7 +93,7 @@ void drawSplashScreen()
 	gfx16_PrintCenteredX(VERSION, 147);
 }
 
-// Display full help screen
+/* 16bpp Draw instructions on how to use the program */
 void drawHelp()
 {
 	gfx16_FillScreen(GFX16_BG_0);
@@ -111,7 +138,7 @@ void drawHelp()
 	gfx16_PutStringXY(YEAR, 288, 230);
 }
 
-// Draw screen that informs user that no picture were detected.
+// 16bpp Draw screen that informs user that no picture were detected.
 void drawNoImagesFound()
 {
 	gfx16_SetTextBGColor(GFX16_BLACK);

@@ -20,6 +20,7 @@
 #include "main.h"
 #include "loadingBarHandler.h"
 #include "keyPressHandler.h"
+#include "gfxCompatibility.h"
 #include "pictureDatabase.h"
 #include "globals.h"
 #include "guiUtils.h"
@@ -30,10 +31,9 @@ int main(void)
 {
 	dbg_sprintf(dbgout, "\nStart");
 
-	gfx16_Begin();
-	gfx16_SetTextTransparentColor(0xfffe);
-
-	dbg_sprintf(dbgout, "\nSplash Screen");
+	//initialize 8 & 16bpp compatibility functions
+	HDpicGFX &gfx = HDpicGFX::getInstance();
+	gfx.use16bpp();
 
 	//draw loading screen
 	drawSplashScreen();
@@ -46,7 +46,7 @@ int main(void)
 
 		drawNoImagesFound();
 		KeyPressHandler::waitForAnyKey();
-		gfx16_End();
+		HDpicGFX::end();
 		return 0;
 	}
 	dbg_sprintf(dbgout, "\nHome screen ");
@@ -57,7 +57,7 @@ int main(void)
 
 
 	//quit
-	gfx16_End();
+	HDpicGFX::end();
 	kb_ClearOnLatch();
 	return 0;
 
@@ -65,27 +65,34 @@ int main(void)
 
 
 // Display UI to select an image
+//starts at 16bpp
 void drawHomeScreen()
 {
 	uint24_t selectedPicIndex{ 0 },
 		desiredWidthInPxl{ MAX_THUMBNAIL_WIDTH }, desiredHeightInPxl{ MAX_THUMBNAIL_HEIGHT };
-
 	//set up variable that checks if drawImage failed
 	uint8_t imageErr{ 0 };
 	PicDatabase &picDB = PicDatabase::getInstance();
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
+	HDpicGFX &gfx = HDpicGFX::getInstance();
 
+	HDpicGFX::autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
 
 	/* main menu */
-	gfx16_FillScreen(GFX16_BLACK);
-	drawMenu(selectedPicIndex);
-
+	if (gfx.is16bppMode()) {
+		dbg_sprintf(dbgout, "\ndrawMenu_16bpp");
+		gfx16_FillScreen(GFX16_BLACK);
+		drawMenu_16bpp(selectedPicIndex);
+	}
+	else {
+		dbg_sprintf(dbgout, "\ndrawMenu_8bpp");
+		gfx_FillScreen(PALETTE_BLACK);
+		drawMenu_8bpp(selectedPicIndex);
+	}
 
 	//thumbnail
 	dbg_sprintf(dbgout, "\n drawImage");
-
-	//drawImage(selectedPicIndex, 180, 120, false);
-
+	drawImage(selectedPicIndex, 180, 120, false);
 
 	/* UI */
 	bool quitProgram{ false };
@@ -101,10 +108,19 @@ void drawHomeScreen()
 			kb_ClearOnLatch();
 			keyHandler.reset();
 			dbg_sprintf(dbgout, "\nRender aborted by ON.");
-			gfx16_SetTextBGColor(GFX16_BG_0);
-			gfx16_SetTextFGColor(GFX16_TEXT_ERROR);
-			gfx16_PrintCenteredX("Render Interrupted.", 10);
-			gfx16_PrintCenteredX("Press enter to continue.", 215);
+
+			if (gfx.is16bppMode()) {
+				gfx16_SetTextBGColor(GFX16_BG_0);
+				gfx16_SetTextFGColor(GFX16_TEXT_ERROR);
+				gfx16_PrintCenteredX("Render Interrupted.", 10);
+				gfx16_PrintCenteredX("Press enter to continue.", 215);
+			}
+			else {
+				gfx_SetTextBGColor(PALETTE_BLACK);
+				gfx_SetTextFGColor(PALETTE_WHITE);
+				PrintCenteredX("Render Interrupted.", 10);
+				PrintCenteredX("Press enter to continue.", 215);
+			}
 			KeyPressHandler::waitForAnyKey();
 		}
 
@@ -136,7 +152,10 @@ void drawHomeScreen()
 				resetPic = true;
 				redrawPic = true;
 				errorID = kb_KeyClear; //1600
-				gfx16_FillScreen(GFX16_BLACK);
+				if (gfx.is16bppMode())
+					gfx16_FillScreen(GFX16_BLACK);
+				else
+					gfx_FillScreen(PALETTE_BLACK);
 			}
 			else {
 				quitProgram = true;
@@ -155,9 +174,19 @@ void drawHomeScreen()
 
 		// mode. Show help.
 		if (keyHandler.wasKeyPressed(kb_KeyMode)) {
+			bool prev16bpp = gfx.is16bppMode();
+			HDpicGFX::use16bpp();
 			drawHelp();
 			KeyPressHandler::waitForAnyKey();
-			gfx16_FillScreen(GFX16_BLACK);
+			
+			if (prev16bpp) {
+				HDpicGFX::use8bpp();
+				gfx_FillScreen(PALETTE_BLACK);
+			}
+			else {
+				HDpicGFX::use16bpp();
+				gfx16_FillScreen(GFX16_BLACK);
+			}
 			resetPic = true;
 			redrawPic = true;
 			errorID = kb_KeyMode; //320
@@ -166,6 +195,7 @@ void drawHomeScreen()
 
 		//Delete. delete all appvars related to current image
 		if (keyHandler.wasKeyPressed(kb_KeyDel)) {
+			HDpicGFX::use16bpp();
 			//we don't want the user seeing the horrors of their image with the wrong palette
 			gfx16_FillScreen(GFX16_BLACK);
 			gfx16_SetTextFGColor(GFX16_TEXT);
@@ -191,7 +221,6 @@ void drawHomeScreen()
 			if (picDB.size() == 0) {
 				drawNoImagesFound();
 				KeyPressHandler::waitForAnyKey();
-				gfx16_End();
 				return;
 			}
 
@@ -200,11 +229,9 @@ void drawHomeScreen()
 				selectedPicIndex--;
 			}
 
-			//ensure text is readable
-			//re construct the GUI
-			gfx16_SetTextFGColor(GFX16_TEXT);
-			gfx16_SetTextBGColor(GFX16_BLACK);
+			//prepare for redrawing everything
 			gfx16_FillScreen(GFX16_BLACK);
+			
 			resetPic = true;
 			redrawPic = true;
 			errorID = kb_KeyDel; //384
@@ -216,10 +243,9 @@ void drawHomeScreen()
 			//make sure user can't scroll down too far
 			if (selectedPicIndex > picDB.size() - 1) {
 				dbg_sprintf(dbgout, "\ntoo high %d -> 0", selectedPicIndex);
-
 				selectedPicIndex = 0;
 			}
-
+			gfx.autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
 			resetPic = fullScreenImage;
 			redrawPic = true;
 			errorID = kb_KeyGraph; //257 if an error is thrown, then we've scrolled past the safety barrier somehow.
@@ -232,9 +258,9 @@ void drawHomeScreen()
 			// Checks if selectedName underflowed. selectedName shouldn't be more than the max number of images possible.
 			if (selectedPicIndex > MAX_IMAGES) {
 				dbg_sprintf(dbgout, "\nunderflow: %d -> %d", selectedPicIndex, (picDB.size() - 1));
-
 				selectedPicIndex = picDB.size() - 1;
 			}
+			gfx.autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
 			resetPic = fullScreenImage;
 			redrawPic = true;
 			errorID = kb_KeyYequ; //272 if an error is thrown, then we've scrolled past the safety barrier somehow.
@@ -348,29 +374,32 @@ void drawHomeScreen()
 
 		// If necessary, draw the image with new settings.
 		if (redrawPic) {
-			if (!fullScreenImage) {
-				drawMenu(selectedPicIndex);
-			}
+
+			// change gfx libraries, if necessary.
+			HDpicGFX::autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
+
 			keyHandler.reset();
 			imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, fullScreenImage);
 			if (imageErr != 0) {
-				gfx16_End();
-				gfx_Begin();
-
+				HDpicGFX::use8bpp();
 				gfx_PrintStringXY("Error: ", (LCD_WIDTH - gfx_GetStringWidth("Error: ")) / 2, 150);
 				gfx_PrintUInt(errorID, 6);
 				gfx_PrintStringXY("Press any key to quit.", (LCD_WIDTH - gfx_GetStringWidth("Press any key to quit.")) / 2, 160);
 				KeyPressHandler::waitForAnyKey();
-				gfx_End();
 				return;
 			}
 		}
 
-		if (!fullScreenImage)
-			drawWatermark();
+		if (!fullScreenImage) {
+			if (gfx.is16bppMode())
+				drawWatermark_16bpp();
+			else
+				drawWatermark_8bpp();
+		}
 	} while (!quitProgram);
 
 }
+
 
 /* Draws the image stored in database at position selectedName.
 * Draws the image at location x,y starting at top left corner.
@@ -385,14 +414,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	PicDatabase &picDB = PicDatabase::getInstance();
 	imageData &curPicture = picDB.getPicture(picName);
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
+	HDpicGFX &gfx = HDpicGFX::getInstance();
 
-	dbg_sprintf(dbgout, "\nINFO: Changing BPP to ");
-	dbg_sprintf(dbgout, "\n BPP: %d", curPicture.BPP);
-
-	if (curPicture.BPP != 16) {
-		gfx16_End();
-		gfx_Begin();
-	}
+	if (curPicture.BPP == 16)
+		HDpicGFX::use16bpp();
+	else
+		HDpicGFX::use8bpp();
 
 	//checks if it should scale an image horizontally or vertically.
 	int24_t scaleNumerator{ 1 }, scaleDenominator{ 1 }, subimgNewDimNumerator{ 0 };
@@ -452,7 +479,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 
 	//sets correct palettes
-	if (curPicture.BPP != 16) {
+	//requires 8bpp mode
+	if (!gfx.is16bppMode()) {
 		char palName[9];
 		sprintf(palName, "HP%.2s0000", curPicture.ID);
 		ti_var_t palSlot{ ti_Open(palName,"r") };
@@ -566,15 +594,14 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	// If displaying thumbnail, cover up the last image
 	if (!fullScreenPic) {
-		if (curPicture.BPP == 16) {
+		if (gfx.is16bppMode()) {
 			gfx16_SetColor(GFX16_BLACK);
 			gfx16_FillRectangle_NoClip(150, 0, 170, 240);
 		}
 		else {
-			gfx_SetColor(1);//temp magic number
+			gfx_SetColor(PALETTE_BLACK);
 			gfx_FillRectangle_NoClip(150, 0, 170, 240);
 		}
-
 	}
 
 	/* DISABLED until gfx16 lib supports resizing sprite */
@@ -588,7 +615,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//pointer to memory where each unsized subimage will be stored
 	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
 	if (!srcImg) {
-		dbg_sprintf(dbgout, "\nERR: Failed to allocate src memory!");
+		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcImg memory!");
 		return 1;
 	}
 
@@ -613,7 +640,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 
-		dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl", xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
+		//dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl", xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
 
 		//a key interrupted output. Quit immediately
 		if (kb_On || keyHandler.scanKeys(fullScreenPic)) {
@@ -631,7 +658,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//combines the separate parts into one name to search for
 		char picAppvarToFind[9];
 
-		dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
+		//dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
 
 
 		//Pull pointer to the subimage from the cache
@@ -647,7 +674,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			//cache miss. Find the appvar by name
 			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
 
-			dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
+			//dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
 
 			subimgSlot = ti_Open(picAppvarToFind, "r");
 
@@ -662,7 +689,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 				//cache the pointer to the subimage for next time
 				subimgPtr = ti_GetDataPtr(subimgSlot);
-				dbg_sprintf(dbgout, "\nsubimgPtr: %p", (void *)&subimgPtr);
 
 				//curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
 			}
@@ -682,7 +708,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		//displays subimage
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
-		dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
+		//dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
 
 		uint8_t pixelsPerByte = 8 / curPicture.BPP;
 		uint24_t dataToRead = (SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS) / pixelsPerByte;
@@ -794,11 +820,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//free(outputImg);
 
 	dbg_sprintf(dbgout, "\nDraw Finished.\n");
-	if (curPicture.BPP != 16) {
-		while (!os_GetCSC());
-		gfx_End();
-		gfx16_Begin();
-	}
 	return 0;
 }
 
@@ -811,6 +832,7 @@ uint24_t findPictures()
 	uint24_t imagesFound{ 0 };
 
 	//resets splash screen for new loading bar
+	HDpicGFX::use16bpp();
 	drawSplashScreen();
 
 	LoadingBar &loadingBar = LoadingBar::getInstance();
@@ -945,7 +967,7 @@ uint24_t findPictures()
 }
 
 /* This UI keeps the user selection in the middle of the screen. */
-void drawMenu(uint24_t selectedName)
+void drawMenu_16bpp(uint24_t selectedName)
 {
 	gfx16_SetColor(GFX16_WHITE);
 	gfx16_VertLine(140, 20, 200);
@@ -999,7 +1021,65 @@ void drawMenu(uint24_t selectedName)
 			gfx16_PutStringXY(picDB.getPicture(curName).imgName, X_MARGIN, yPxlPos);
 		}
 	}
-	drawWatermark();
+	drawWatermark_16bpp();
+}
+
+/* This UI keeps the user selection in the middle of the screen. */
+void drawMenu_8bpp(uint24_t selectedName)
+{
+	gfx_SetColor(PALETTE_WHITE);
+	gfx_VertLine(140, 20, 200);
+
+	uint24_t yPxlPos{ 0 };
+
+	//clears old text and sets prev for new text
+	gfx_SetTextScale(2, 2);
+	gfx_SetColor(3);
+	gfx_FillRectangle_NoClip(0, 0, 140, 240);
+	gfx_SetColor(PALETTE_WHITE);
+	gfx_SetTextFGColor(PALETTE_WHITE);
+	gfx_SetTextBGColor(PALETTE_BLACK);
+
+	//re-draws UI lines
+	gfx_HorizLine_NoClip(0, 120, 6);
+	gfx_HorizLine_NoClip(136, 120, 5);
+	gfx_HorizLine_NoClip(6, 110, 130);
+	gfx_HorizLine_NoClip(6, 130, 130);
+	gfx_VertLine_NoClip(6, 110, 20);
+	gfx_VertLine_NoClip(136, 110, 21);
+
+	PicDatabase &picDB = PicDatabase::getInstance();
+
+	/* draw image names above selected name */
+	dbg_sprintf(dbgout, "\nselectedName %d", selectedName);
+	if (selectedName > 0) {
+		yPxlPos = Y_MARGIN + 75;
+		for (uint24_t curImg{ selectedName - 1 }; (curImg < MAX_UINT) && (yPxlPos > 15); curImg--) {
+			//calculates where the text should be drawn
+			yPxlPos -= Y_SPACING;
+
+			dbg_sprintf(dbgout, "\ncurImg: %d", curImg);
+			//Prints out the correct name
+			gfx_PrintStringXY(picDB.getPicture(curImg).imgName, X_MARGIN, yPxlPos);
+		}
+	}
+
+	//display selected image name in center of screen
+	yPxlPos = Y_MARGIN + 75;
+	gfx_PrintStringXY(picDB.getPicture(selectedName).imgName, X_MARGIN, yPxlPos);
+
+	/* Draw image names below selected name.
+	* Iterates until out of pics or about to draw off the screen */
+	if (selectedName + 1 < picDB.size()) {
+		for (uint24_t curName{ selectedName + 1 }; (curName < picDB.size()) && (yPxlPos < 210); curName++) {
+			//calculates where the text should be drawn
+			yPxlPos += Y_SPACING;
+
+			//Prints out the correct name
+			gfx_PrintStringXY(picDB.getPicture(curName).imgName, X_MARGIN, yPxlPos);
+		}
+	}
+	drawWatermark_8bpp();
 }
 
 // Allows iterating a 2D grid in multiple different directions.
