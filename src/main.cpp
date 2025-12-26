@@ -86,7 +86,7 @@ void drawHomeScreen()
 	}
 	else {
 		dbg_sprintf(dbgout, "\ndrawMenu_8bpp");
-		gfx_FillScreen(PALETTE_BLACK);
+		gfx_ZeroScreen();
 		drawMenu_8bpp(selectedPicIndex);
 	}
 
@@ -155,7 +155,7 @@ void drawHomeScreen()
 				if (gfx.is16bppMode())
 					gfx16_FillScreen(GFX16_BLACK);
 				else
-					gfx_FillScreen(PALETTE_BLACK);
+					gfx_ZeroScreen();
 			}
 			else {
 				quitProgram = true;
@@ -178,14 +178,14 @@ void drawHomeScreen()
 			HDpicGFX::use16bpp();
 			drawHelp();
 			KeyPressHandler::waitForAnyKey();
-			
+
 			if (prev16bpp) {
 				HDpicGFX::use16bpp();
-				gfx_FillScreen(GFX16_BLACK);
+				gfx16_FillScreen(GFX16_BLACK);
 			}
 			else {
 				HDpicGFX::use8bpp();
-				gfx16_FillScreen(PALETTE_BLACK);
+				gfx_FillScreen(PALETTE_BLACK);
 			}
 			resetPic = true;
 			redrawPic = true;
@@ -231,7 +231,7 @@ void drawHomeScreen()
 
 			//prepare for redrawing everything
 			gfx16_FillScreen(GFX16_BLACK);
-			
+
 			resetPic = true;
 			redrawPic = true;
 			errorID = kb_KeyDel; //384
@@ -434,8 +434,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		scaleDenominator = curPicture.vertSubImages * SUBIMAGE_DIMENSIONS;
 	}
 
-	dbg_sprintf(dbgout, "\n horizSubImages: %d\n vertSubImages: %d",
-		curPicture.horizSubImages, curPicture.vertSubImages);
+	//dbg_sprintf(dbgout, "\n horizSubImages: %d\n vertSubImages: %d",	curPicture.horizSubImages, curPicture.vertSubImages);
 	// Check for invalid fractions
 	if (scaleNumerator == 0 || scaleDenominator == 0) {
 		dbg_sprintf(dbgout, "\nERR: Cant zoom out\n scaleNumerator:%d\n scaleDenominator:%d", scaleNumerator, scaleDenominator);
@@ -463,8 +462,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	subimgNewDimNumerator = SUBIMAGE_DIMENSIONS * scaleNumerator;
 	int24_t subimgScaledDim{ subimgNewDimNumerator / scaleDenominator };
 
-	dbg_sprintf(dbgout, "\n subimgScaledDim %d\n subimgNewDimNumerator: %d \n ScaleNum: %d \n scaleDenominator: %d \n xOffset: %d \n yOffset %d",
-		subimgScaledDim, subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
+	//dbg_sprintf(dbgout, "\n subimgScaledDim %d\n subimgNewDimNumerator: %d \n ScaleNum: %d \n scaleDenominator: %d \n xOffset: %d \n yOffset %d",
+	//	subimgScaledDim, subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
 
 	//ensure the resized subimage will fit within the dimensions of the screen.
 	if (subimgScaledDim > LCD_HEIGHT) {
@@ -483,8 +482,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	if (!gfx.is16bppMode()) {
 		char palName[9];
 		sprintf(palName, "HP%.2s0000", curPicture.ID);
-		ti_var_t palSlot{ ti_Open(palName,"r") };
-		if (!palSlot) {
+		uint24_t iEntries = static_cast<uint24_t>(pow(2.0, static_cast<double>(curPicture.BPP)) * 2);
+		if (!gfx.usePalette(palName, iEntries)) {
 			PrintCenteredX(palName, 110);
 			PrintCenteredX("ERR: Palette does not exist!", 120);
 			PrintCenteredX("Image may have recently been deleted.", 130);
@@ -492,10 +491,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			KeyPressHandler::waitForAnyKey();
 			return 1;
 		}
-		ti_Seek(26, SEEK_SET, palSlot);
-		uint24_t numPaletteEntries{ static_cast<uint24_t>(pow(2.0, static_cast<double>(curPicture.BPP)) * 2) };
-		gfx_SetPalette(ti_GetDataPtr(palSlot), numPaletteEntries, 0);
-		ti_Close(palSlot);
 	}
 
 

@@ -13,7 +13,9 @@ private:
 	//once 8 or 16bpp library set, this gets set to true permenantly.
 	inline static bool bGfxLibSet = false;
 	inline static bool b16bppModeEnabled = false;
-
+	//last used palette is stored here
+	inline static char cPalette[9] = "";
+	inline static uint24_t iPaletteEntries = 0;
 
 
 public:
@@ -66,7 +68,6 @@ public:
 			gfx_Begin();
 			b16bppModeEnabled = false;
 			dbg_sprintf(dbgout, "\nINFO: Started with 8bpp");
-
 			return;
 		}
 		//if 16bpp library in use, end it.
@@ -74,6 +75,7 @@ public:
 		if (HDpicGFX::b16bppModeEnabled) {
 			gfx16_End();
 			gfx_Begin();
+			HDpicGFX::usePalette(cPalette, iPaletteEntries);
 			b16bppModeEnabled = false;
 			dbg_sprintf(dbgout, "\nINFO: Changed to 8bpp");
 			return;
@@ -81,6 +83,29 @@ public:
 		dbg_sprintf(dbgout, "\nINFO: Already 8bpp");
 
 		//if 8bpp already enabled, no need to do anything.
+	}
+
+	//set the default palette for when 8bpp mode is active
+	//Returns false and uses xlibc palette if parameters are invalid.
+	static bool usePalette(char palName[9], uint24_t iEntries)
+	{
+		palName[8] = '\0';//avoid invalid input
+		dbg_sprintf(dbgout, "\nINFO: Switching to palette %.8s, entries: %d", palName, iEntries);
+		ti_var_t palSlot{ ti_Open(palName,"r") };
+		if (!palSlot) {
+			//Reverts to xlibc palette
+			dbg_sprintf(dbgout, "\nWARN: Using xlibc palette!");
+			gfx_SetDefaultPalette(gfx_mode_t::gfx_8bpp);
+			return false;
+		}
+
+		//26 skips past palette header
+		ti_Seek(26, SEEK_SET, palSlot);
+		gfx_SetPalette(ti_GetDataPtr(palSlot), iEntries, 0);
+		ti_Close(palSlot);
+		std::strncpy(cPalette, palName, 9);
+		iPaletteEntries = iEntries;
+		return true;
 	}
 
 	static void autoSelectLibrary(uint8_t bpp)
