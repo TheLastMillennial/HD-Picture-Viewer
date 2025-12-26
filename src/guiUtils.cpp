@@ -18,7 +18,7 @@ void drawWatermark_8bpp()
 void drawWatermark_16bpp()
 {
 	gfx16_SetTextScale(1, 1);
-	gfx16_SetTextFGColor(GFX16_WHITE);
+	gfx16_SetTextFGColor(GFX16_TEXT_TITLE);
 	gfx16_SetTextBGColor(GFX16_BLACK);
 	gfx16_PutStringXY("HD Picture Viewer", 2, 2);
 	gfx16_PutStringXY("[mode] = help", 2, 232);
@@ -67,7 +67,7 @@ void drawSplashScreen()
 	gfx16_FillScreen(GFX16_BLACK);
 	gfx16_SetColor(GFX16_BG_BLUE);
 	gfx16_FillRectangle_NoClip(40, 80, 240, 80); //size: 2/3 screen width, 1/3 screen height
-	
+
 	/* Print title screen */
 	gfx16_SetTextBGColor(GFX16_BG_BLUE);
 	gfx16_SetTextFGColor(GFX16_TEXT_TITLE);
@@ -129,7 +129,7 @@ void drawNoImagesFound()
 	gfx16_SetTextFGColor(GFX16_TEXT);
 	gfx16_PrintCenteredX("Convert some images and send them to", 30);
 	gfx16_PrintCenteredX("your calculator using the converter!", 40);
-	
+
 	gfx16_SetTextFGColor(0xae1f); //URL blue
 	gfx16_PrintCenteredX("https://youtu.be/uixL9t5ZTJs", 50);
 
@@ -138,7 +138,7 @@ void drawNoImagesFound()
 	gfx16_PrintCenteredX(" Go to home screen.", 190);
 	gfx16_PrintCenteredX(" Press 2nd then + then select 'AppVars'. ", 200);
 	gfx16_PrintCenteredX(" Ensure all picture files are present. ", 210);
-	
+
 	gfx16_SetTextFGColor(GFX16_TEXT_ERROR);
 	gfx16_PrintCenteredX("Press any key to quit.", 230);
 

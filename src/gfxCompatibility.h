@@ -96,6 +96,8 @@ public:
 			//Reverts to xlibc palette
 			dbg_sprintf(dbgout, "\nWARN: Using xlibc palette!");
 			gfx_SetDefaultPalette(gfx_mode_t::gfx_8bpp);
+			std::strncpy(cPalette, "\0\0\0\0\0\0\0\0", 9);
+			iEntries = 0;
 			return false;
 		}
 
@@ -108,6 +110,7 @@ public:
 		return true;
 	}
 
+	//given a bpp level, chooses either 8bpp gfx or 16bpp gfx
 	static void autoSelectLibrary(uint8_t bpp)
 	{
 		if (bpp <= 8)

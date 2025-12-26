@@ -86,7 +86,7 @@ void drawHomeScreen()
 	}
 	else {
 		dbg_sprintf(dbgout, "\ndrawMenu_8bpp");
-		gfx_ZeroScreen();
+		gfx_FillScreen(PALETTE_BLACK);
 		drawMenu_8bpp(selectedPicIndex);
 	}
 
@@ -155,7 +155,7 @@ void drawHomeScreen()
 				if (gfx.is16bppMode())
 					gfx16_FillScreen(GFX16_BLACK);
 				else
-					gfx_ZeroScreen();
+					gfx_FillScreen(PALETTE_BLACK);
 			}
 			else {
 				quitProgram = true;
@@ -187,6 +187,7 @@ void drawHomeScreen()
 				HDpicGFX::use8bpp();
 				gfx_FillScreen(PALETTE_BLACK);
 			}
+
 			resetPic = true;
 			redrawPic = true;
 			errorID = kb_KeyMode; //320
@@ -374,9 +375,18 @@ void drawHomeScreen()
 
 		// If necessary, draw the image with new settings.
 		if (redrawPic) {
-
 			// change gfx libraries, if necessary.
 			HDpicGFX::autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
+			if (!fullScreenImage) {
+				if (gfx.is16bppMode()) {
+					gfx16_FillScreen(GFX16_BLACK);
+					drawMenu_16bpp(selectedPicIndex);
+				}
+				else {
+					gfx_FillScreen(PALETTE_BLACK);
+					drawMenu_8bpp(selectedPicIndex);
+				}
+			}
 
 			keyHandler.reset();
 			imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, fullScreenImage);
@@ -1029,7 +1039,7 @@ void drawMenu_8bpp(uint24_t selectedName)
 
 	//clears old text and sets prev for new text
 	gfx_SetTextScale(2, 2);
-	gfx_SetColor(3);
+	gfx_SetColor(PALETTE_BLACK);
 	gfx_FillRectangle_NoClip(0, 0, 140, 240);
 	gfx_SetColor(PALETTE_WHITE);
 	gfx_SetTextFGColor(PALETTE_WHITE);
