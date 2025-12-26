@@ -24,24 +24,6 @@ void drawWatermark_16bpp()
 	gfx16_PutStringXY("[mode] = help", 2, 232);
 }
 
-// Change gfx libraries if the image has changed to/from 16bpp
-// Requires that gfx_Begin() or gfx16_Begin() has already been called.
-// Returns the Now16bpp status
-bool handleBppModeChange(bool bPreviously16bpp, bool bCurrently16bpp)
-{
-	if (bPreviously16bpp != bCurrently16bpp) {
-		if (bPreviously16bpp) {
-			gfx16_End();
-			gfx_Begin();
-		}
-		else {
-			gfx_End();
-			gfx16_Begin();
-		}
-	}
-	return bCurrently16bpp;
-}
-
 /* Prints a X centered string */
 void gfx16_PrintCenteredX(const char *str, const uint24_t y)
 {

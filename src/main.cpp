@@ -180,12 +180,12 @@ void drawHomeScreen()
 			KeyPressHandler::waitForAnyKey();
 			
 			if (prev16bpp) {
-				HDpicGFX::use8bpp();
-				gfx_FillScreen(PALETTE_BLACK);
+				HDpicGFX::use16bpp();
+				gfx_FillScreen(GFX16_BLACK);
 			}
 			else {
-				HDpicGFX::use16bpp();
-				gfx16_FillScreen(GFX16_BLACK);
+				HDpicGFX::use8bpp();
+				gfx16_FillScreen(PALETTE_BLACK);
 			}
 			resetPic = true;
 			redrawPic = true;

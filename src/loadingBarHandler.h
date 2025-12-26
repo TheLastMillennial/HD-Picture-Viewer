@@ -32,10 +32,10 @@ private:
 			gfx16_SetColor(GFX16_WHITE);
 			gfx16_FillRectangle_NoClip(60, 153, progress, 7);
 		}
+		else
 		{
 			gfx_SetColor(PALETTE_WHITE);
 			gfx_FillRectangle_NoClip(60, 153, progress, 7);
-
 		}
 
 	}
