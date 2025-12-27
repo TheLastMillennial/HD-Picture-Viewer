@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "gfxCompatibility.h"
+#include <cmath>
 
 class LoadingBar
 {
@@ -22,7 +23,7 @@ private:
 	//makes a loading bar and fills it in depending on progress made / tasks left
 	void draw() const
 	{
-		constexpr double maxPixelWidth{ 200.0 };
+		constexpr double maxPixelWidth{ 240.0 };
 		const double progress = (static_cast<double>(tasksFinished) / static_cast<double>(tasksToFinish)) * maxPixelWidth;
 
 		HDpicGFX &gfx = HDpicGFX::getInstance();
@@ -30,12 +31,12 @@ private:
 		if (gfx.is16bppMode())
 		{
 			gfx16_SetColor(GFX16_WHITE);
-			gfx16_FillRectangle_NoClip(60, 153, progress, 7);
+			gfx16_FillRectangle_NoClip(40, 153, fmin(progress, maxPixelWidth), 7);
 		}
 		else
 		{
 			gfx_SetColor(PALETTE_WHITE);
-			gfx_FillRectangle_NoClip(60, 153, progress, 7);
+			gfx_FillRectangle_NoClip(40, 153, fmin(progress, maxPixelWidth), 7);
 		}
 
 	}

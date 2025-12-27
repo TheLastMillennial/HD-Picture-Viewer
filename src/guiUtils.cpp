@@ -72,7 +72,7 @@ void drawSplashScreen()
 	gfx16_SetTextBGColor(GFX16_BG_BLUE);
 	gfx16_SetTextFGColor(GFX16_TEXT_TITLE);
 	gfx16_PrintCenteredX("HD Picture Viewer", 116);
-	gfx16_PrintCenteredX(VERSION, 147);
+	gfx16_PrintCenteredX(VERSION, 140);
 }
 
 /* 16bpp Draw instructions on how to use the program */

@@ -425,11 +425,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	imageData &curPicture = picDB.getPicture(picName);
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
 	HDpicGFX &gfx = HDpicGFX::getInstance();
+	HDpicGFX::autoSelectLibrary(curPicture.BPP);
 
-	if (curPicture.BPP == 16)
-		HDpicGFX::use16bpp();
-	else
-		HDpicGFX::use8bpp();
 
 	//checks if it should scale an image horizontally or vertically.
 	int24_t scaleNumerator{ 1 }, scaleDenominator{ 1 }, subimgNewDimNumerator{ 0 };
@@ -665,7 +662,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		//dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
 
-
 		//Pull pointer to the subimage from the cache
 		void *subimgPtr{ nullptr };
 		if (!bDisableCache) {
@@ -684,7 +680,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			subimgSlot = ti_Open(picAppvarToFind, "r");
 
 			if (subimgSlot) {
-				//seeks past header
+				//seeks past header. 16bpp has different header size than 8bpp
 				if (curPicture.BPP == 16) {
 					ti_Seek(24, SEEK_CUR, subimgSlot);
 				}
@@ -718,6 +714,11 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		uint8_t pixelsPerByte = 8 / curPicture.BPP;
 		uint24_t dataToRead = (SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS) / pixelsPerByte;
 		uint24_t out{ 0 };
+
+		/*dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX < 0: %d < 0", subimgPxlPosX < 0, subimgPxlPosX);
+		dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX + subimgScaledDim > LCD_WIDTH: %d > %d", subimgPxlPosX + subimgScaledDim > LCD_WIDTH, subimgPxlPosX + subimgScaledDim, LCD_WIDTH);
+		dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY < 0: %d < 0", subimgPxlPosY < 0, subimgPxlPosY);
+		dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY + subimgScaledDim > LCD_HEIGHT: %d > %d", subimgPxlPosY + subimgScaledDim > LCD_HEIGHT, subimgPxlPosY + subimgScaledDim, LCD_HEIGHT);*/
 
 		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT) {
 			switch (curPicture.BPP) {
@@ -967,7 +968,6 @@ uint24_t findPictures()
 
 	drawSplashScreen();
 	dbg_sprintf(dbgout, "\nPics Detected: %d", imagesFound);
-	loadingBar.increment();
 	return imagesFound;
 }
 
