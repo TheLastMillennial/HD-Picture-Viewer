@@ -267,26 +267,25 @@ void drawHomeScreen()
 			errorID = kb_KeyYequ; //272 if an error is thrown, then we've scrolled past the safety barrier somehow.
 		}
 
-		/* DISABLED until zoom feature implemented */
 		//left, right, up, down. Image panning.
-		//if (fullScreenImage) {
-		//	if (keyHandler.wasKeyPressed(kb_KeyLeft)) {
-		//		errorID = kb_KeyLeft; //1794
-		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 1, 0);
-		//	}
-		//	if (keyHandler.wasKeyPressed(kb_KeyRight)) {
-		//		errorID = kb_KeyRight; //1796
-		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);
-		//	}
-		//	if (keyHandler.wasKeyPressed(kb_KeyUp)) {
-		//		errorID = kb_KeyUp; //1800
-		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);
-		//	}
-		//	if (keyHandler.wasKeyPressed(kb_KeyDown)) {
-		//		errorID = kb_KeyDown; //1793
-		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
-		//	}
-
+		if (fullScreenImage) {
+			if (keyHandler.wasKeyPressed(kb_KeyLeft)) {
+				errorID = kb_KeyLeft; //1794
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 1, 0);
+			}
+			if (keyHandler.wasKeyPressed(kb_KeyRight)) {
+				errorID = kb_KeyRight; //1796
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);
+			}
+			if (keyHandler.wasKeyPressed(kb_KeyUp)) {
+				errorID = kb_KeyUp; //1800
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);
+			}
+			if (keyHandler.wasKeyPressed(kb_KeyDown)) {
+				errorID = kb_KeyDown; //1793
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
+			}
+		}//temporary }
 		/* DISABLED until gfx16 lib supports resizing sprite */
 		//	//Zoom key. Zoom in as far as possible while maintaining full quality
 		//	if (keyHandler.wasKeyPressed(kb_KeyZoom)) {
@@ -501,7 +500,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	}
 
 
-	/* DISABLED until zoom feature implemented */
 	/* Apply Pan Offset */
 
 	// Which direction to draw the subimages. 
@@ -514,37 +512,86 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	picDB.getPicture(picName).yOffset += shiftY;
 
 	//Check if we need to pan the image. If so, shift the contents of the screen over so we don't need to redraw as many subimages.
-	//if (shiftX != 0 || shiftY != 0) {
-	//	// Shift screen to right
-	//	if (shiftX > 0) {
-	//		bReverseDirection = true;
-	//		bDrawVertical = true;
-	//		gfx_CopyRectangle(gfx_screen, gfx_screen, 0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
-	//	}
-	//	// Shift screen to left
-	//	if (shiftX < 0) {
-	//		bReverseDirection = false;
-	//		bDrawVertical = true;
-	//		gfx_CopyRectangle(gfx_screen, gfx_screen, subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
-	//	}
-	//	// Shift screen up
-	//	if (shiftY > 0) {
-	//		bReverseDirection = false;
-	//		bDrawVertical = false;
-	//		gfx_CopyRectangle(gfx_screen, gfx_screen, 0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
-	//	}
-	//	// Shift screen down
-	//	if (shiftY < 0) {
-	//		bReverseDirection = true;
-	//		bDrawVertical = false;
-	//		gfx_CopyRectangle(gfx_screen, gfx_screen, 0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
-	//	}
-	//}
-	//else if (fullScreenPic) {
-	//	//If there's no panning, then we need to re-draw the entire image. 
-	//	gfx16_FillScreen(GFX16_BLACK);
-	//}
+	if (shiftX != 0 || shiftY != 0) {
+		if (HDpicGFX::is16bppMode()) {
+			gfx16_SetColor(GFX16_BLACK);
+		}
+		else {
+			//only 8bpp can double buffer
+			gfx_SetColor(PALETTE_BLACK);
+			gfx_SetDrawBuffer();
+		}
 
+		// Shift screen to right
+		if (shiftX > 0) {
+			bReverseDirection = true;
+			bDrawVertical = true;
+			if (HDpicGFX::is16bppMode()) {
+				gfx16_CopyRectangle(0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+				gfx16_FillRectangle_NoClip(0, 0, subimgScaledDim, LCD_HEIGHT);
+			}
+			else {
+				gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+				gfx_FillRectangle_NoClip(0, 0, subimgScaledDim, LCD_HEIGHT);
+			}
+		}
+		// Shift screen to left
+		if (shiftX < 0) {
+			bReverseDirection = false;
+			bDrawVertical = true;
+			if (HDpicGFX::is16bppMode()) {
+				gfx16_CopyRectangle(subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+				gfx16_FillRectangle_NoClip(LCD_WIDTH - subimgScaledDim, 0, subimgScaledDim, LCD_HEIGHT);
+
+			}
+			else {
+				gfx_CopyRectangle(gfx_screen, gfx_buffer, subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+				gfx_FillRectangle_NoClip(LCD_WIDTH - subimgScaledDim, 0, subimgScaledDim, LCD_HEIGHT);
+			}
+		}
+		// Shift screen up
+		if (shiftY > 0) {
+			bReverseDirection = false;
+			bDrawVertical = false;
+			if (HDpicGFX::is16bppMode()) {
+				gfx16_CopyRectangle(0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+				gfx16_FillRectangle_NoClip(0, LCD_HEIGHT - subimgScaledDim, LCD_WIDTH, subimgScaledDim);
+
+			}
+			else {
+				gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+				gfx_FillRectangle_NoClip(0, LCD_HEIGHT - subimgScaledDim, LCD_WIDTH, subimgScaledDim);
+			}
+		}
+		// Shift screen down
+		if (shiftY < 0) {
+			bReverseDirection = true;
+			bDrawVertical = false;
+			if (HDpicGFX::is16bppMode()) {
+				gfx16_CopyRectangle(0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+				gfx16_FillRectangle_NoClip(0, 0, LCD_WIDTH, subimgScaledDim);
+
+			}
+			else {
+				gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+				gfx_FillRectangle_NoClip(0, 0, LCD_WIDTH, subimgScaledDim);
+			}
+		}
+		//Show other 8bpp buffer
+		if (!HDpicGFX::is16bppMode()) {
+			gfx_BlitBuffer();
+			gfx_SetDrawScreen();
+		}
+		while (!os_GetCSC()); //todo: remove
+	}
+	else if (fullScreenPic) {
+		//If there's no panning, then we need to re-draw the entire image. 
+		if (HDpicGFX::is16bppMode())
+			gfx16_FillScreen(GFX16_BLACK);
+		else
+			gfx_FillScreen(PALETTE_BLACK);
+
+	}
 
 	/* Set up to display all the subimages */
 	dbg_sprintf(dbgout, "\n-------------------------");
@@ -563,14 +610,13 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//ceilDiv since we don't want missing subimages. (Overflow is compensated for, if necessary, below)
 	int24_t bottomMostSubimg{ ceilDiv(static_cast<int24_t>(LCD_HEIGHT) , (subimgNewDimNumerator / scaleDenominator)) };
 
-	/* DISABLED until zoom feature implemented */
 	/* Apply pan offsets */
 	//if we're panning horizontally, shift the rightmost and leftmost subimages (xOffset is negative in this case)
-	//rightMostSubimg -= curPicture.xOffset;
-	//leftMostSubimg -= curPicture.xOffset;
+	rightMostSubimg -= curPicture.xOffset;
+	leftMostSubimg -= curPicture.xOffset;
 	//if we're panning vertically, shift the topmost and bottommost subimages (yOffset is negative in this case)
-	//bottomMostSubimg += curPicture.yOffset;
-	//topMostSubimg += curPicture.yOffset;
+	bottomMostSubimg += curPicture.yOffset;
+	topMostSubimg += curPicture.yOffset;
 
 	/* Ensure we don't try to display more subimages than exist */
 	if (rightMostSubimg > curPicture.horizSubImages)
@@ -581,6 +627,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		bottomMostSubimg = curPicture.vertSubImages;
 	if (topMostSubimg < 0)
 		topMostSubimg = 0;
+
+	/* Check for invalid situations */
+	if (rightMostSubimg < 0 || bottomMostSubimg < 0 || (rightMostSubimg - 1 < leftMostSubimg) || (bottomMostSubimg - 1) < topMostSubimg) {
+		dbg_sprintf(dbgout, "\nERR: Image Name: %s\n rightmost: %d\n leftmost:  %d\n topmost:    %d\n bottommost: %d", curPicture.imgName, rightMostSubimg, leftMostSubimg, topMostSubimg, bottomMostSubimg);
+		return 1;
+	}
 
 	/* Display final image */
 
@@ -642,7 +694,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 
-		//dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl", xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
+		dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl", xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
 
 		//a key interrupted output. Quit immediately
 		if (kb_On || keyHandler.scanKeys(fullScreenPic)) {
@@ -660,12 +712,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//combines the separate parts into one name to search for
 		char picAppvarToFind[9];
 
-		//dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
+		dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
 
 		//Pull pointer to the subimage from the cache
 		void *subimgPtr{ nullptr };
 		if (!bDisableCache) {
-			//dbg_sprintf(dbgout, "\n Cache Hit.");
+			dbg_sprintf(dbgout, "\n Cache Hit.");
 			subimgPtr = curPicture.cache[xSubimgID][ySubimgID];
 		}
 
@@ -691,7 +743,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 				//cache the pointer to the subimage for next time
 				subimgPtr = ti_GetDataPtr(subimgSlot);
 
-				//curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
+				curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
 			}
 			else {
 				//subimage does not exist, display error image
@@ -709,7 +761,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		//displays subimage
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
-		//dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
+		dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
 
 		uint8_t pixelsPerByte = 8 / curPicture.BPP;
 		uint24_t dataToRead = (SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS) / pixelsPerByte;
