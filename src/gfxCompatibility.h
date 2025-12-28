@@ -128,4 +128,33 @@ public:
 		else
 			gfx_End();
 	}
+
+	// Resize picture to new dimensions
+	static void scaleSprite(gfx_sprite_t *src, gfx_sprite_t *dst)
+	{
+		dbg_sprintf(dbgout, "\n Scaling... %d x %d to %d x %d", src->width, src->height, dst->width,dst->height);
+		if (HDpicGFX::is16bppMode())
+			gfx16_ScaleSprite(src, dst);
+		else
+			gfx_ScaleSprite(src, dst);
+	}
+
+	// Draw clipped or unclipped sprite. Uses currently set bpp mode.
+	static void sprite(gfx_sprite_t *picture, uint24_t x, uint24_t y, bool bClipPicture = true)
+	{
+		dbg_sprintf(dbgout, "\n Drawing... %d x %d", picture->width, picture->height);
+
+		if (bClipPicture) {
+			if (is16bppMode())
+				gfx16_Sprite(picture, x, y);
+			else
+				gfx_Sprite(picture, x, y);
+		}
+		else {
+			if (is16bppMode())
+				gfx16_Sprite_NoClip(picture, x, y);
+			else
+				gfx_Sprite_NoClip(picture, x, y);
+		}
+	}
 };

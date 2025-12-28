@@ -285,71 +285,68 @@ void drawHomeScreen()
 				errorID = kb_KeyDown; //1793
 				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
 			}
-		}//temporary }
-		/* DISABLED until gfx16 lib supports resizing sprite */
-		//	//Zoom key. Zoom in as far as possible while maintaining full quality
-		//	if (keyHandler.wasKeyPressed(kb_KeyZoom)) {
-		//		//pull image full dimensions from database
-		//		PicDatabase &picDB = PicDatabase::getInstance();
 
-		//		//convert subimg width to pixels width
-		//		uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
-		//		desiredWidthInPxl = picDB.getPicture(selectedPicIndex).horizSubImages * SUBIMAGE_DIMENSIONS;
-		//		desiredHeightInPxl = picDB.getPicture(selectedPicIndex).vertSubImages * SUBIMAGE_DIMENSIONS;
+			//Zoom key. Zoom in as far as possible while maintaining full quality
+			if (keyHandler.wasKeyPressed(kb_KeyZoom)) {
+				//pull image full dimensions from database
+				PicDatabase &picDB = PicDatabase::getInstance();
 
-		//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-		//		//this means we can't zoom in any more. Zoom back out.
-		//		if (imageErr != 0) {
-		//			dbg_sprintf(dbgout, "\nCant zoom in to Max. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
-		//			desiredWidthInPxl = prevWidth;
-		//			desiredHeightInPxl = prevHeight;
-		//			redrawPic = true;
-		//		}
-		//		errorID = kb_KeyZoom; //260
-		//	}
+				//convert subimg width to pixels width
+				uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
+				desiredWidthInPxl = picDB.getPicture(selectedPicIndex).horizSubImages * SUBIMAGE_DIMENSIONS;
+				desiredHeightInPxl = picDB.getPicture(selectedPicIndex).vertSubImages * SUBIMAGE_DIMENSIONS;
 
-			/* DISABLED until gfx16 lib supports resizing sprite */
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+				//this means we can't zoom in any more. Zoom back out.
+				if (imageErr != 0) {
+					dbg_sprintf(dbgout, "\nCant zoom in to Max. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
+					desiredWidthInPxl = prevWidth;
+					desiredHeightInPxl = prevHeight;
+					redrawPic = true;
+				}
+				errorID = kb_KeyZoom; //260
+			}
+
 			//Plus key. Zoom in by double
-			//if (keyHandler.wasKeyPressed(kb_KeyAdd)) {
-			//	uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
-			//	//calculate increased zoom
-			//	desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
-			//	desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
-			//	dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-			//	//if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
+			if (keyHandler.wasKeyPressed(kb_KeyAdd)) {
+				uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
+				//calculate increased zoom
+				desiredWidthInPxl = desiredWidthInPxl * ZOOM_SCALE;
+				desiredHeightInPxl = desiredHeightInPxl * ZOOM_SCALE;
+				dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+				//if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
 
-			//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-			//		//this means we can't zoom in any more. Zoom back out.
-			//		if (imageErr != 0) {
-			//			dbg_sprintf(dbgout, "\nCant zoom in. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
-			//			desiredWidthInPxl = prevWidth;
-			//			desiredHeightInPxl = prevHeight;
-			//		}
-			//	//}
-			//	errorID = kb_KeyAdd; //1538
-			//}
+				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+				//this means we can't zoom in any more. Zoom back out.
+				if (imageErr != 0) {
+					dbg_sprintf(dbgout, "\nCant zoom in. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
+					desiredWidthInPxl = prevWidth;
+					desiredHeightInPxl = prevHeight;
+				}
+				//}
+				errorID = kb_KeyAdd; //1538
+			}
 
-			/* DISABLED until gfx16 lib supports resizing sprite */
-			//subtract key. Zoom out by double.
-			//if (keyHandler.wasKeyPressed(kb_KeySub)) {
-			//	//apply the zoom out to the width and height
-			//	uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
-			//	desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
-			//	desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
+			//subtract key.Zoom out by double.
+			if (keyHandler.wasKeyPressed(kb_KeySub)) {
+				//apply the zoom out to the width and height
+				uint24_t prevWidth{ desiredWidthInPxl }, prevHeight{ desiredHeightInPxl };
+				desiredWidthInPxl = desiredWidthInPxl / ZOOM_SCALE;
+				desiredHeightInPxl = desiredHeightInPxl / ZOOM_SCALE;
 
-			//	if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
-			//		dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-			//		imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
-			//		//this means we can't zoom out any more. Zoom back in.
-			//		if (imageErr != 0) {
-			//			dbg_sprintf(dbgout, "\nCant zoom out. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
-			//			desiredWidthInPxl = prevWidth;
-			//			desiredHeightInPxl = prevHeight;
-			//		}
-			//	}
-			//	errorID = kb_KeySub; //1540
-			//}
-		//}
+				if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
+					dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
+					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+					//this means we can't zoom out any more. Zoom back in.
+					if (imageErr != 0) {
+						dbg_sprintf(dbgout, "\nCant zoom out. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
+						desiredWidthInPxl = prevWidth;
+						desiredHeightInPxl = prevHeight;
+					}
+				}
+				errorID = kb_KeySub; //1540
+			}
+		}
 
 		//Window. Reset zoom and pan
 		if (resetPic || keyHandler.wasKeyPressed(kb_KeyWindow)) {
@@ -446,23 +443,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		dbg_sprintf(dbgout, "\nERR: Cant zoom out\n scaleNumerator:%d\n scaleDenominator:%d", scaleNumerator, scaleDenominator);
 		return 1;
 	}
-
-	/*
-	[jacobly] so now whenever we want to compute
-	`x * scale`
-	we instead want to compute
-	`x * (scaleNumerator / scaleDenominator)`
-	which can now be reordered to use strictly integer math as
-	`(x * scaleNumerator) / scaleDenominator`
-
-	[jacobly] if you don't know:
-	floorDiv(x, y) := x / y;
-	roundDiv(x, y) := (x + (y / 2)) / y;
-	ceilDiv(x, y) := (x + y - 1) / y;
-	[MateoC] huh I didn't know about roundDiv
-	*/
-
-
 
 	//Final dimension of all subimages
 	subimgNewDimNumerator = SUBIMAGE_DIMENSIONS * scaleNumerator;
@@ -582,7 +562,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			gfx_BlitBuffer();
 			gfx_SetDrawScreen();
 		}
-		while (!os_GetCSC()); //todo: remove
 	}
 	else if (fullScreenPic) {
 		//If there's no panning, then we need to re-draw the entire image. 
@@ -658,25 +637,22 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		}
 	}
 
-	/* DISABLED until gfx16 lib supports resizing sprite */
-	//allocates memory for resized image
-	//gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim,subimgScaledDim) };
-	//if (!outputImg) {
-	//	dbg_sprintf(dbgout, "\nERR: Failed to allocate output memory!");
-	//	return 1;
-	//}
-
 	//pointer to memory where each unsized subimage will be stored
 	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
 	if (!srcImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcImg memory!");
 		return 1;
 	}
-
 	//pointer to memory where each unsized subimage will be stored
 	gfx_sprite_t *tempImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
 	if (!tempImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate tempImg src memory!");
+		return 1;
+	}
+	//allocates memory for resized image
+	gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim,subimgScaledDim) };
+	if (!outputImg) {
+		dbg_sprintf(dbgout, "\nERR: Failed to allocate outputImg memory!");
 		return 1;
 	}
 
@@ -702,7 +678,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			//free up source and output memory
 			free(srcImg);
 			free(tempImg);
-			//free(outputImg);
+			free(outputImg);
 			return 0;
 		}
 
@@ -726,17 +702,24 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		if (subimgPtr == nullptr) {
 			//cache miss. Find the appvar by name
 			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
-
-			//dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
+			dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
 
 			subimgSlot = ti_Open(picAppvarToFind, "r");
+			dbg_sprintf(dbgout, "\n 1");
+
 
 			if (subimgSlot) {
+				dbg_sprintf(dbgout, "\n 2: %d", (uint8_t)subimgSlot);
+
 				//seeks past header. 16bpp has different header size than 8bpp
 				if (curPicture.BPP == 16) {
+					dbg_sprintf(dbgout, "\n 3.1: %d", (uint8_t)subimgSlot);
+
 					ti_Seek(24, SEEK_CUR, subimgSlot);
 				}
 				else {
+					dbg_sprintf(dbgout, "\n 3.2: %d", (uint8_t)subimgSlot);
+
 					ti_Seek(16, SEEK_CUR, subimgSlot);
 				}
 
@@ -754,10 +737,9 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		/* subimage exists, display it */
 
 		//decompress subimage into srcImg
-		zx0_Decompress(srcImg, subimgPtr);
+		dbg_sprintf(dbgout, "\n Decompressing...");
 
-		//resizes it to outputImg size
-		//gfx_ScaleSprite(srcImg, outputImg);
+		zx0_Decompress(srcImg, subimgPtr);
 
 		//displays subimage
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
@@ -771,102 +753,57 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX + subimgScaledDim > LCD_WIDTH: %d > %d", subimgPxlPosX + subimgScaledDim > LCD_WIDTH, subimgPxlPosX + subimgScaledDim, LCD_WIDTH);
 		dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY < 0: %d < 0", subimgPxlPosY < 0, subimgPxlPosY);
 		dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY + subimgScaledDim > LCD_HEIGHT: %d > %d", subimgPxlPosY + subimgScaledDim > LCD_HEIGHT, subimgPxlPosY + subimgScaledDim, LCD_HEIGHT);*/
+		bool bClipPicture = subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT;
 
-		if (subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT) {
-			switch (curPicture.BPP) {
-			case 1:
-				for (size_t i = 0; i < dataToRead; i++) {
-					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+		switch (curPicture.BPP) {
+		case 1:
+			for (size_t i = 0; i < dataToRead; i++) {
+				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
 
-					tempImg->data[out++] = (byte >> 7) & 0x01;
-					tempImg->data[out++] = (byte >> 6) & 0x01;
-					tempImg->data[out++] = (byte >> 5) & 0x01;
-					tempImg->data[out++] = (byte >> 4) & 0x01;
-					tempImg->data[out++] = (byte >> 3) & 0x01;
-					tempImg->data[out++] = (byte >> 2) & 0x01;
-					tempImg->data[out++] = (byte >> 1) & 0x01;
-					tempImg->data[out++] = byte & 0x01;
-				}
-				gfx_Sprite(tempImg, subimgPxlPosX, subimgPxlPosY);
-				break;
-
-			case 2:
-				for (size_t i = 0; i < dataToRead; i++) {
-					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
-
-					tempImg->data[out++] = (byte >> 6) & 0x03;
-					tempImg->data[out++] = (byte >> 4) & 0x03;
-					tempImg->data[out++] = (byte >> 2) & 0x03;
-					tempImg->data[out++] = byte & 0x03;
-				}
-				gfx_Sprite(tempImg, subimgPxlPosX, subimgPxlPosY);
-				break;
-
-			case 4:
-				for (size_t i = 0; i < dataToRead; i++) {
-					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
-
-					tempImg->data[out++] = (byte >> 4) & 0x0F;
-					tempImg->data[out++] = byte & 0x0F;
-				}
-				gfx_Sprite(tempImg, subimgPxlPosX, subimgPxlPosY);
-				break;
-
-			case 8:
-				gfx_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
-				break;
-
-			case 16:
-				gfx16_Sprite(srcImg, subimgPxlPosX, subimgPxlPosY);
-				break;
+				tempImg->data[out++] = (byte >> 7) & 0x01;
+				tempImg->data[out++] = (byte >> 6) & 0x01;
+				tempImg->data[out++] = (byte >> 5) & 0x01;
+				tempImg->data[out++] = (byte >> 4) & 0x01;
+				tempImg->data[out++] = (byte >> 3) & 0x01;
+				tempImg->data[out++] = (byte >> 2) & 0x01;
+				tempImg->data[out++] = (byte >> 1) & 0x01;
+				tempImg->data[out++] = byte & 0x01;
 			}
-		}
-		else {
-			switch (curPicture.BPP) {
-			case 1:
-				for (size_t i = 0; i < dataToRead; i++) {
-					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
-					tempImg->data[out++] = (byte >> 7) & 0x01;
-					tempImg->data[out++] = (byte >> 6) & 0x01;
-					tempImg->data[out++] = (byte >> 5) & 0x01;
-					tempImg->data[out++] = (byte >> 4) & 0x01;
-					tempImg->data[out++] = (byte >> 3) & 0x01;
-					tempImg->data[out++] = (byte >> 2) & 0x01;
-					tempImg->data[out++] = (byte >> 1) & 0x01;
-					tempImg->data[out++] = byte & 0x01;
-				}
-				gfx_Sprite_NoClip(tempImg, subimgPxlPosX, subimgPxlPosY);
-				break;
+			HDpicGFX::scaleSprite(tempImg, outputImg);
+			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
+			break;
 
-			case 2:
-				for (size_t i = 0; i < dataToRead; i++) {
-					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
-					tempImg->data[out++] = (byte >> 6) & 0x03;
-					tempImg->data[out++] = (byte >> 4) & 0x03;
-					tempImg->data[out++] = (byte >> 2) & 0x03;
-					tempImg->data[out++] = byte & 0x03;
-				}
-				gfx_Sprite_NoClip(tempImg, subimgPxlPosX, subimgPxlPosY);
-				break;
+		case 2:
+			for (size_t i = 0; i < dataToRead; i++) {
+				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
 
-			case 4:
-				for (size_t i = 0; i < dataToRead; i++) {
-					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
-					tempImg->data[out++] = (byte >> 4) & 0x0F;
-					tempImg->data[out++] = byte & 0x0F;
-				}
-				gfx_Sprite_NoClip(tempImg, subimgPxlPosX, subimgPxlPosY);
-				break;
-
-			case 8:
-				gfx_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
-				break;
-
-			case 16:
-				gfx16_Sprite_NoClip(srcImg, subimgPxlPosX, subimgPxlPosY);
-				break;
+				tempImg->data[out++] = (byte >> 6) & 0x03;
+				tempImg->data[out++] = (byte >> 4) & 0x03;
+				tempImg->data[out++] = (byte >> 2) & 0x03;
+				tempImg->data[out++] = byte & 0x03;
 			}
+			HDpicGFX::scaleSprite(tempImg, outputImg);
+			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
+			break;
+
+		case 4:
+			for (size_t i = 0; i < dataToRead; i++) {
+				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+
+				tempImg->data[out++] = (byte >> 4) & 0x0F;
+				tempImg->data[out++] = byte & 0x0F;
+			}
+			HDpicGFX::scaleSprite(tempImg, outputImg);
+			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
+			break;
+
+		case 8:
+		case 16:
+			HDpicGFX::scaleSprite(srcImg, outputImg);
+			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
+			break;
 		}
+
 
 		//cleans up
 		ti_Close(subimgSlot);
@@ -875,7 +812,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//free up source and output memory
 	free(srcImg);
 	free(tempImg);
-	//free(outputImg);
+	free(outputImg);
 
 	dbg_sprintf(dbgout, "\nDraw Finished.\n");
 	return 0;
