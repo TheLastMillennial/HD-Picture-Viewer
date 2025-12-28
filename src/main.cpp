@@ -659,7 +659,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	/* Loop through all subimages to create full image */
 	bool bFirstRun{ true };
 	//If there's no cache yet, don't bother even checking it.
-	bool bDisableCache{ curPicture.cache.isEmpty() };
+	bool bDisableCache{ true };
+	//bool bDisableCache{ curPicture.cache.isEmpty() };
 	//dbg_sprintf(dbgout, "\nbDisableCache: %d", bDisableCache);
 
 	int24_t xSubimgID{ 0 };
@@ -705,28 +706,21 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
 
 			subimgSlot = ti_Open(picAppvarToFind, "r");
-			dbg_sprintf(dbgout, "\n 1");
-
-
 			if (subimgSlot) {
-				dbg_sprintf(dbgout, "\n 2: %d", (uint8_t)subimgSlot);
-
 				//seeks past header. 16bpp has different header size than 8bpp
-				if (curPicture.BPP == 16) {
-					dbg_sprintf(dbgout, "\n 3.1: %d", (uint8_t)subimgSlot);
-
+				if (curPicture.BPP == 16) 
 					ti_Seek(24, SEEK_CUR, subimgSlot);
-				}
-				else {
-					dbg_sprintf(dbgout, "\n 3.2: %d", (uint8_t)subimgSlot);
-
+				
+				else 
 					ti_Seek(16, SEEK_CUR, subimgSlot);
-				}
-
+			
 				//cache the pointer to the subimage for next time
 				subimgPtr = ti_GetDataPtr(subimgSlot);
 
-				curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
+				//todo: cache dimensions don't seem to be set correctly for 16bpp
+				//curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
+				//dbg_sprintf(dbgout, "\n 6: %p", (void *)curPicture.cache[xSubimgID][ySubimgID]);
+
 			}
 			else {
 				//subimage does not exist, display error image
