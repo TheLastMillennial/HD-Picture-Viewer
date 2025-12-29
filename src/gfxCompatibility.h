@@ -1,4 +1,5 @@
 #pragma once
+#include <tice.h>
 
 class HDpicGFX
 {
@@ -9,6 +10,8 @@ private:
 	// Private copy constructor and assignment operator to prevent copying
 	HDpicGFX(const HDpicGFX &) = delete;
 	HDpicGFX &operator=(const HDpicGFX &) = delete;
+
+	inline static const uint8_t MAX_SUBIMG_DIM = 150;
 
 	//once 8 or 16bpp library set, this gets set to true permenantly.
 	inline static bool bGfxLibSet = false;
@@ -132,7 +135,13 @@ public:
 	// Resize picture to new dimensions
 	static void scaleSprite(gfx_sprite_t *src, gfx_sprite_t *dst)
 	{
-		dbg_sprintf(dbgout, "\n Scaling... %d x %d to %d x %d", src->width, src->height, dst->width,dst->height);
+		dbg_sprintf(dbgout, "\n Scaling... %d x %d to %d x %d", src->width, src->height, dst->width, dst->height);
+		
+		if (dst->width != dst->height || dst->width > MAX_SUBIMG_DIM || dst->height > MAX_SUBIMG_DIM) 			{
+			dbg_sprintf(dbgout, "\n  ERR: Not square or can't scale this big. Reverting to 80x80");
+			dst->width = 80; dst->height = 80;
+			while (!os_GetCSC());
+		}
 		if (HDpicGFX::is16bppMode())
 			gfx16_ScaleSprite(src, dst);
 		else
@@ -142,7 +151,7 @@ public:
 	// Draw clipped or unclipped sprite. Uses currently set bpp mode.
 	static void sprite(gfx_sprite_t *picture, uint24_t x, uint24_t y, bool bClipPicture = true)
 	{
-		dbg_sprintf(dbgout, "\n Drawing... %d x %d", picture->width, picture->height);
+		//dbg_sprintf(dbgout, "\n Drawing... %d x %d", picture->width, picture->height);
 
 		if (bClipPicture) {
 			if (is16bppMode())
@@ -157,4 +166,34 @@ public:
 				gfx_Sprite_NoClip(picture, x, y);
 		}
 	}
+
+	static void fillRectangle(uint24_t x, uint24_t y, uint24_t width, uint24_t height, bool bClip = true)
+	{
+		if (bClip) {
+			if (is16bppMode())
+				gfx16_FillRectangle(x, y, width, height);
+			else
+				gfx_FillRectangle(x, y, width, height);
+
+		}
+		else {
+			if (is16bppMode())
+				gfx16_FillRectangle_NoClip(x, y, width, height);
+			else
+				gfx_FillRectangle_NoClip(x, y, width, height);
+
+
+		}
+	}
+
+	static void copyRectangle(uint24_t srcX, uint24_t srcY, uint24_t dstX, uint24_t dstY, uint24_t width, uint8_t height, gfx_location_t srcBuffer = gfx_screen, gfx_location_t dstBuffer = gfx_buffer)
+	{
+		if (is16bppMode()) {
+			gfx16_CopyRectangle(srcX, srcY, dstX, dstY, width, height);
+		}
+		else {
+			gfx_CopyRectangle(srcBuffer, dstBuffer, srcX, srcY, dstX, dstY, width, height);
+		}
+	}
+
 };

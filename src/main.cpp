@@ -506,56 +506,29 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		if (shiftX > 0) {
 			bReverseDirection = true;
 			bDrawVertical = true;
-			if (HDpicGFX::is16bppMode()) {
-				gfx16_CopyRectangle(0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
-				gfx16_FillRectangle_NoClip(0, 0, subimgScaledDim, LCD_HEIGHT);
-			}
-			else {
-				gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
-				gfx_FillRectangle_NoClip(0, 0, subimgScaledDim, LCD_HEIGHT);
-			}
+			HDpicGFX::copyRectangle(0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+			HDpicGFX::fillRectangle(0, 0, subimgScaledDim, LCD_HEIGHT, false);
 		}
 		// Shift screen to left
 		if (shiftX < 0) {
 			bReverseDirection = false;
 			bDrawVertical = true;
-			if (HDpicGFX::is16bppMode()) {
-				gfx16_CopyRectangle(subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
-				gfx16_FillRectangle_NoClip(LCD_WIDTH - subimgScaledDim, 0, subimgScaledDim, LCD_HEIGHT);
-
-			}
-			else {
-				gfx_CopyRectangle(gfx_screen, gfx_buffer, subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
-				gfx_FillRectangle_NoClip(LCD_WIDTH - subimgScaledDim, 0, subimgScaledDim, LCD_HEIGHT);
-			}
+			HDpicGFX::copyRectangle(subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+			HDpicGFX::fillRectangle(LCD_WIDTH - subimgScaledDim, 0, subimgScaledDim, LCD_HEIGHT, false);
 		}
 		// Shift screen up
 		if (shiftY > 0) {
 			bReverseDirection = false;
 			bDrawVertical = false;
-			if (HDpicGFX::is16bppMode()) {
-				gfx16_CopyRectangle(0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
-				gfx16_FillRectangle_NoClip(0, LCD_HEIGHT - subimgScaledDim, LCD_WIDTH, subimgScaledDim);
-
-			}
-			else {
-				gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
-				gfx_FillRectangle_NoClip(0, LCD_HEIGHT - subimgScaledDim, LCD_WIDTH, subimgScaledDim);
-			}
+			HDpicGFX::copyRectangle(0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+			HDpicGFX::fillRectangle(0, LCD_HEIGHT - subimgScaledDim, LCD_WIDTH, subimgScaledDim, false);
 		}
 		// Shift screen down
 		if (shiftY < 0) {
 			bReverseDirection = true;
 			bDrawVertical = false;
-			if (HDpicGFX::is16bppMode()) {
-				gfx16_CopyRectangle(0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
-				gfx16_FillRectangle_NoClip(0, 0, LCD_WIDTH, subimgScaledDim);
-
-			}
-			else {
-				gfx_CopyRectangle(gfx_screen, gfx_buffer, 0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
-				gfx_FillRectangle_NoClip(0, 0, LCD_WIDTH, subimgScaledDim);
-			}
+			HDpicGFX::copyRectangle(0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+			HDpicGFX::fillRectangle(0, 0, LCD_WIDTH, subimgScaledDim, false);
 		}
 		//Show other 8bpp buffer
 		if (!HDpicGFX::is16bppMode()) {
@@ -637,30 +610,46 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		}
 	}
 
-	//pointer to memory where each unsized subimage will be stored
-	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
-	if (!srcImg) {
-		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcImg memory!");
+	//allocates memory for resized image
+
+	//TODO: fix memory allocation with gfx16_MallocSprite()
+
+	/*gfx_sprite_t *outputImg{ nullptr };
+	if (HDpicGFX::is16bppMode())
+		outputImg = gfx16_MallocSprite(subimgScaledDim, subimgScaledDim);
+	else
+		outputImg = gfx_MallocSprite(subimgScaledDim, subimgScaledDim);*/
+	gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim, subimgScaledDim) };
+	if (!outputImg) {
+		dbg_sprintf(dbgout, "\nERR: Failed to allocate outputImg memory!");
 		return 1;
 	}
-	//pointer to memory where each unsized subimage will be stored
+
+
+	////pointer to memory where bit-unpacked subimage will be stored
 	gfx_sprite_t *tempImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
 	if (!tempImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate tempImg src memory!");
 		return 1;
 	}
-	//allocates memory for resized image
-	gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim,subimgScaledDim) };
-	if (!outputImg) {
-		dbg_sprintf(dbgout, "\nERR: Failed to allocate outputImg memory!");
+
+	//pointer to memory where each unsized subimage will be stored
+	/*/gfx_sprite_t *srcImg{nullptr};
+	if (HDpicGFX::is16bppMode())
+		srcImg = gfx16_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS);
+	else
+		srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS);*/
+	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
+	if (!srcImg) {
+		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcImg memory!");
 		return 1;
 	}
 
 	/* Loop through all subimages to create full image */
 	bool bFirstRun{ true };
 	//If there's no cache yet, don't bother even checking it.
-	bool bDisableCache{ true };
-	//bool bDisableCache{ curPicture.cache.isEmpty() };
+	bool bDisableCache = true;
+	//bool bDisableCache{ curPicture.cache.isEmpty() || HDpicGFX::is16bppMode() };
 	//dbg_sprintf(dbgout, "\nbDisableCache: %d", bDisableCache);
 
 	int24_t xSubimgID{ 0 };
@@ -702,25 +691,24 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		ti_var_t subimgSlot = NULL;
 		if (subimgPtr == nullptr) {
 			//cache miss. Find the appvar by name
-			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
-			dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
 
+			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
+			//dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
 			subimgSlot = ti_Open(picAppvarToFind, "r");
 			if (subimgSlot) {
 				//seeks past header. 16bpp has different header size than 8bpp
-				if (curPicture.BPP == 16) 
+				if (curPicture.BPP == 16) {
 					ti_Seek(24, SEEK_CUR, subimgSlot);
-				
-				else 
+
+				}
+
+				else
 					ti_Seek(16, SEEK_CUR, subimgSlot);
-			
+
 				//cache the pointer to the subimage for next time
 				subimgPtr = ti_GetDataPtr(subimgSlot);
 
-				//todo: cache dimensions don't seem to be set correctly for 16bpp
 				//curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
-				//dbg_sprintf(dbgout, "\n 6: %p", (void *)curPicture.cache[xSubimgID][ySubimgID]);
-
 			}
 			else {
 				//subimage does not exist, display error image
@@ -729,15 +717,17 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			}
 		}
 		/* subimage exists, display it */
+		dbg_sprintf(dbgout, "\n CHECK 1: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
+
 
 		//decompress subimage into srcImg
-		dbg_sprintf(dbgout, "\n Decompressing...");
-
+		dbg_sprintf(dbgout, "\n Decompressing... subimgPtr %p to srcImg %p", subimgPtr, srcImg);
 		zx0_Decompress(srcImg, subimgPtr);
+		dbg_sprintf(dbgout, "\n CHECK 2: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
 
 		//displays subimage
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
-		dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
+		//dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
 
 		uint8_t pixelsPerByte = 8 / curPicture.BPP;
 		uint24_t dataToRead = (SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS) / pixelsPerByte;
@@ -750,46 +740,46 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		bool bClipPicture = subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT;
 
 		switch (curPicture.BPP) {
-		case 1:
-			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+			case 1:
+				for (size_t i = 0; i < dataToRead; i++) {
+					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
 
-				tempImg->data[out++] = (byte >> 7) & 0x01;
-				tempImg->data[out++] = (byte >> 6) & 0x01;
-				tempImg->data[out++] = (byte >> 5) & 0x01;
-				tempImg->data[out++] = (byte >> 4) & 0x01;
-				tempImg->data[out++] = (byte >> 3) & 0x01;
-				tempImg->data[out++] = (byte >> 2) & 0x01;
-				tempImg->data[out++] = (byte >> 1) & 0x01;
-				tempImg->data[out++] = byte & 0x01;
-			}
-			HDpicGFX::scaleSprite(tempImg, outputImg);
-			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
-			break;
+					tempImg->data[out++] = (byte >> 7) & 0x01;
+					tempImg->data[out++] = (byte >> 6) & 0x01;
+					tempImg->data[out++] = (byte >> 5) & 0x01;
+					tempImg->data[out++] = (byte >> 4) & 0x01;
+					tempImg->data[out++] = (byte >> 3) & 0x01;
+					tempImg->data[out++] = (byte >> 2) & 0x01;
+					tempImg->data[out++] = (byte >> 1) & 0x01;
+					tempImg->data[out++] = byte & 0x01;
+				}
+				HDpicGFX::scaleSprite(tempImg, outputImg);
+				HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
+				break;
 
-		case 2:
-			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+			case 2:
+				for (size_t i = 0; i < dataToRead; i++) {
+					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
 
-				tempImg->data[out++] = (byte >> 6) & 0x03;
-				tempImg->data[out++] = (byte >> 4) & 0x03;
-				tempImg->data[out++] = (byte >> 2) & 0x03;
-				tempImg->data[out++] = byte & 0x03;
-			}
-			HDpicGFX::scaleSprite(tempImg, outputImg);
-			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
-			break;
+					tempImg->data[out++] = (byte >> 6) & 0x03;
+					tempImg->data[out++] = (byte >> 4) & 0x03;
+					tempImg->data[out++] = (byte >> 2) & 0x03;
+					tempImg->data[out++] = byte & 0x03;
+				}
+				HDpicGFX::scaleSprite(tempImg, outputImg);
+				HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
+				break;
 
-		case 4:
-			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+			case 4:
+				for (size_t i = 0; i < dataToRead; i++) {
+					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
 
-				tempImg->data[out++] = (byte >> 4) & 0x0F;
-				tempImg->data[out++] = byte & 0x0F;
-			}
-			HDpicGFX::scaleSprite(tempImg, outputImg);
-			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
-			break;
+					tempImg->data[out++] = (byte >> 4) & 0x0F;
+					tempImg->data[out++] = byte & 0x0F;
+				}
+				HDpicGFX::scaleSprite(tempImg, outputImg);
+				HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
+				break;
 
 		case 8:
 		case 16:
