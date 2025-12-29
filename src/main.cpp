@@ -452,7 +452,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//	subimgScaledDim, subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
 
 	//ensure the resized subimage will fit within the dimensions of the screen.
-	if (subimgScaledDim > LCD_HEIGHT) {
+	if (subimgScaledDim > LCD_HEIGHT || (HDpicGFX::is16bppMode() && subimgScaledDim > MAX_16BPP_SUBIMAGE_DIMENSIONS)) {
 		dbg_sprintf(dbgout, "\nERR: Subimage will be too large: %d", subimgScaledDim);
 		return 1;
 	}
@@ -461,7 +461,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		dbg_sprintf(dbgout, "\nERR: Subimage will be too small: %d", subimgScaledDim);
 		return 1;
 	}
-
 
 	//sets correct palettes
 	//requires 8bpp mode
@@ -614,32 +613,43 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//TODO: fix memory allocation with gfx16_MallocSprite()
 
-	/*gfx_sprite_t *outputImg{ nullptr };
+	gfx_sprite_t *outputImg{ nullptr };
 	if (HDpicGFX::is16bppMode())
-		outputImg = gfx16_MallocSprite(subimgScaledDim, subimgScaledDim);
+	{
+		//we allocate twice as much memory as an 8bpp image.
+		outputImg = gfx_MallocSprite(subimgScaledDim*2, subimgScaledDim);
+		//we manually set the width and height to the correct values.
+		outputImg->width = outputImg->height = subimgScaledDim;
+	}
 	else
-		outputImg = gfx_MallocSprite(subimgScaledDim, subimgScaledDim);*/
-	gfx_sprite_t *outputImg{ gfx_MallocSprite(subimgScaledDim, subimgScaledDim) };
+		outputImg = gfx_MallocSprite(subimgScaledDim, subimgScaledDim);	
 	if (!outputImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate outputImg memory!");
 		return 1;
 	}
 
-
-	////pointer to memory where bit-unpacked subimage will be stored
-	gfx_sprite_t *tempImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
+	//pointer to memory where bit-unpacked subimage will be stored
+	gfx_sprite_t *tempImg{ nullptr};
+	if (HDpicGFX::is16bppMode()) {
+		tempImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS * 2, SUBIMAGE_DIMENSIONS);
+		tempImg->width = tempImg->height = SUBIMAGE_DIMENSIONS;
+	}
+	else
+		tempImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS);
 	if (!tempImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate tempImg src memory!");
 		return 1;
 	}
 
 	//pointer to memory where each unsized subimage will be stored
-	/*/gfx_sprite_t *srcImg{nullptr};
+	gfx_sprite_t *srcImg{nullptr};
 	if (HDpicGFX::is16bppMode())
-		srcImg = gfx16_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS);
+	{
+		srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS*2, SUBIMAGE_DIMENSIONS);
+		srcImg->width = srcImg->height = SUBIMAGE_DIMENSIONS;
+	}
 	else
-		srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS);*/
-	gfx_sprite_t *srcImg{ gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS) };
+		srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS);
 	if (!srcImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcImg memory!");
 		return 1;
@@ -701,7 +711,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 					ti_Seek(24, SEEK_CUR, subimgSlot);
 
 				}
-
 				else
 					ti_Seek(16, SEEK_CUR, subimgSlot);
 
@@ -717,11 +726,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			}
 		}
 		/* subimage exists, display it */
-		dbg_sprintf(dbgout, "\n CHECK 1: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
+		//dbg_sprintf(dbgout, "\n CHECK 1: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
 
 
 		//decompress subimage into srcImg
-		dbg_sprintf(dbgout, "\n Decompressing... subimgPtr %p to srcImg %p", subimgPtr, srcImg);
+		//dbg_sprintf(dbgout, "\n Decompressing... subimgPtr %p to srcImg %p", subimgPtr, srcImg);
+		dbg_sprintf(dbgout, "\n Decompressing... ");
 		zx0_Decompress(srcImg, subimgPtr);
 		dbg_sprintf(dbgout, "\n CHECK 2: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
 
