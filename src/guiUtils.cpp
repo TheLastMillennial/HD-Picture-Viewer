@@ -99,11 +99,11 @@ void drawHelp()
 	PrintHelpText("Y= ", " Show previous.", 100);
 	PrintHelpText("Graph ", " Show next.", 110);
 	PrintHelpText("Del ", " Delete picture permanently.", 120);
-	//PrintHelpText("Arrow Keys", " Pan picture.", 130);
-	//PrintHelpText("+ ", " Zoom in.", 140);
-	//PrintHelpText("- ", " Zoom out.", 150);
-	//PrintHelpText("Zoom ", " Maximum zoom.", 160);
-	//PrintHelpText("Window", " Default zoom.", 170);
+	PrintHelpText("Arrow Keys", " Pan picture.", 130);
+	PrintHelpText("+ ", " Zoom in.", 140);
+	PrintHelpText("- ", " Zoom out.", 150);
+	PrintHelpText("Zoom ", " Maximum zoom.", 160);
+	PrintHelpText("Window", " Default zoom.", 170);
 
 	gfx16_SetTextFGColor(GFX16_TEXT_TITLE);
 	gfx16_PrintCenteredX("Press any key to return.", 190);

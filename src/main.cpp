@@ -51,10 +51,8 @@ int main(void)
 	}
 	dbg_sprintf(dbgout, "\nHome screen ");
 
-
 	//display the list of images
 	drawHomeScreen();
-
 
 	//quit
 	HDpicGFX::end();
@@ -658,8 +656,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	/* Loop through all subimages to create full image */
 	bool bFirstRun{ true };
 	//If there's no cache yet, don't bother even checking it.
-	bool bDisableCache = true;
-	//bool bDisableCache{ curPicture.cache.isEmpty() || HDpicGFX::is16bppMode() };
+	bool bDisableCache{ curPicture.cache.isEmpty() };
 	//dbg_sprintf(dbgout, "\nbDisableCache: %d", bDisableCache);
 
 	int24_t xSubimgID{ 0 };
@@ -716,8 +713,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 				//cache the pointer to the subimage for next time
 				subimgPtr = ti_GetDataPtr(subimgSlot);
-
-				//curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
+				curPicture.cache[xSubimgID][ySubimgID] = subimgPtr;
 			}
 			else {
 				//subimage does not exist, display error image

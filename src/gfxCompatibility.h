@@ -124,13 +124,13 @@ public:
 	//quits the correct gfx library, if necessary
 	static void end()
 	{
-		bGfxLibSet = false;
 		if (!bGfxLibSet)
 			return;
 		if (is16bppMode())
 			gfx16_End();
 		else
 			gfx_End();
+		bGfxLibSet = false;
 	}
 
 	// Resize picture to new dimensions
@@ -167,6 +167,7 @@ public:
 		}
 	}
 
+	// Draw clipped or unclipped rectangle. Uses currently set bpp mode.
 	static void fillRectangle(uint24_t x, uint24_t y, uint24_t width, uint24_t height, bool bClip = true)
 	{
 		if (bClip) {
@@ -183,6 +184,8 @@ public:
 		}
 	}
 
+	// Copies portion of screen from one place to another. Uses currently set bpp mode.
+	// WARNING: gfx16 library has a visual but when copying screen to the right.
 	static void copyRectangle(uint24_t srcX, uint24_t srcY, uint24_t dstX, uint24_t dstY, uint24_t width, uint8_t height, gfx_location_t srcBuffer = gfx_screen, gfx_location_t dstBuffer = gfx_buffer)
 	{
 		if (is16bppMode()) 

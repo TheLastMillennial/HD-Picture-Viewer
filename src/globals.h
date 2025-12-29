@@ -10,9 +10,9 @@
 * ticalc.org
 */
 #define OBTAINED_FROM " from bin folder"
-#define VERSION "3.0.0-alpha" OBTAINED_FROM
+#define VERSION "3.0.0-alpha.1" OBTAINED_FROM
 #define YEAR "2025"
-#define TUTORIAL_LINK "https://youtu.be/uixL9t5ZTJs"
+#define TUTORIAL_LINK "no tutorial for alpha"
 
 
 /* MAX_IMAGES is the maximum number of images that can be on the calculator.
