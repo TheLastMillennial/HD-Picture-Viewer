@@ -1,3 +1,5 @@
+#pragma once
+
 #include "globals.h"
 #include "gfxCompatibility.h"
 #include <cmath>

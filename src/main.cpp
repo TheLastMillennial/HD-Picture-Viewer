@@ -583,6 +583,9 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		return 1;
 	}
 
+	// Get compression mode
+	const uint8_t compressionMode = picDB.getPicture(picName).compressionType;
+
 	/* Display final image */
 
 	//the -1 is to account for some loop weirdness. Specifically in the iterate() function.
@@ -612,22 +615,21 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//TODO: fix memory allocation with gfx16_MallocSprite()
 
 	gfx_sprite_t *outputImg{ nullptr };
-	if (HDpicGFX::is16bppMode())
-	{
+	if (HDpicGFX::is16bppMode()) {
 		//we allocate twice as much memory as an 8bpp image.
-		outputImg = gfx_MallocSprite(subimgScaledDim*2, subimgScaledDim);
+		outputImg = gfx_MallocSprite(subimgScaledDim * 2, subimgScaledDim);
 		//we manually set the width and height to the correct values.
 		outputImg->width = outputImg->height = subimgScaledDim;
 	}
 	else
-		outputImg = gfx_MallocSprite(subimgScaledDim, subimgScaledDim);	
+		outputImg = gfx_MallocSprite(subimgScaledDim, subimgScaledDim);
 	if (!outputImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate outputImg memory!");
 		return 1;
 	}
 
 	//pointer to memory where bit-unpacked subimage will be stored
-	gfx_sprite_t *tempImg{ nullptr};
+	gfx_sprite_t *tempImg{ nullptr };
 	if (HDpicGFX::is16bppMode()) {
 		tempImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS * 2, SUBIMAGE_DIMENSIONS);
 		tempImg->width = tempImg->height = SUBIMAGE_DIMENSIONS;
@@ -640,10 +642,9 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	}
 
 	//pointer to memory where each unsized subimage will be stored
-	gfx_sprite_t *srcImg{nullptr};
-	if (HDpicGFX::is16bppMode())
-	{
-		srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS*2, SUBIMAGE_DIMENSIONS);
+	gfx_sprite_t *srcImg{ nullptr };
+	if (HDpicGFX::is16bppMode()) {
+		srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS * 2, SUBIMAGE_DIMENSIONS);
 		srcImg->width = srcImg->height = SUBIMAGE_DIMENSIONS;
 	}
 	else
@@ -705,11 +706,11 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			if (subimgSlot) {
 				//seeks past header. 16bpp has different header size than 8bpp
 				if (curPicture.BPP == 16) {
-					ti_Seek(24, SEEK_CUR, subimgSlot);
+					ti_Seek(25, SEEK_CUR, subimgSlot);
 
 				}
 				else
-					ti_Seek(16, SEEK_CUR, subimgSlot);
+					ti_Seek(17, SEEK_CUR, subimgSlot);
 
 				//cache the pointer to the subimage for next time
 				subimgPtr = ti_GetDataPtr(subimgSlot);
@@ -728,7 +729,19 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//decompress subimage into srcImg
 		//dbg_sprintf(dbgout, "\n Decompressing... subimgPtr %p to srcImg %p", subimgPtr, srcImg);
 		dbg_sprintf(dbgout, "\n Decompressing... ");
-		zx0_Decompress(srcImg, subimgPtr);
+		if (compressionMode == 0) {
+			dbg_sprintf(dbgout, " zx0 ");
+			zx0_Decompress(srcImg, subimgPtr);
+		}
+		else if (compressionMode == 7) {
+			dbg_sprintf(dbgout, " zx7 ");
+			zx7_Decompress(srcImg, subimgPtr);
+		}
+		else {
+			dbg_sprintf(dbgout, "\n ERR: Unknown compression type %d", compressionMode);
+			continue;
+		}
+
 		dbg_sprintf(dbgout, "\n CHECK 2: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
 
 		//displays subimage
@@ -746,46 +759,46 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		bool bClipPicture = subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT;
 
 		switch (curPicture.BPP) {
-			case 1:
-				for (size_t i = 0; i < dataToRead; i++) {
-					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+		case 1:
+			for (size_t i = 0; i < dataToRead; i++) {
+				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
 
-					tempImg->data[out++] = (byte >> 7) & 0x01;
-					tempImg->data[out++] = (byte >> 6) & 0x01;
-					tempImg->data[out++] = (byte >> 5) & 0x01;
-					tempImg->data[out++] = (byte >> 4) & 0x01;
-					tempImg->data[out++] = (byte >> 3) & 0x01;
-					tempImg->data[out++] = (byte >> 2) & 0x01;
-					tempImg->data[out++] = (byte >> 1) & 0x01;
-					tempImg->data[out++] = byte & 0x01;
-				}
-				HDpicGFX::scaleSprite(tempImg, outputImg);
-				HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
-				break;
+				tempImg->data[out++] = (byte >> 7) & 0x01;
+				tempImg->data[out++] = (byte >> 6) & 0x01;
+				tempImg->data[out++] = (byte >> 5) & 0x01;
+				tempImg->data[out++] = (byte >> 4) & 0x01;
+				tempImg->data[out++] = (byte >> 3) & 0x01;
+				tempImg->data[out++] = (byte >> 2) & 0x01;
+				tempImg->data[out++] = (byte >> 1) & 0x01;
+				tempImg->data[out++] = byte & 0x01;
+			}
+			HDpicGFX::scaleSprite(tempImg, outputImg);
+			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
+			break;
 
-			case 2:
-				for (size_t i = 0; i < dataToRead; i++) {
-					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+		case 2:
+			for (size_t i = 0; i < dataToRead; i++) {
+				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
 
-					tempImg->data[out++] = (byte >> 6) & 0x03;
-					tempImg->data[out++] = (byte >> 4) & 0x03;
-					tempImg->data[out++] = (byte >> 2) & 0x03;
-					tempImg->data[out++] = byte & 0x03;
-				}
-				HDpicGFX::scaleSprite(tempImg, outputImg);
-				HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
-				break;
+				tempImg->data[out++] = (byte >> 6) & 0x03;
+				tempImg->data[out++] = (byte >> 4) & 0x03;
+				tempImg->data[out++] = (byte >> 2) & 0x03;
+				tempImg->data[out++] = byte & 0x03;
+			}
+			HDpicGFX::scaleSprite(tempImg, outputImg);
+			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
+			break;
 
-			case 4:
-				for (size_t i = 0; i < dataToRead; i++) {
-					uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+		case 4:
+			for (size_t i = 0; i < dataToRead; i++) {
+				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
 
-					tempImg->data[out++] = (byte >> 4) & 0x0F;
-					tempImg->data[out++] = byte & 0x0F;
-				}
-				HDpicGFX::scaleSprite(tempImg, outputImg);
-				HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
-				break;
+				tempImg->data[out++] = (byte >> 4) & 0x0F;
+				tempImg->data[out++] = byte & 0x0F;
+			}
+			HDpicGFX::scaleSprite(tempImg, outputImg);
+			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
+			break;
 
 		case 8:
 		case 16:
@@ -813,7 +826,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 uint24_t findPictures()
 {
 	char *var_name, imgInfo[16];
-	void *search_pos = NULL;
 	uint24_t imagesFound{ 0 };
 
 	//resets splash screen for new loading bar
@@ -830,11 +842,13 @@ uint24_t findPictures()
 	*/
 
 	//find 16 bit pictures
+	void *search_pos = NULL;
 	while ((var_name = ti_DetectVar(&search_pos, "HDPIC16A", OS_TYPE_APPVAR)) != NULL) {
 		imagesFound++;
 		loadingBar.increment();
 	}
 	// find 1,2,4,8 bit pictures
+	search_pos = NULL;
 	while ((var_name = ti_DetectVar(&search_pos, "HDPALV11", OS_TYPE_APPVAR)) != NULL) {
 		imagesFound++;
 		loadingBar.increment();
@@ -851,7 +865,8 @@ uint24_t findPictures()
 		constexpr uint8_t ID_SIZE{ 2 };
 		constexpr uint8_t HORIZ_VERT_SIZE{ 3 };
 		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
-		constexpr uint8_t HEADER_SIZE{ 18 };
+		constexpr uint8_t COMPRESSION_SIZE{ 1 };
+		constexpr uint8_t HEADER_SIZE{ 19 };
 
 		loadingBar.increment();
 
@@ -882,8 +897,10 @@ uint24_t findPictures()
 		imgData.horizSubImages = charToInt(buffer[0]) * 100 + charToInt(buffer[1]) * 10 + charToInt(buffer[2]) + 1;
 		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE, HORIZ_VERT_SIZE);
 		imgData.vertSubImages = charToInt(buffer[0]) * 100 + charToInt(buffer[1]) * 10 + charToInt(buffer[2]) + 1;
+		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE + HORIZ_VERT_SIZE, COMPRESSION_SIZE);
 
-		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n", imgData.imgName, imgData.ID, imgData.horizSubImages, imgData.vertSubImages);
+		imgData.compressionType = charToInt(buffer[0]);
+		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n compression %d", imgData.imgName, imgData.ID, imgData.horizSubImages, imgData.vertSubImages, imgData.compressionType);
 
 		picDB.addPicture(imgData);
 
@@ -891,6 +908,7 @@ uint24_t findPictures()
 		ti_Close(firstPic);
 	}
 
+	search_pos = NULL;
 	while ((var_name = ti_DetectVar(&search_pos, "HDPALV11", OS_TYPE_APPVAR)) != NULL) {
 
 		constexpr uint8_t ID_SIZE{ 2 };
@@ -898,7 +916,8 @@ uint24_t findPictures()
 		constexpr uint8_t PALETTE_NAME_SIZE{ 8 };
 		constexpr uint8_t BITS_PER_PIXEL_SIZE{ 2 };
 		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
-		constexpr uint8_t HEADER_SIZE{ 18 };
+		constexpr uint8_t COMPRESSION_SIZE{ 1 };
+		constexpr uint8_t HEADER_SIZE{ 19 };
 
 		loadingBar.increment();
 
@@ -917,10 +936,11 @@ uint24_t findPictures()
 		char charArrImgInfo[HEADER_SIZE];
 		char BPPbuffer[BITS_PER_PIXEL_SIZE];
 		std::strncpy(charArrImgInfo, imgInfo, HEADER_SIZE);
-		dbg_sprintf(dbgout, "\n charArrImgInfo\n BPP: %.18s", charArrImgInfo);
+		dbg_sprintf(dbgout, "\n charArrImgInfo\n BPP: %.19s", charArrImgInfo);
 		std::strncpy(BPPbuffer, charArrImgInfo, BITS_PER_PIXEL_SIZE);
 		std::strncpy(imgData.imgName, charArrImgInfo + BITS_PER_PIXEL_SIZE, IMAGE_NAME_SIZE);
 		std::strncpy(imgData.ID, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE, ID_SIZE);
+
 		std::strncpy(imgData.paletteName, var_name, PALETTE_NAME_SIZE);
 
 		imgData.imgName[8] = '\0';
@@ -934,10 +954,18 @@ uint24_t findPictures()
 		std::strncpy(dimBuffer, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE, HORIZ_VERT_SIZE);
 		imgData.vertSubImages = charToInt(dimBuffer[0]) * 100 + charToInt(dimBuffer[1]) * 10 + charToInt(dimBuffer[2]) + 1;
 
+		//Get compression type image uses
+		char compressionBuffer[COMPRESSION_SIZE];
+		std::strncpy(compressionBuffer, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE + HORIZ_VERT_SIZE, COMPRESSION_SIZE);
+
 		//convert the char BPP to a uint8_t
 		imgData.BPP = static_cast<uint8_t>(charToInt(BPPbuffer[0]) * 10 + charToInt(BPPbuffer[1]));
 
-		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n palName: %.8s\n ID: %.2s\n BPP: %d\n subImgHoriz: %d\n subImgVert: %d\n", imgData.imgName, imgData.paletteName, imgData.ID, imgData.BPP, imgData.horizSubImages, imgData.vertSubImages);
+		//convert compression level to uint8_t
+		imgData.compressionType = static_cast<uint8_t>(charToInt(compressionBuffer[0]));
+
+		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n palName: %.8s", imgData.imgName, imgData.paletteName);
+		dbg_sprintf(dbgout, "\n ID: %.2s\n BPP: %d\n subImgHoriz: %d\n subImgVert: %d\n compression %d \n", imgData.ID, imgData.BPP, imgData.horizSubImages, imgData.vertSubImages, imgData.compressionType);
 
 		picDB.addPicture(imgData);
 
@@ -950,121 +978,7 @@ uint24_t findPictures()
 	return imagesFound;
 }
 
-/* This UI keeps the user selection in the middle of the screen. */
-void drawMenu_16bpp(uint24_t selectedName)
-{
-	gfx16_SetColor(GFX16_WHITE);
-	gfx16_VertLine(140, 20, 200);
 
-	uint24_t yPxlPos{ 0 };
-
-	//clears old text and sets prev for new text
-	gfx16_SetTextScale(2, 2);
-	gfx16_SetColor(GFX16_BLACK);
-	gfx16_FillRectangle_NoClip(0, 0, 140, 240);
-	gfx16_SetColor(GFX16_WHITE);
-	gfx16_SetTextFGColor(GFX16_TEXT);
-	gfx16_SetTextBGColor(GFX16_BLACK);
-
-	//re-draws UI lines
-	gfx16_HorizLine_NoClip(0, 120, 6);
-	gfx16_HorizLine_NoClip(136, 120, 5);
-	gfx16_HorizLine_NoClip(6, 110, 130);
-	gfx16_HorizLine_NoClip(6, 130, 130);
-	gfx16_VertLine_NoClip(6, 110, 20);
-	gfx16_VertLine_NoClip(136, 110, 21);
-
-	PicDatabase &picDB = PicDatabase::getInstance();
-
-	/* draw image names above selected name */
-	dbg_sprintf(dbgout, "\nselectedName %d", selectedName);
-	if (selectedName > 0) {
-		yPxlPos = Y_MARGIN + 75;
-		for (uint24_t curImg{ selectedName - 1 }; (curImg < MAX_UINT) && (yPxlPos > 15); curImg--) {
-			//calculates where the text should be drawn
-			yPxlPos -= Y_SPACING;
-
-			dbg_sprintf(dbgout, "\ncurImg: %d", curImg);
-			//Prints out the correct name
-			gfx16_PutStringXY(picDB.getPicture(curImg).imgName, X_MARGIN, yPxlPos);
-		}
-	}
-
-	//display selected image name in center of screen
-	yPxlPos = Y_MARGIN + 75;
-	gfx16_PutStringXY(picDB.getPicture(selectedName).imgName, X_MARGIN, yPxlPos);
-
-	/* Draw image names below selected name.
-	* Iterates until out of pics or about to draw off the screen */
-	if (selectedName + 1 < picDB.size()) {
-		for (uint24_t curName{ selectedName + 1 }; (curName < picDB.size()) && (yPxlPos < 210); curName++) {
-			//calculates where the text should be drawn
-			yPxlPos += Y_SPACING;
-
-			//Prints out the correct name
-			gfx16_PutStringXY(picDB.getPicture(curName).imgName, X_MARGIN, yPxlPos);
-		}
-	}
-	drawWatermark_16bpp();
-}
-
-/* This UI keeps the user selection in the middle of the screen. */
-void drawMenu_8bpp(uint24_t selectedName)
-{
-	gfx_SetColor(PALETTE_WHITE);
-	gfx_VertLine(140, 20, 200);
-
-	uint24_t yPxlPos{ 0 };
-
-	//clears old text and sets prev for new text
-	gfx_SetTextScale(2, 2);
-	gfx_SetColor(PALETTE_BLACK);
-	gfx_FillRectangle_NoClip(0, 0, 140, 240);
-	gfx_SetColor(PALETTE_WHITE);
-	gfx_SetTextFGColor(PALETTE_WHITE);
-	gfx_SetTextBGColor(PALETTE_BLACK);
-
-	//re-draws UI lines
-	gfx_HorizLine_NoClip(0, 120, 6);
-	gfx_HorizLine_NoClip(136, 120, 5);
-	gfx_HorizLine_NoClip(6, 110, 130);
-	gfx_HorizLine_NoClip(6, 130, 130);
-	gfx_VertLine_NoClip(6, 110, 20);
-	gfx_VertLine_NoClip(136, 110, 21);
-
-	PicDatabase &picDB = PicDatabase::getInstance();
-
-	/* draw image names above selected name */
-	dbg_sprintf(dbgout, "\nselectedName %d", selectedName);
-	if (selectedName > 0) {
-		yPxlPos = Y_MARGIN + 75;
-		for (uint24_t curImg{ selectedName - 1 }; (curImg < MAX_UINT) && (yPxlPos > 15); curImg--) {
-			//calculates where the text should be drawn
-			yPxlPos -= Y_SPACING;
-
-			dbg_sprintf(dbgout, "\ncurImg: %d", curImg);
-			//Prints out the correct name
-			gfx_PrintStringXY(picDB.getPicture(curImg).imgName, X_MARGIN, yPxlPos);
-		}
-	}
-
-	//display selected image name in center of screen
-	yPxlPos = Y_MARGIN + 75;
-	gfx_PrintStringXY(picDB.getPicture(selectedName).imgName, X_MARGIN, yPxlPos);
-
-	/* Draw image names below selected name.
-	* Iterates until out of pics or about to draw off the screen */
-	if (selectedName + 1 < picDB.size()) {
-		for (uint24_t curName{ selectedName + 1 }; (curName < picDB.size()) && (yPxlPos < 210); curName++) {
-			//calculates where the text should be drawn
-			yPxlPos += Y_SPACING;
-
-			//Prints out the correct name
-			gfx_PrintStringXY(picDB.getPicture(curName).imgName, X_MARGIN, yPxlPos);
-		}
-	}
-	drawWatermark_8bpp();
-}
 
 // Allows iterating a 2D grid in multiple different directions.
 // Returns true as long as there is still iterating to do.

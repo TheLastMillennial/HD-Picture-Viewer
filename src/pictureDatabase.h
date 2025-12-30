@@ -7,6 +7,7 @@
 #include "types/vector.h"
 #include "types/pair.h"
 #include "types/map.h"
+#include "loadingBarHandler.h"
 
 struct imageData
 {
@@ -14,6 +15,7 @@ struct imageData
 	char paletteName[9];
 	char ID[3];
 	double zoomScale{ 1.0 };
+	uint8_t compressionType{ 0 }; //0 = zx0, 7 = zx7
 	uint8_t BPP{ 0 };
 	int24_t xOffset{ 0 };
 	int24_t yOffset{ 0 };
@@ -136,12 +138,11 @@ public:
 		HDpicGFX &gfx = HDpicGFX::getInstance();
 
 		//sets up loading bar finish line
-		if (gfx.is16bppMode())
-		{
+		if (gfx.is16bppMode()) {
 			gfx16_SetColor(GFX16_WHITE);
 			gfx16_VertLine_NoClip(260, 153, 7);
 		}
-		else 			{
+		else {
 			gfx_SetColor(PALETTE_WHITE);
 			gfx_VertLine_NoClip(260, 153, 7);
 		}

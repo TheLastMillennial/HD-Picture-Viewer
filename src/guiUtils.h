@@ -3,8 +3,9 @@ void drawWatermark_16bpp();
 void drawWatermark_8bpp();
 
 void drawHelp();
+void drawMenu_8bpp(uint24_t selectedName);
+void drawMenu_16bpp(uint24_t selectedName);
 void drawNoImagesFound();
-bool handleBppModeChange(bool bPreviously16bpp, bool bCurrently16bpp);
 void PrintCentered(const char *str);
 void gfx16_PrintCenteredX(const char *str, uint24_t y);
 void PrintCenteredX(const char *str, uint24_t y);

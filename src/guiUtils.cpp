@@ -3,6 +3,7 @@
 #include <gfx16.h>
 #include "guiUtils.h"
 #include "globals.h"
+#include "pictureDatabase.h"
 
 // Simple text that displays program name and how to open help.
 void drawWatermark_8bpp()
@@ -145,4 +146,116 @@ void drawNoImagesFound()
 	gfx16_SetColor(GFX16_WHITE);
 	gfx16_HorizLine_NoClip(0, 60, LCD_WIDTH);
 	gfx16_HorizLine_NoClip(0, 177, LCD_WIDTH);
+}
+
+/* This UI keeps the user selection in the middle of the screen. */
+void drawMenu_16bpp(uint24_t selectedName)
+{
+	gfx16_SetColor(GFX16_WHITE);
+	gfx16_VertLine(140, 20, 200);
+
+	uint24_t yPxlPos{ 0 };
+
+	//clears old text and sets prev for new text
+	gfx16_SetTextScale(2, 2);
+	gfx16_SetColor(GFX16_BLACK);
+	gfx16_FillRectangle_NoClip(0, 0, 140, 240);
+	gfx16_SetColor(GFX16_WHITE);
+	gfx16_SetTextFGColor(GFX16_TEXT);
+	gfx16_SetTextBGColor(GFX16_BLACK);
+
+	//re-draws UI lines
+	gfx16_HorizLine_NoClip(0, 120, 6);
+	gfx16_HorizLine_NoClip(136, 120, 5);
+	gfx16_HorizLine_NoClip(6, 110, 130);
+	gfx16_HorizLine_NoClip(6, 130, 130);
+	gfx16_VertLine_NoClip(6, 110, 20);
+	gfx16_VertLine_NoClip(136, 110, 21);
+
+	PicDatabase &picDB = PicDatabase::getInstance();
+
+	/* draw image names above selected name */
+	if (selectedName > 0) {
+		yPxlPos = Y_MARGIN + 75;
+		for (uint24_t curImg{ selectedName - 1 }; (curImg < MAX_UINT) && (yPxlPos > 15); curImg--) {
+			//calculates where the text should be drawn
+			yPxlPos -= Y_SPACING;
+
+			//Prints out the correct name
+			gfx16_PutStringXY(picDB.getPicture(curImg).imgName, X_MARGIN, yPxlPos);
+		}
+	}
+
+	//display selected image name in center of screen
+	yPxlPos = Y_MARGIN + 75;
+	gfx16_PutStringXY(picDB.getPicture(selectedName).imgName, X_MARGIN, yPxlPos);
+
+	/* Draw image names below selected name.
+	* Iterates until out of pics or about to draw off the screen */
+	if (selectedName + 1 < picDB.size()) {
+		for (uint24_t curName{ selectedName + 1 }; (curName < picDB.size()) && (yPxlPos < 210); curName++) {
+			//calculates where the text should be drawn
+			yPxlPos += Y_SPACING;
+
+			//Prints out the correct name
+			gfx16_PutStringXY(picDB.getPicture(curName).imgName, X_MARGIN, yPxlPos);
+		}
+	}
+	drawWatermark_16bpp();
+}
+
+/* This UI keeps the user selection in the middle of the screen. */
+void drawMenu_8bpp(uint24_t selectedName)
+{
+	gfx_SetColor(PALETTE_WHITE);
+	gfx_VertLine(140, 20, 200);
+
+	uint24_t yPxlPos{ 0 };
+
+	//clears old text and sets prev for new text
+	gfx_SetTextScale(2, 2);
+	gfx_SetColor(PALETTE_BLACK);
+	gfx_FillRectangle_NoClip(0, 0, 140, 240);
+	gfx_SetColor(PALETTE_WHITE);
+	gfx_SetTextFGColor(PALETTE_WHITE);
+	gfx_SetTextBGColor(PALETTE_BLACK);
+
+	//re-draws UI lines
+	gfx_HorizLine_NoClip(0, 120, 6);
+	gfx_HorizLine_NoClip(136, 120, 5);
+	gfx_HorizLine_NoClip(6, 110, 130);
+	gfx_HorizLine_NoClip(6, 130, 130);
+	gfx_VertLine_NoClip(6, 110, 20);
+	gfx_VertLine_NoClip(136, 110, 21);
+
+	PicDatabase &picDB = PicDatabase::getInstance();
+
+	/* draw image names above selected name */
+	if (selectedName > 0) {
+		yPxlPos = Y_MARGIN + 75;
+		for (uint24_t curImg{ selectedName - 1 }; (curImg < MAX_UINT) && (yPxlPos > 15); curImg--) {
+			//calculates where the text should be drawn
+			yPxlPos -= Y_SPACING;
+
+			//Prints out the correct name
+			gfx_PrintStringXY(picDB.getPicture(curImg).imgName, X_MARGIN, yPxlPos);
+		}
+	}
+
+	//display selected image name in center of screen
+	yPxlPos = Y_MARGIN + 75;
+	gfx_PrintStringXY(picDB.getPicture(selectedName).imgName, X_MARGIN, yPxlPos);
+
+	/* Draw image names below selected name.
+	* Iterates until out of pics or about to draw off the screen */
+	if (selectedName + 1 < picDB.size()) {
+		for (uint24_t curName{ selectedName + 1 }; (curName < picDB.size()) && (yPxlPos < 210); curName++) {
+			//calculates where the text should be drawn
+			yPxlPos += Y_SPACING;
+
+			//Prints out the correct name
+			gfx_PrintStringXY(picDB.getPicture(curName).imgName, X_MARGIN, yPxlPos);
+		}
+	}
+	drawWatermark_8bpp();
 }

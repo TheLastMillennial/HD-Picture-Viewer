@@ -1,4 +1,6 @@
 #pragma once
+#include "debug.h"
+#include <fileioc.h>
 
 class HDpicGFX
 {
@@ -10,7 +12,7 @@ private:
 	HDpicGFX(const HDpicGFX &) = delete;
 	HDpicGFX &operator=(const HDpicGFX &) = delete;
 
-	inline static const uint8_t PALETTE_HEADER_SIZE = 26;
+	inline static const uint8_t PALETTE_HEADER_SIZE = 27;
 
 	//once 8 or 16bpp library set, this gets set to true.
 	inline static bool bGfxLibSet = false;
@@ -188,10 +190,10 @@ public:
 	// WARNING: gfx16 library has a visual but when copying screen to the right.
 	static void copyRectangle(uint24_t srcX, uint24_t srcY, uint24_t dstX, uint24_t dstY, uint24_t width, uint8_t height, gfx_location_t srcBuffer = gfx_screen, gfx_location_t dstBuffer = gfx_buffer)
 	{
-		if (is16bppMode()) 
+		if (is16bppMode())
 			gfx16_CopyRectangle(srcX, srcY, dstX, dstY, width, height);
-		else 
+		else
 			gfx_CopyRectangle(srcBuffer, dstBuffer, srcX, srcY, dstX, dstY, width, height);
-		
+
 	}
 };
