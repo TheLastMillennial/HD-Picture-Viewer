@@ -12,7 +12,7 @@ private:
 	HDpicGFX(const HDpicGFX &) = delete;
 	HDpicGFX &operator=(const HDpicGFX &) = delete;
 
-	inline static const uint8_t PALETTE_HEADER_SIZE = 27;
+	inline static const uint8_t PALETTE_HEADER_SIZE = 26;
 
 	//once 8 or 16bpp library set, this gets set to true.
 	inline static bool bGfxLibSet = false;

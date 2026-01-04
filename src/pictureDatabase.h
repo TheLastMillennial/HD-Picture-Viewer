@@ -15,7 +15,6 @@ struct imageData
 	char paletteName[9];
 	char ID[3];
 	double zoomScale{ 1.0 };
-	uint8_t compressionType{ 0 }; //0 = zx0, 7 = zx7
 	uint8_t BPP{ 0 };
 	int24_t xOffset{ 0 };
 	int24_t yOffset{ 0 };

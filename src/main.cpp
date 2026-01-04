@@ -583,9 +583,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		return 1;
 	}
 
-	// Get compression mode
-	const uint8_t compressionMode = picDB.getPicture(picName).compressionType;
-
 	/* Display final image */
 
 	//the -1 is to account for some loop weirdness. Specifically in the iterate() function.
@@ -706,11 +703,11 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			if (subimgSlot) {
 				//seeks past header. 16bpp has different header size than 8bpp
 				if (curPicture.BPP == 16) {
-					ti_Seek(25, SEEK_CUR, subimgSlot);
+					ti_Seek(24, SEEK_CUR, subimgSlot);
 
 				}
 				else
-					ti_Seek(17, SEEK_CUR, subimgSlot);
+					ti_Seek(16, SEEK_CUR, subimgSlot);
 
 				//cache the pointer to the subimage for next time
 				subimgPtr = ti_GetDataPtr(subimgSlot);
@@ -729,18 +726,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//decompress subimage into srcImg
 		//dbg_sprintf(dbgout, "\n Decompressing... subimgPtr %p to srcImg %p", subimgPtr, srcImg);
 		dbg_sprintf(dbgout, "\n Decompressing... ");
-		if (compressionMode == 0) {
-			dbg_sprintf(dbgout, " zx0 ");
-			zx0_Decompress(srcImg, subimgPtr);
-		}
-		else if (compressionMode == 7) {
-			dbg_sprintf(dbgout, " zx7 ");
-			zx7_Decompress(srcImg, subimgPtr);
-		}
-		else {
-			dbg_sprintf(dbgout, "\n ERR: Unknown compression type %d", compressionMode);
-			continue;
-		}
+		zx0_Decompress(srcImg, subimgPtr);
+
 
 		dbg_sprintf(dbgout, "\n CHECK 2: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
 
@@ -865,7 +852,6 @@ uint24_t findPictures()
 		constexpr uint8_t ID_SIZE{ 2 };
 		constexpr uint8_t HORIZ_VERT_SIZE{ 3 };
 		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
-		constexpr uint8_t COMPRESSION_SIZE{ 1 };
 		constexpr uint8_t HEADER_SIZE{ 19 };
 
 		loadingBar.increment();
@@ -897,10 +883,8 @@ uint24_t findPictures()
 		imgData.horizSubImages = charToInt(buffer[0]) * 100 + charToInt(buffer[1]) * 10 + charToInt(buffer[2]) + 1;
 		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE, HORIZ_VERT_SIZE);
 		imgData.vertSubImages = charToInt(buffer[0]) * 100 + charToInt(buffer[1]) * 10 + charToInt(buffer[2]) + 1;
-		std::strncpy(buffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE + HORIZ_VERT_SIZE, COMPRESSION_SIZE);
 
-		imgData.compressionType = charToInt(buffer[0]);
-		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n compression %d", imgData.imgName, imgData.ID, imgData.horizSubImages, imgData.vertSubImages, imgData.compressionType);
+		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n ID: %.2s\n subImgHoriz: %d\n subImgVert: %d\n ", imgData.imgName, imgData.ID, imgData.horizSubImages, imgData.vertSubImages);
 
 		picDB.addPicture(imgData);
 
@@ -916,8 +900,7 @@ uint24_t findPictures()
 		constexpr uint8_t PALETTE_NAME_SIZE{ 8 };
 		constexpr uint8_t BITS_PER_PIXEL_SIZE{ 2 };
 		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
-		constexpr uint8_t COMPRESSION_SIZE{ 1 };
-		constexpr uint8_t HEADER_SIZE{ 19 };
+		constexpr uint8_t HEADER_SIZE{ 18 };
 
 		loadingBar.increment();
 
@@ -936,7 +919,7 @@ uint24_t findPictures()
 		char charArrImgInfo[HEADER_SIZE];
 		char BPPbuffer[BITS_PER_PIXEL_SIZE];
 		std::strncpy(charArrImgInfo, imgInfo, HEADER_SIZE);
-		dbg_sprintf(dbgout, "\n charArrImgInfo\n BPP: %.19s", charArrImgInfo);
+		dbg_sprintf(dbgout, "\n charArrImgInfo\n BPP: %.18s", charArrImgInfo);
 		std::strncpy(BPPbuffer, charArrImgInfo, BITS_PER_PIXEL_SIZE);
 		std::strncpy(imgData.imgName, charArrImgInfo + BITS_PER_PIXEL_SIZE, IMAGE_NAME_SIZE);
 		std::strncpy(imgData.ID, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE, ID_SIZE);
@@ -954,18 +937,11 @@ uint24_t findPictures()
 		std::strncpy(dimBuffer, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE, HORIZ_VERT_SIZE);
 		imgData.vertSubImages = charToInt(dimBuffer[0]) * 100 + charToInt(dimBuffer[1]) * 10 + charToInt(dimBuffer[2]) + 1;
 
-		//Get compression type image uses
-		char compressionBuffer[COMPRESSION_SIZE];
-		std::strncpy(compressionBuffer, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE + HORIZ_VERT_SIZE, COMPRESSION_SIZE);
-
 		//convert the char BPP to a uint8_t
 		imgData.BPP = static_cast<uint8_t>(charToInt(BPPbuffer[0]) * 10 + charToInt(BPPbuffer[1]));
 
-		//convert compression level to uint8_t
-		imgData.compressionType = static_cast<uint8_t>(charToInt(compressionBuffer[0]));
-
 		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n palName: %.8s", imgData.imgName, imgData.paletteName);
-		dbg_sprintf(dbgout, "\n ID: %.2s\n BPP: %d\n subImgHoriz: %d\n subImgVert: %d\n compression %d \n", imgData.ID, imgData.BPP, imgData.horizSubImages, imgData.vertSubImages, imgData.compressionType);
+		dbg_sprintf(dbgout, "\n ID: %.2s\n BPP: %d\n subImgHoriz: %d\n subImgVert: %d\n ", imgData.ID, imgData.BPP, imgData.horizSubImages, imgData.vertSubImages);
 
 		picDB.addPicture(imgData);
 
