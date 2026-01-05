@@ -11,6 +11,7 @@
 
 struct imageData
 {
+	bool isGIF{ false };
 	char imgName[9];
 	char paletteName[9];
 	char ID[3];
@@ -20,9 +21,14 @@ struct imageData
 	int24_t yOffset{ 0 };
 	int24_t horizSubImages{ 0 };
 	int24_t vertSubImages{ 0 };
+	uint24_t numGIFFrames{ 0 };
 
 	//When we find a subimage, store the pointer to it here.
 	Map< uint24_t, Map< uint24_t, void *>> cache;
+	//GIFs have their image location pointers stored beforehand
+	Vector<void *> vecFramesPtr;
+	//Store how long a GIF frame should be on screen
+	Vector<uint24_t> vecFramesDelayMS;
 };
 
 class PicDatabase

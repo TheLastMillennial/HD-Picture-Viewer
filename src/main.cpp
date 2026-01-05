@@ -840,13 +840,20 @@ uint24_t findPictures()
 		imagesFound++;
 		loadingBar.increment();
 	}
+	// find GIFs
+	search_pos = NULL;
+	while ((var_name = ti_DetectVar(&search_pos, "HDGIFV01", OS_TYPE_APPVAR)) != NULL) {
+		imagesFound++;
+		loadingBar.increment();
+	}
 
 	PicDatabase &picDB = PicDatabase::getInstance();
 	picDB.reserve(imagesFound);
 
 	loadingBar.resetLoadingBar(imagesFound);
-	search_pos = NULL;
 
+	/* Find and store 16bpp image data */
+	search_pos = NULL;
 	while ((var_name = ti_DetectVar(&search_pos, "HDPIC16A", OS_TYPE_APPVAR)) != NULL) {
 
 		constexpr uint8_t ID_SIZE{ 2 };
@@ -857,6 +864,7 @@ uint24_t findPictures()
 		loadingBar.increment();
 
 		imageData imgData;
+		imgData.isGIF = false;
 		//finds the name, letter ID, and size of entire image this picture belongs to.
 		ti_var_t  firstPic;
 		dbg_sprintf(dbgout, "\nfirstPic %.8s", var_name);
@@ -892,6 +900,7 @@ uint24_t findPictures()
 		ti_Close(firstPic);
 	}
 
+	/* Find a store data for 1,2,4,&8bpp images*/
 	search_pos = NULL;
 	while ((var_name = ti_DetectVar(&search_pos, "HDPALV11", OS_TYPE_APPVAR)) != NULL) {
 
@@ -899,12 +908,13 @@ uint24_t findPictures()
 		constexpr uint8_t HORIZ_VERT_SIZE{ 3 };
 		constexpr uint8_t PALETTE_NAME_SIZE{ 8 };
 		constexpr uint8_t BITS_PER_PIXEL_SIZE{ 2 };
-		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
 		constexpr uint8_t HEADER_SIZE{ 18 };
+		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
 
 		loadingBar.increment();
 
 		imageData imgData;
+		imgData.isGIF = false;
 		//finds the name, letter ID, and size of entire image this palette belongs to.
 		ti_var_t  palette;
 		dbg_sprintf(dbgout, "\npalette %.8s", var_name);
@@ -942,6 +952,101 @@ uint24_t findPictures()
 
 		dbg_sprintf(dbgout, "\nPicture found:\n imgName: %.8s\n palName: %.8s", imgData.imgName, imgData.paletteName);
 		dbg_sprintf(dbgout, "\n ID: %.2s\n BPP: %d\n subImgHoriz: %d\n subImgVert: %d\n ", imgData.ID, imgData.BPP, imgData.horizSubImages, imgData.vertSubImages);
+
+		picDB.addPicture(imgData);
+
+		//closes palette for next iteration
+		ti_Close(palette);
+	}
+
+	/* Find a store data for 1,2,4,&8bpp images*/
+	search_pos = NULL;
+	while ((var_name = ti_DetectVar(&search_pos, "HDGIFV01", OS_TYPE_APPVAR)) != NULL) {
+
+		constexpr uint8_t ID_SIZE{ 2 };
+		constexpr uint8_t PALETTE_NAME_SIZE{ 8 };
+		constexpr uint8_t GIF_FRAMES_SIZE{ 6 };
+		constexpr uint8_t HEADER_SIZE{ 16 };
+
+		constexpr uint8_t IMAGE_NAME_SIZE{ 8 };
+		constexpr uint8_t GIF_FRAME_DELAY_SIZE{ 4 };
+
+		loadingBar.increment();
+
+		imageData imgData;
+		imgData.isGIF = true;
+		//finds the name, letter ID, and size of entire image this palette belongs to.
+		ti_var_t  palette;
+		dbg_sprintf(dbgout, "\npalette %.8s", var_name);
+
+		palette = ti_Open(var_name, "r");
+		//seeks past HDGIFV01
+		ti_Seek(8, SEEK_CUR, palette);
+		//reads the important info
+		//e.g. poppy___JT
+		ti_Read(&imgInfo, HEADER_SIZE, 1, palette);
+
+		char charArrImgInfo[HEADER_SIZE];
+		char numFramesBuffer[GIF_FRAMES_SIZE];
+		std::strncpy(charArrImgInfo, imgInfo, HEADER_SIZE);
+		dbg_sprintf(dbgout, "\n charArrImgInfo\n BPP: %.16s", charArrImgInfo);
+		std::strncpy(imgData.imgName, charArrImgInfo, IMAGE_NAME_SIZE);
+		std::strncpy(imgData.ID, charArrImgInfo + IMAGE_NAME_SIZE, ID_SIZE);
+		std::strncpy(numFramesBuffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE, GIF_FRAMES_SIZE);
+		imgData.numGIFFrames = base36charToInt(numFramesBuffer);
+
+		std::strncpy(imgData.paletteName, var_name, PALETTE_NAME_SIZE);
+
+		imgData.imgName[8] = '\0';
+		imgData.paletteName[8] = '\0';
+		imgData.ID[2] = '\0';
+
+		dbg_sprintf(dbgout, "\nGIF found:\n gifName: %.8s\n palName: %.8s", imgData.imgName, imgData.paletteName);
+		dbg_sprintf(dbgout, "\n ID: %.2s\n Frames string: %.6s\n Frames int   : %d\n", imgData.ID, numFramesBuffer, imgData.numGIFFrames);
+
+		dbg_sprintf(dbgout, "\nCaching frame pointers...");
+		if (imgData.numGIFFrames == 16777215) {
+			dbg_sprintf(dbgout, "\n ERR: Invalid frame length!");
+			ti_Close(palette);
+			continue;
+		}
+		for (uint24_t i{ 0 }; i < imgData.numGIFFrames; i++) {
+			char result[GIF_FRAMES_SIZE+1];
+			toBase36(i, result, GIF_FRAMES_SIZE);
+			result[6] = '\0';
+			char picAppvarToFind[9]; 			//combines the separate parts into one name to search for
+
+
+			sprintf(picAppvarToFind, "%.2s%.6s", imgData.ID, result);
+			dbg_sprintf(dbgout, "\n gifAppvarToFind: %.8s", picAppvarToFind);
+			ti_var_t subimgSlot = NULL;
+			subimgSlot = ti_Open(picAppvarToFind, "r");
+			if (subimgSlot) {
+				char frameDelay[4];
+				ti_Read(&frameDelay, GIF_FRAME_DELAY_SIZE, 1, subimgSlot);
+				dbg_sprintf(dbgout, "\n FrameDelay string: %.4s", frameDelay);
+				uint24_t delayBuffer = charToInt(frameDelay[0]) * 1000 + charToInt(frameDelay[1]) * 100 + charToInt(frameDelay[2]) * 10 + charToInt(frameDelay[3]);
+				dbg_sprintf(dbgout, "\n FrameDelay int   : %d", delayBuffer);
+				imgData.vecFramesDelayMS.push_back(delayBuffer);
+
+				//seek past frame delay
+				ti_Seek(GIF_FRAME_DELAY_SIZE, SEEK_SET, subimgSlot);
+
+				//cache the pointer to the image data
+				void *subimgPtr{ ti_GetDataPtr(subimgSlot) };
+				imgData.vecFramesPtr.push_back(subimgPtr);
+
+				ti_Close(subimgSlot);
+			}
+			else {
+				//subimage does not exist, display error image
+				dbg_sprintf(dbgout, "\nERR: GIF frame doesn't exist: %s", picAppvarToFind);
+				continue;
+			}
+
+		}
+
+
 
 		picDB.addPicture(imgData);
 
@@ -1060,4 +1165,60 @@ int24_t ceilDiv(int24_t x, int24_t y)
 int24_t charToInt(char c)
 {
 	return static_cast<int24_t>(c) - '0';
+}
+
+//converts char array of 6 digits to integer.
+uint24_t base36charToInt(const char str[6])
+{
+	uint24_t value{ 0 };
+
+	for (uint8_t i{ 0 }; i < 6; i++) {
+		const char c{ str[i] };
+
+		if (c >= '0' && c <= '9')
+			value = value * 36 + (c - '0');
+		else if (c >= 'A' && c <= 'Z')
+			value = value * 36 + (c - 'A' + 10);
+		else
+			return 16777215;  // invalid character
+	}
+
+	return value;
+}
+
+//convert base 10 int to base 36 char array
+void toBase36(uint24_t value, char *buffer, uint8_t width)
+{
+	const char chars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	char temp[65];
+	int len = 0;
+
+	/* Convert to base-36 (reverse order) */
+	if (value == 0) {
+		temp[len++] = '0';
+	}
+	else {
+		while (value > 0) {
+			temp[len++] = chars[value % 36];
+			value /= 36;
+		}
+	}
+
+	/* Determine padding */
+	int pad = width - len;
+	if (pad < 0)
+		pad = 0;
+
+	/* Add leading zeros */
+	int pos = 0;
+	for (int i = 0; i < pad; i++) {
+		buffer[pos++] = '0';
+	}
+
+	/* Reverse digits into buffer */
+	for (int i = len - 1; i >= 0; i--) {
+		buffer[pos++] = temp[i];
+	}
+
+	buffer[pos] = '\0';
 }
