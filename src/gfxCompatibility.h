@@ -12,7 +12,10 @@ private:
 	HDpicGFX(const HDpicGFX &) = delete;
 	HDpicGFX &operator=(const HDpicGFX &) = delete;
 
-	inline static const uint8_t PALETTE_HEADER_SIZE = 26;
+	//GIF and Pictures have different palette header sizes. 
+	inline static const uint8_t IMG_PALETTE_HEADER_SIZE = 26;
+	inline static const uint8_t GIF_PALETTE_HEADER_SIZE = 24;
+	inline static uint8_t paletteHeaderSize = IMG_PALETTE_HEADER_SIZE;
 
 	//once 8 or 16bpp library set, this gets set to true.
 	inline static bool bGfxLibSet = false;
@@ -20,6 +23,7 @@ private:
 	//last used palette is stored here
 	inline static char cPalette[9] = "";
 	inline static uint24_t iPaletteEntries = 0;
+	inline static bool bGIFmode = false;
 
 
 public:
@@ -28,6 +32,18 @@ public:
 	{
 		static HDpicGFX instance; // Guaranteed to be created once
 		return instance;
+	}
+
+	static void useGIFMode()
+	{
+		bGIFmode = true;
+		paletteHeaderSize = GIF_PALETTE_HEADER_SIZE;
+	}
+
+	static void usePictureMode()
+	{
+		paletteHeaderSize = IMG_PALETTE_HEADER_SIZE;
+		bGIFmode = false;
 	}
 
 	//Returns true if gfx16 library in use
@@ -105,12 +121,12 @@ public:
 			return false;
 		}
 
-		//26 skips past palette header
-		ti_Seek(PALETTE_HEADER_SIZE, SEEK_SET, palSlot);
+		// skips past palette header
+		ti_Seek(HDpicGFX::paletteHeaderSize, SEEK_SET, palSlot);
 		gfx_SetPalette(ti_GetDataPtr(palSlot), iEntries, 0);
 		ti_Close(palSlot);
 		std::strncpy(cPalette, palName, 9);
-		iPaletteEntries = iEntries;
+		HDpicGFX::iPaletteEntries = iEntries;
 		return true;
 	}
 

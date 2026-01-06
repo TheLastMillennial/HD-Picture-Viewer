@@ -26,9 +26,9 @@ struct imageData
 	//When we find a subimage, store the pointer to it here.
 	Map< uint24_t, Map< uint24_t, void *>> cache;
 	//GIFs have their image location pointers stored beforehand
-	Vector<void *> vecFramesPtr;
+	void ** framesPtrList =nullptr;
 	//Store how long a GIF frame should be on screen
-	Vector<uint24_t> vecFramesDelayMS;
+	uint24_t* framesDelayMSlist = nullptr;
 };
 
 class PicDatabase
@@ -37,6 +37,7 @@ private:
 
 	// Private constructor to prevent instantiation from outside the class
 	PicDatabase() {}
+	~PicDatabase(){}//todo: delete data stored in lists
 
 	// Private copy constructor and assignment operator to prevent copying
 	PicDatabase(const PicDatabase &) = delete;

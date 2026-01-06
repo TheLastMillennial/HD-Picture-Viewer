@@ -16,6 +16,7 @@
 #include <gfx16.h>
 #include <cstring>
 #include <cmath>
+#include <time.h>
 
 #include "main.h"
 #include "loadingBarHandler.h"
@@ -53,10 +54,16 @@ int main(void)
 
 	//display the list of images
 	drawHomeScreen();
+	dbg_sprintf(dbgout, "\n quitter 2");
+
 
 	//quit
 	HDpicGFX::end();
+	dbg_sprintf(dbgout, "\n quitter 3");
+
 	kb_ClearOnLatch();
+	dbg_sprintf(dbgout, "\n quitter 4");
+
 	return 0;
 
 }
@@ -68,7 +75,7 @@ void drawHomeScreen()
 {
 	uint24_t selectedPicIndex{ 0 },
 		desiredWidthInPxl{ MAX_THUMBNAIL_WIDTH }, desiredHeightInPxl{ MAX_THUMBNAIL_HEIGHT };
-	//set up variable that checks if drawImage failed
+	//set up variable that checks if drawMedia failed
 	uint8_t imageErr{ 0 };
 	PicDatabase &picDB = PicDatabase::getInstance();
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
@@ -89,8 +96,8 @@ void drawHomeScreen()
 	}
 
 	//thumbnail
-	dbg_sprintf(dbgout, "\n drawImage");
-	drawImage(selectedPicIndex, 180, 120, false);
+	dbg_sprintf(dbgout, "\n drawMedia");
+	drawMedia(selectedPicIndex, 180, 120, false);
 
 	/* UI */
 	bool quitProgram{ false };
@@ -269,19 +276,19 @@ void drawHomeScreen()
 		if (fullScreenImage) {
 			if (keyHandler.wasKeyPressed(kb_KeyLeft)) {
 				errorID = kb_KeyLeft; //1794
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 1, 0);
+				imageErr = drawMedia(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 1, 0);
 			}
 			if (keyHandler.wasKeyPressed(kb_KeyRight)) {
 				errorID = kb_KeyRight; //1796
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);
+				imageErr = drawMedia(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, -1, 0);
 			}
 			if (keyHandler.wasKeyPressed(kb_KeyUp)) {
 				errorID = kb_KeyUp; //1800
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);
+				imageErr = drawMedia(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, -1);
 			}
 			if (keyHandler.wasKeyPressed(kb_KeyDown)) {
 				errorID = kb_KeyDown; //1793
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
+				imageErr = drawMedia(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true, 0, 1);
 			}
 
 			//Zoom key. Zoom in as far as possible while maintaining full quality
@@ -294,7 +301,7 @@ void drawHomeScreen()
 				desiredWidthInPxl = picDB.getPicture(selectedPicIndex).horizSubImages * SUBIMAGE_DIMENSIONS;
 				desiredHeightInPxl = picDB.getPicture(selectedPicIndex).vertSubImages * SUBIMAGE_DIMENSIONS;
 
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+				imageErr = drawMedia(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
 					dbg_sprintf(dbgout, "\nCant zoom in to Max. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
@@ -314,7 +321,7 @@ void drawHomeScreen()
 				dbg_sprintf(dbgout, "\n\n--KEYPRESS--\n Zoom In\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
 				//if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
 
-				imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+				imageErr = drawMedia(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
 					dbg_sprintf(dbgout, "\nCant zoom in. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
@@ -334,7 +341,7 @@ void drawHomeScreen()
 
 				if (desiredWidthInPxl != 0 && desiredHeightInPxl != 0) {
 					dbg_sprintf(dbgout, "\n desiredWidthInPxl: %d\n desiredHeightInPxl: %d ", desiredWidthInPxl, desiredHeightInPxl);
-					imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
+					imageErr = drawMedia(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
 					//this means we can't zoom out any more. Zoom back in.
 					if (imageErr != 0) {
 						dbg_sprintf(dbgout, "\nCant zoom out. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
@@ -383,7 +390,7 @@ void drawHomeScreen()
 			}
 
 			keyHandler.reset();
-			imageErr = drawImage(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, fullScreenImage);
+			imageErr = drawMedia(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, fullScreenImage);
 			if (imageErr != 0) {
 				HDpicGFX::use8bpp();
 				gfx_PrintStringXY("Error: ", (LCD_WIDTH - gfx_GetStringWidth("Error: ")) / 2, 150);
@@ -401,9 +408,98 @@ void drawHomeScreen()
 				drawWatermark_8bpp();
 		}
 	} while (!quitProgram);
+	dbg_sprintf(dbgout, "\n quitter 1");
 
 }
 
+uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
+{
+	dbg_sprintf(dbgout, "GIF --");
+
+	PicDatabase &picDB = PicDatabase::getInstance();
+	imageData &curPicture = picDB.getPicture(picName);
+	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
+	HDpicGFX &gfx = HDpicGFX::getInstance();
+	HDpicGFX::useGIFMode();
+	HDpicGFX::use8bpp(); //GIF is always 8bpp
+
+	//requires 8bpp mode
+	char palName[9];
+	sprintf(palName, "HP%.2s0000", curPicture.ID);
+
+	if (!gfx.usePalette(palName, 512)) {
+		PrintCenteredX(palName, 110);
+		PrintCenteredX("ERR: Palette does not exist!", 120);
+		PrintCenteredX("Image may have recently been deleted.", 130);
+		PrintCenteredX("Try restarting the program.", 140);
+		KeyPressHandler::waitForAnyKey();
+		return 1;
+	}
+
+
+	// If displaying thumbnail, cover up the last image
+	if (!fullScreenPic) {
+		gfx_SetColor(PALETTE_BLACK);
+		gfx_FillRectangle_NoClip(150, 0, 170, 240);
+	}
+
+	//allocate memory for resized image
+	//gfx_rletsprite_t *srcGif{ nullptr };
+	gfx_rletsprite_t *srcGif{ gfx_MallocRLETSprite(32400) };
+	if (srcGif==NULL) {
+		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcGif memory!");
+		return 1;
+	}
+	dbg_sprintf(dbgout, "\n test 2:   %p", srcGif);
+
+
+	uint24_t curFrame{ 0 };
+	const uint24_t finalFrame{ curPicture.numGIFFrames - 1 };
+	const uint24_t x = 160;
+	const uint24_t y = 80;
+	dbg_sprintf(dbgout, "\n test 3");
+
+	clock_t frameTimer = clock();
+	while (!keyHandler.scanKeys(fullScreenPic)) {
+		//display frame
+		dbg_sprintf(dbgout, "\n test 3.2: %p @ curFrame %d", curPicture.framesPtrList[curFrame], curFrame);
+		zx0_Decompress(srcGif, curPicture.framesPtrList[curFrame]);
+		dbg_sprintf(dbgout, "\n test 4 %p", curPicture.framesPtrList[curFrame]);
+		gfx_RLETSprite_NoClip(srcGif, x, y);
+		dbg_sprintf(dbgout, "\n test 5");
+
+
+		dbg_sprintf(dbgout, "\nclock: %lu\nframeTimer: %lu\ndifference: %lu\nwaiting: %d", (clock()), frameTimer, (clock()) - frameTimer, curPicture.framesDelayMSlist[curFrame]);
+
+		//wait for frame delay to expire.
+		while ((clock() - frameTimer) < (curPicture.framesDelayMSlist[curFrame])); 
+		frameTimer = clock();
+
+		//loop gif
+		if (++curFrame > finalFrame) {
+			curFrame = 0;
+		}
+	}
+	free(srcGif);
+
+	//free(outputGif);
+	return 0;
+}
+
+uint8_t drawMedia(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desiredHeightInPxl, bool fullScreenPic, int8_t shiftX, int8_t shiftY)
+{
+	dbg_sprintf(dbgout, "\n\n-- DRAWING: ");
+
+	PicDatabase &picDB = PicDatabase::getInstance();
+	imageData &curPicture = picDB.getPicture(picName);
+
+	if (curPicture.isGIF) {
+		return drawGIF(picName, fullScreenPic);
+	}
+	else {
+		return drawImage(picName, desiredWidthInPxl, desiredHeightInPxl, fullScreenPic, shiftX, shiftY);
+	}
+}
 
 /* Draws the image stored in database at position selectedName.
 * Draws the image at location x,y starting at top left corner.
@@ -414,13 +510,13 @@ void drawHomeScreen()
 */
 uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desiredHeightInPxl, bool fullScreenPic, int8_t shiftX, int8_t shiftY)
 {
-	dbg_sprintf(dbgout, "\n\n--DRAW IMAGE--");
+	dbg_sprintf(dbgout, "PICTURE --");
 	PicDatabase &picDB = PicDatabase::getInstance();
 	imageData &curPicture = picDB.getPicture(picName);
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
 	HDpicGFX &gfx = HDpicGFX::getInstance();
+	HDpicGFX::usePictureMode();
 	HDpicGFX::autoSelectLibrary(curPicture.BPP);
-
 
 	//checks if it should scale an image horizontally or vertically.
 	int24_t scaleNumerator{ 1 }, scaleDenominator{ 1 }, subimgNewDimNumerator{ 0 };
@@ -962,7 +1058,6 @@ uint24_t findPictures()
 	/* Find a store data for 1,2,4,&8bpp images*/
 	search_pos = NULL;
 	while ((var_name = ti_DetectVar(&search_pos, "HDGIFV01", OS_TYPE_APPVAR)) != NULL) {
-
 		constexpr uint8_t ID_SIZE{ 2 };
 		constexpr uint8_t PALETTE_NAME_SIZE{ 8 };
 		constexpr uint8_t GIF_FRAMES_SIZE{ 6 };
@@ -977,7 +1072,7 @@ uint24_t findPictures()
 		imgData.isGIF = true;
 		//finds the name, letter ID, and size of entire image this palette belongs to.
 		ti_var_t  palette;
-		dbg_sprintf(dbgout, "\npalette %.8s", var_name);
+		//dbg_sprintf(dbgout, "\npalette %.8s", var_name);
 
 		palette = ti_Open(var_name, "r");
 		//seeks past HDGIFV01
@@ -989,36 +1084,43 @@ uint24_t findPictures()
 		char charArrImgInfo[HEADER_SIZE];
 		char numFramesBuffer[GIF_FRAMES_SIZE];
 		std::strncpy(charArrImgInfo, imgInfo, HEADER_SIZE);
-		dbg_sprintf(dbgout, "\n charArrImgInfo\n BPP: %.16s", charArrImgInfo);
+		//dbg_sprintf(dbgout, "\n charArrImgInfo\n BPP: %.16s", charArrImgInfo);
 		std::strncpy(imgData.imgName, charArrImgInfo, IMAGE_NAME_SIZE);
 		std::strncpy(imgData.ID, charArrImgInfo + IMAGE_NAME_SIZE, ID_SIZE);
 		std::strncpy(numFramesBuffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE, GIF_FRAMES_SIZE);
-		imgData.numGIFFrames = base36charToInt(numFramesBuffer);
+		imgData.numGIFFrames = base36charToInt(numFramesBuffer) + 1;//+1 because first image starts at 0
+
 
 		std::strncpy(imgData.paletteName, var_name, PALETTE_NAME_SIZE);
 
 		imgData.imgName[8] = '\0';
 		imgData.paletteName[8] = '\0';
 		imgData.ID[2] = '\0';
+		imgData.BPP = 8;//GIF is always 8bpp
 
-		dbg_sprintf(dbgout, "\nGIF found:\n gifName: %.8s\n palName: %.8s", imgData.imgName, imgData.paletteName);
+		dbg_sprintf(dbgout, "\n\nGIF found:\n gifName: %.8s\n palName: %.8s", imgData.imgName, imgData.paletteName);
 		dbg_sprintf(dbgout, "\n ID: %.2s\n Frames string: %.6s\n Frames int   : %d\n", imgData.ID, numFramesBuffer, imgData.numGIFFrames);
 
 		dbg_sprintf(dbgout, "\nCaching frame pointers...");
-		if (imgData.numGIFFrames == 16777215) {
+		if (imgData.numGIFFrames == MAX_UINT) {
 			dbg_sprintf(dbgout, "\n ERR: Invalid frame length!");
 			ti_Close(palette);
 			continue;
 		}
+
+		imgData.framesDelayMSlist = static_cast<uint24_t *>(operator new(sizeof(uint24_t) * imgData.numGIFFrames));
+		imgData.framesPtrList = static_cast<void **>(operator new(sizeof(void *) * imgData.numGIFFrames));
+
+
 		for (uint24_t i{ 0 }; i < imgData.numGIFFrames; i++) {
-			char result[GIF_FRAMES_SIZE+1];
-			toBase36(i, result, GIF_FRAMES_SIZE);
-			result[6] = '\0';
-			char picAppvarToFind[9]; 			//combines the separate parts into one name to search for
+			char result[GIF_FRAMES_SIZE + 1];//+1 to account for needing \0
+			toBase36(i, result);
 
-
+			char picAppvarToFind[9]; //combines the separate parts into one name to search for
 			sprintf(picAppvarToFind, "%.2s%.6s", imgData.ID, result);
-			dbg_sprintf(dbgout, "\n gifAppvarToFind: %.8s", picAppvarToFind);
+			picAppvarToFind[8] = '\0';
+			dbg_sprintf(dbgout, "\n gifAppvarToFind: %s", picAppvarToFind);
+
 			ti_var_t subimgSlot = NULL;
 			subimgSlot = ti_Open(picAppvarToFind, "r");
 			if (subimgSlot) {
@@ -1027,15 +1129,17 @@ uint24_t findPictures()
 				dbg_sprintf(dbgout, "\n FrameDelay string: %.4s", frameDelay);
 				uint24_t delayBuffer = charToInt(frameDelay[0]) * 1000 + charToInt(frameDelay[1]) * 100 + charToInt(frameDelay[2]) * 10 + charToInt(frameDelay[3]);
 				dbg_sprintf(dbgout, "\n FrameDelay int   : %d", delayBuffer);
-				imgData.vecFramesDelayMS.push_back(delayBuffer);
+				imgData.framesDelayMSlist[i] = delayBuffer * 32;//The CE does 32.768 clocks per millisecond
+				//imgData.vecFramesDelayMS.push_back(delayBuffer * 32); 
 
 				//seek past frame delay
 				ti_Seek(GIF_FRAME_DELAY_SIZE, SEEK_SET, subimgSlot);
 
 				//cache the pointer to the image data
 				void *subimgPtr{ ti_GetDataPtr(subimgSlot) };
-				imgData.vecFramesPtr.push_back(subimgPtr);
+				imgData.framesPtrList[i] = subimgPtr;
 
+				//imgData.vecFramesPtr.push_back(subimgPtr);
 				ti_Close(subimgSlot);
 			}
 			else {
@@ -1045,8 +1149,6 @@ uint24_t findPictures()
 			}
 
 		}
-
-
 
 		picDB.addPicture(imgData);
 
@@ -1180,45 +1282,22 @@ uint24_t base36charToInt(const char str[6])
 		else if (c >= 'A' && c <= 'Z')
 			value = value * 36 + (c - 'A' + 10);
 		else
-			return 16777215;  // invalid character
+			return MAX_UINT;  // invalid character
 	}
 
 	return value;
 }
 
-//convert base 10 int to base 36 char array
-void toBase36(uint24_t value, char *buffer, uint8_t width)
+//convert base 10 int to base 36 char array. Handles at most 6 characters
+void toBase36(uint24_t value, char out[7])
 {
-	const char chars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	char temp[65];
-	int len = 0;
+	static const char digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-	/* Convert to base-36 (reverse order) */
-	if (value == 0) {
-		temp[len++] = '0';
-	}
-	else {
-		while (value > 0) {
-			temp[len++] = chars[value % 36];
-			value /= 36;
-		}
+	// Generate from least-significant digit to most
+	for (int8_t i = 5; i >= 0; --i) {
+		out[i] = digits[value % 36];
+		value /= 36;
 	}
 
-	/* Determine padding */
-	int pad = width - len;
-	if (pad < 0)
-		pad = 0;
-
-	/* Add leading zeros */
-	int pos = 0;
-	for (int i = 0; i < pad; i++) {
-		buffer[pos++] = '0';
-	}
-
-	/* Reverse digits into buffer */
-	for (int i = len - 1; i >= 0; i--) {
-		buffer[pos++] = temp[i];
-	}
-
-	buffer[pos] = '\0';
+	out[6] = '\0'; // null terminator
 }
