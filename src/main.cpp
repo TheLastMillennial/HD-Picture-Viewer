@@ -21,6 +21,7 @@
 #include "main.h"
 #include "loadingBarHandler.h"
 #include "keyPressHandler.h"
+#include "memoryHandler.h"
 #include "gfxCompatibility.h"
 #include "pictureDatabase.h"
 #include "globals.h"
@@ -31,7 +32,6 @@
 int main(void)
 {
 	dbg_sprintf(dbgout, "\nStart");
-
 	//initialize 8 & 16bpp compatibility functions
 	HDpicGFX &gfx = HDpicGFX::getInstance();
 	gfx.use16bpp();
@@ -446,7 +446,7 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	//allocate memory for resized image
 	//gfx_rletsprite_t *srcGif{ nullptr };
 	gfx_rletsprite_t *srcGif{ gfx_MallocRLETSprite(32400) };
-	if (srcGif==NULL) {
+	if (srcGif == NULL) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcGif memory!");
 		return 1;
 	}
@@ -461,18 +461,21 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 
 	clock_t frameTimer = clock();
 	while (!keyHandler.scanKeys(fullScreenPic)) {
+		if (curPicture.framesPtrList[curFrame] == nullptr) {
+			curFrame++;
+			continue;
+		}
 		//display frame
 		dbg_sprintf(dbgout, "\n test 3.2: %p @ curFrame %d", curPicture.framesPtrList[curFrame], curFrame);
 		zx0_Decompress(srcGif, curPicture.framesPtrList[curFrame]);
-		dbg_sprintf(dbgout, "\n test 4 %p", curPicture.framesPtrList[curFrame]);
+		//dbg_sprintf(dbgout, "\n test 4 %p", curPicture.framesPtrList[curFrame]);
 		gfx_RLETSprite_NoClip(srcGif, x, y);
-		dbg_sprintf(dbgout, "\n test 5");
 
 
-		dbg_sprintf(dbgout, "\nclock: %lu\nframeTimer: %lu\ndifference: %lu\nwaiting: %d", (clock()), frameTimer, (clock()) - frameTimer, curPicture.framesDelayMSlist[curFrame]);
+		//dbg_sprintf(dbgout, "\nclock: %lu\nframeTimer: %lu\ndifference: %lu\nwaiting: %d", (clock()), frameTimer, (clock()) - frameTimer, curPicture.framesDelayMSlist[curFrame]);
 
 		//wait for frame delay to expire.
-		while ((clock() - frameTimer) < (curPicture.framesDelayMSlist[curFrame])); 
+		while ((clock() - frameTimer) < (curPicture.framesDelayMSlist[curFrame]));
 		frameTimer = clock();
 
 		//loop gif
@@ -517,6 +520,8 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	HDpicGFX &gfx = HDpicGFX::getInstance();
 	HDpicGFX::usePictureMode();
 	HDpicGFX::autoSelectLibrary(curPicture.BPP);
+	MemHandler &mem = MemHandler::getInstance();
+	mem.use8bppMemory();
 
 	//checks if it should scale an image horizontally or vertically.
 	int24_t scaleNumerator{ 1 }, scaleDenominator{ 1 }, subimgNewDimNumerator{ 0 };
@@ -735,14 +740,18 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	}
 
 	//pointer to memory where each unsized subimage will be stored
-	gfx_sprite_t *srcImg{ nullptr };
+	//gfx_sprite_t *srcImg{ nullptr };
 	if (HDpicGFX::is16bppMode()) {
-		srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS * 2, SUBIMAGE_DIMENSIONS);
-		srcImg->width = srcImg->height = SUBIMAGE_DIMENSIONS;
+		return 1;
+		/*srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS * 2, SUBIMAGE_DIMENSIONS);
+		srcImg->width = srcImg->height = SUBIMAGE_DIMENSIONS;*/
 	}
-	else
-		srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS);
-	if (!srcImg) {
+	/*else
+		srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS);*/
+	dbg_sprintf(dbgout, "\nMediaMemory: %p", mem.allocation.picture8bpp.srcImg);
+	//dbg_sprintf(dbgout, "\n data: %.10s w: %d h: %d", mem.picture8bpp.srcImg->data, mem.picture8bpp.srcImg->width, mem.picture8bpp.srcImg->height);
+
+	if (!mem.allocation.picture8bpp.srcImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcImg memory!");
 		return 1;
 	}
@@ -767,7 +776,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		if (kb_On || keyHandler.scanKeys(fullScreenPic)) {
 			dbg_sprintf(dbgout, "\nRender aborted!\n");
 			//free up source and output memory
-			free(srcImg);
+			//free(srcImg);
 			free(tempImg);
 			free(outputImg);
 			return 0;
@@ -822,7 +831,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//decompress subimage into srcImg
 		//dbg_sprintf(dbgout, "\n Decompressing... subimgPtr %p to srcImg %p", subimgPtr, srcImg);
 		dbg_sprintf(dbgout, "\n Decompressing... ");
-		zx0_Decompress(srcImg, subimgPtr);
+		zx0_Decompress(mem.allocation.picture8bpp.srcImg, subimgPtr);
 
 
 		dbg_sprintf(dbgout, "\n CHECK 2: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
@@ -844,7 +853,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		switch (curPicture.BPP) {
 		case 1:
 			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+				uint8_t byte = static_cast<uint8_t>(mem.allocation.picture8bpp.srcImg->data[i]);
 
 				tempImg->data[out++] = (byte >> 7) & 0x01;
 				tempImg->data[out++] = (byte >> 6) & 0x01;
@@ -861,7 +870,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		case 2:
 			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+				uint8_t byte = static_cast<uint8_t>(mem.allocation.picture8bpp.srcImg->data[i]);
 
 				tempImg->data[out++] = (byte >> 6) & 0x03;
 				tempImg->data[out++] = (byte >> 4) & 0x03;
@@ -874,7 +883,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		case 4:
 			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>(srcImg->data[i]);
+				uint8_t byte = static_cast<uint8_t>(mem.allocation.picture8bpp.srcImg->data[i]);
 
 				tempImg->data[out++] = (byte >> 4) & 0x0F;
 				tempImg->data[out++] = byte & 0x0F;
@@ -885,7 +894,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		case 8:
 		case 16:
-			HDpicGFX::scaleSprite(srcImg, outputImg);
+			HDpicGFX::scaleSprite(mem.allocation.picture8bpp.srcImg, outputImg);
 			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
 			break;
 		}
@@ -896,7 +905,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	}
 
 	//free up source and output memory
-	free(srcImg);
+	//free(srcImg);
 	free(tempImg);
 	free(outputImg);
 
@@ -1145,6 +1154,8 @@ uint24_t findPictures()
 			else {
 				//subimage does not exist, display error image
 				dbg_sprintf(dbgout, "\nERR: GIF frame doesn't exist: %s", picAppvarToFind);
+				imgData.framesDelayMSlist[i] = 0;
+				imgData.framesPtrList[i] = nullptr;
 				continue;
 			}
 
