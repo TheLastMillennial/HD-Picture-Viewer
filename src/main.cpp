@@ -422,6 +422,8 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	HDpicGFX &gfx = HDpicGFX::getInstance();
 	HDpicGFX::useGIFMode();
 	HDpicGFX::use8bpp(); //GIF is always 8bpp
+	MemHandler &mem = MemHandler::getInstance();
+	mem.useGifMemory();
 
 	//requires 8bpp mode
 	char palName[9];
@@ -435,6 +437,8 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		KeyPressHandler::waitForAnyKey();
 		return 1;
 	}
+	gfx_SetTransparentColor(GIF_TRANSPARENT_COLOR);
+
 
 
 	// If displaying thumbnail, cover up the last image
@@ -445,18 +449,20 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 
 	//allocate memory for resized image
 	//gfx_rletsprite_t *srcGif{ nullptr };
-	gfx_rletsprite_t *srcGif{ gfx_MallocRLETSprite(32400) };
-	if (srcGif == NULL) {
+	gfx_sprite_t **srcGif = { nullptr };
+	srcGif = &mem.allocation.gif.thumbnail;
+	if (srcGif == nullptr) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcGif memory!");
 		return 1;
 	}
-	dbg_sprintf(dbgout, "\n test 2:   %p", srcGif);
+	dbg_sprintf(dbgout, "\n test 2:   %p", *srcGif);
 
 
 	uint24_t curFrame{ 0 };
 	const uint24_t finalFrame{ curPicture.numGIFFrames - 1 };
-	const uint24_t x = 160;
-	const uint24_t y = 80;
+	const uint24_t x = fullScreenPic ? 0 : 160;
+	const uint24_t y = fullScreenPic ? 0 : 80;
+	const uint8_t scale = fullScreenPic ? 2 : 1;
 	dbg_sprintf(dbgout, "\n test 3");
 
 	clock_t frameTimer = clock();
@@ -466,14 +472,17 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 			continue;
 		}
 		//display frame
-		dbg_sprintf(dbgout, "\n test 3.2: %p @ curFrame %d", curPicture.framesPtrList[curFrame], curFrame);
-		zx0_Decompress(srcGif, curPicture.framesPtrList[curFrame]);
+		//dbg_sprintf(dbgout, "\n test 3.2: %p @ curFrame %d", curPicture.framesPtrList[curFrame], curFrame);
+		zx0_Decompress(*srcGif, curPicture.framesPtrList[curFrame]);
 		//dbg_sprintf(dbgout, "\n test 4 %p", curPicture.framesPtrList[curFrame]);
-		gfx_RLETSprite_NoClip(srcGif, x, y);
+		if (fullScreenPic)
+			gfx_ScaledTransparentSprite_NoClip(*srcGif, x, y, 2, 2);
+		else
+			gfx_TransparentSprite_NoClip(*srcGif, x, y);
 
 
 		//dbg_sprintf(dbgout, "\nclock: %lu\nframeTimer: %lu\ndifference: %lu\nwaiting: %d", (clock()), frameTimer, (clock()) - frameTimer, curPicture.framesDelayMSlist[curFrame]);
-
+		dbg_sprintf(dbgout, "\n clock ticks: %lu", clock() - frameTimer);
 		//wait for frame delay to expire.
 		while ((clock() - frameTimer) < (curPicture.framesDelayMSlist[curFrame]));
 		frameTimer = clock();
@@ -483,9 +492,6 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 			curFrame = 0;
 		}
 	}
-	free(srcGif);
-
-	//free(outputGif);
 	return 0;
 }
 
@@ -520,8 +526,32 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	HDpicGFX &gfx = HDpicGFX::getInstance();
 	HDpicGFX::usePictureMode();
 	HDpicGFX::autoSelectLibrary(curPicture.BPP);
+
 	MemHandler &mem = MemHandler::getInstance();
-	mem.use8bppMemory();
+	gfx_sprite_t **srcImg = { nullptr };  //Appvar data initially stored here
+	gfx_sprite_t **tempImg = { nullptr }; //If 1,2, or 4bpp, we'll need to bit-unpacked to here.
+
+	if (gfx.is16bppMode()) {
+		mem.use16bppMemory();
+		srcImg = &mem.allocation.picture16bpp.srcImg;
+		tempImg = &mem.allocation.picture16bpp.tempImg;
+
+		if (!srcImg || !tempImg)
+			return 1;
+		//manually set width and ehight for 16bpp to account for library bug
+		(*srcImg)->width = SUBIMAGE_DIMENSIONS;
+		(*srcImg)->height = SUBIMAGE_DIMENSIONS;
+		(*tempImg)->width = SUBIMAGE_DIMENSIONS;
+		(*tempImg)->height = SUBIMAGE_DIMENSIONS;
+	}
+	else {
+		mem.use8bppMemory();
+		srcImg = &mem.allocation.picture8bpp.srcImg;
+		tempImg = &mem.allocation.picture16bpp.tempImg;
+
+		if (!srcImg || !tempImg)
+			return 1;
+	}
 
 	//checks if it should scale an image horizontally or vertically.
 	int24_t scaleNumerator{ 1 }, scaleDenominator{ 1 }, subimgNewDimNumerator{ 0 };
@@ -711,13 +741,13 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//allocates memory for resized image
 
 	//TODO: fix memory allocation with gfx16_MallocSprite()
-
 	gfx_sprite_t *outputImg{ nullptr };
 	if (HDpicGFX::is16bppMode()) {
 		//we allocate twice as much memory as an 8bpp image.
 		outputImg = gfx_MallocSprite(subimgScaledDim * 2, subimgScaledDim);
 		//we manually set the width and height to the correct values.
-		outputImg->width = outputImg->height = subimgScaledDim;
+		if (outputImg != nullptr)
+			outputImg->width = outputImg->height = subimgScaledDim;
 	}
 	else
 		outputImg = gfx_MallocSprite(subimgScaledDim, subimgScaledDim);
@@ -726,32 +756,11 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		return 1;
 	}
 
-	//pointer to memory where bit-unpacked subimage will be stored
-	gfx_sprite_t *tempImg{ nullptr };
-	if (HDpicGFX::is16bppMode()) {
-		tempImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS * 2, SUBIMAGE_DIMENSIONS);
-		tempImg->width = tempImg->height = SUBIMAGE_DIMENSIONS;
-	}
-	else
-		tempImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS);
-	if (!tempImg) {
-		dbg_sprintf(dbgout, "\nERR: Failed to allocate tempImg src memory!");
-		return 1;
-	}
-
 	//pointer to memory where each unsized subimage will be stored
-	//gfx_sprite_t *srcImg{ nullptr };
-	if (HDpicGFX::is16bppMode()) {
-		return 1;
-		/*srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS * 2, SUBIMAGE_DIMENSIONS);
-		srcImg->width = srcImg->height = SUBIMAGE_DIMENSIONS;*/
-	}
-	/*else
-		srcImg = gfx_MallocSprite(SUBIMAGE_DIMENSIONS, SUBIMAGE_DIMENSIONS);*/
-	dbg_sprintf(dbgout, "\nMediaMemory: %p", mem.allocation.picture8bpp.srcImg);
+	dbg_sprintf(dbgout, "\nMediaMemory: %p", *srcImg);
 	//dbg_sprintf(dbgout, "\n data: %.10s w: %d h: %d", mem.picture8bpp.srcImg->data, mem.picture8bpp.srcImg->width, mem.picture8bpp.srcImg->height);
 
-	if (!mem.allocation.picture8bpp.srcImg) {
+	if (!*srcImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcImg memory!");
 		return 1;
 	}
@@ -776,8 +785,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		if (kb_On || keyHandler.scanKeys(fullScreenPic)) {
 			dbg_sprintf(dbgout, "\nRender aborted!\n");
 			//free up source and output memory
-			//free(srcImg);
-			free(tempImg);
 			free(outputImg);
 			return 0;
 		}
@@ -831,7 +838,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//decompress subimage into srcImg
 		//dbg_sprintf(dbgout, "\n Decompressing... subimgPtr %p to srcImg %p", subimgPtr, srcImg);
 		dbg_sprintf(dbgout, "\n Decompressing... ");
-		zx0_Decompress(mem.allocation.picture8bpp.srcImg, subimgPtr);
+		zx0_Decompress(*srcImg, subimgPtr);
 
 
 		dbg_sprintf(dbgout, "\n CHECK 2: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
@@ -853,60 +860,57 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		switch (curPicture.BPP) {
 		case 1:
 			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>(mem.allocation.picture8bpp.srcImg->data[i]);
+				uint8_t byte = static_cast<uint8_t>((*srcImg)->data[i]);
 
-				tempImg->data[out++] = (byte >> 7) & 0x01;
-				tempImg->data[out++] = (byte >> 6) & 0x01;
-				tempImg->data[out++] = (byte >> 5) & 0x01;
-				tempImg->data[out++] = (byte >> 4) & 0x01;
-				tempImg->data[out++] = (byte >> 3) & 0x01;
-				tempImg->data[out++] = (byte >> 2) & 0x01;
-				tempImg->data[out++] = (byte >> 1) & 0x01;
-				tempImg->data[out++] = byte & 0x01;
+				(*tempImg)->data[out++] = (byte >> 7) & 0x01;
+				(*tempImg)->data[out++] = (byte >> 6) & 0x01;
+				(*tempImg)->data[out++] = (byte >> 5) & 0x01;
+				(*tempImg)->data[out++] = (byte >> 4) & 0x01;
+				(*tempImg)->data[out++] = (byte >> 3) & 0x01;
+				(*tempImg)->data[out++] = (byte >> 2) & 0x01;
+				(*tempImg)->data[out++] = (byte >> 1) & 0x01;
+				(*tempImg)->data[out++] = byte & 0x01;
 			}
-			HDpicGFX::scaleSprite(tempImg, outputImg);
+			HDpicGFX::scaleSprite(*tempImg, outputImg);
 			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
 			break;
 
 		case 2:
 			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>(mem.allocation.picture8bpp.srcImg->data[i]);
+				uint8_t byte = static_cast<uint8_t>((*srcImg)->data[i]);
 
-				tempImg->data[out++] = (byte >> 6) & 0x03;
-				tempImg->data[out++] = (byte >> 4) & 0x03;
-				tempImg->data[out++] = (byte >> 2) & 0x03;
-				tempImg->data[out++] = byte & 0x03;
+				(*tempImg)->data[out++] = (byte >> 6) & 0x03;
+				(*tempImg)->data[out++] = (byte >> 4) & 0x03;
+				(*tempImg)->data[out++] = (byte >> 2) & 0x03;
+				(*tempImg)->data[out++] = byte & 0x03;
 			}
-			HDpicGFX::scaleSprite(tempImg, outputImg);
+			HDpicGFX::scaleSprite(*tempImg, outputImg);
 			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
 			break;
 
 		case 4:
 			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>(mem.allocation.picture8bpp.srcImg->data[i]);
+				uint8_t byte = static_cast<uint8_t>((*srcImg)->data[i]);
 
-				tempImg->data[out++] = (byte >> 4) & 0x0F;
-				tempImg->data[out++] = byte & 0x0F;
+				(*tempImg)->data[out++] = (byte >> 4) & 0x0F;
+				(*tempImg)->data[out++] = byte & 0x0F;
 			}
-			HDpicGFX::scaleSprite(tempImg, outputImg);
+			HDpicGFX::scaleSprite(*tempImg, outputImg);
 			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
 			break;
 
 		case 8:
 		case 16:
-			HDpicGFX::scaleSprite(mem.allocation.picture8bpp.srcImg, outputImg);
+			HDpicGFX::scaleSprite(*srcImg, outputImg);
 			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
 			break;
 		}
-
 
 		//cleans up
 		ti_Close(subimgSlot);
 	}
 
-	//free up source and output memory
-	//free(srcImg);
-	free(tempImg);
+	//free up output memory
 	free(outputImg);
 
 	dbg_sprintf(dbgout, "\nDraw Finished.\n");

@@ -45,22 +45,22 @@ private:
 	};
 
 	/* Allocate maximum required space ONCE */
-	static uint8_t memForGif[
+	inline static uint8_t memForGif[
 		//(320 * 240 + 2) +    
 		(GIF_SRC_WIDTH * GIF_SRC_HEIGHT + 2)
 	];
 
-	static uint8_t memFor8bpp[
+	inline static uint8_t memFor8bpp[
 		(SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS + 2) * 2
 	];
 
-	static uint8_t memFor16bpp[
+	inline static uint8_t memFor16bpp[
 		((SUBIMAGE_DIMENSIONS * 2) * SUBIMAGE_DIMENSIONS + 2) * 2
 	];
 
 
 public:
-	static union MediaMemory allocation;
+	inline static union MediaMemory allocation;
 
 	// Static method to get the instance of the Singleton
 	static MemHandler &getInstance()
@@ -91,5 +91,11 @@ public:
 		allocation.picture8bpp.tempImg = (gfx_sprite_t *)&memFor16bpp[iOffset];
 		allocation.picture8bpp.tempImg->width = SUBIMAGE_DIMENSIONS * 2;
 		allocation.picture8bpp.tempImg->height = SUBIMAGE_DIMENSIONS;
+	}
+
+	static void useGifMemory()
+	{
+		uint8_t iOffset = 0;
+		allocation.gif.thumbnail = (gfx_sprite_t *)&memForGif[iOffset];
 	}
 };//namespace MemoryHandler
