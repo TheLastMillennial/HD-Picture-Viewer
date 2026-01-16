@@ -8,14 +8,27 @@ class MemHandler
 
 
 private:
-
+	//this is dumb this function doesn't exist already.
+	uint24_t maxInt(uint24_t a, uint24_t b)
+	{
+		return a > b ? a : b;
+	}
 	// Private constructor to prevent instantiation from outside the class
-	MemHandler() {}
+	MemHandler()
+	{
+		usedMem += maxInt(MEM_FOR_GIF, maxInt(MEM_FOR_8BPP, MEM_FOR_16BPP));
+		dbg_sprintf(dbgout, "\nINFO: usedMem: %d / %d", usedMem, totalFreeMem);
+
+	}
 
 	// Private copy constructor and assignment operator to prevent copying
 	MemHandler(const MemHandler &) = delete;
 	MemHandler &operator=(const MemHandler &) = delete;
 
+	void *pFreeMem{ nullptr };
+	uint24_t totalFreeMem = os_MemChk(&pFreeMem);
+
+	uint24_t usedMem{ 0 };
 	//Statically allocate memory for pictures and GIFs. The memory will never be shared across modes.
 	union MediaMemory
 	{
@@ -33,30 +46,26 @@ private:
 		{
 			gfx_sprite_t *srcImg;
 			gfx_sprite_t *tempImg;
-			//output will be dynamically allocated
+			//output will be allocated base on leftover RAM
 		} picture8bpp;
 
 		struct
 		{
 			gfx_sprite_t *srcImg;
 			gfx_sprite_t *tempImg;
-			//output will be dynamically allocated
+			//output will be allocated based on leftover RAM
 		} picture16bpp;
 	};
 
 	/* Allocate maximum required space ONCE */
-	inline static uint8_t memForGif[
-		//(320 * 240 + 2) +    
-		(GIF_SRC_WIDTH * GIF_SRC_HEIGHT + 2)
-	];
+	static constexpr uint24_t MEM_FOR_GIF{ (GIF_SRC_WIDTH * GIF_SRC_HEIGHT + 2) };
+	static constexpr uint24_t MEM_FOR_8BPP{ (SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS + 2) * 2 };
+	static constexpr uint24_t MEM_FOR_16BPP{ ((SUBIMAGE_DIMENSIONS * 2) * SUBIMAGE_DIMENSIONS + 2) * 2 };
 
-	inline static uint8_t memFor8bpp[
-		(SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS + 2) * 2
-	];
+	inline static uint8_t memForGif[MEM_FOR_GIF];
+	inline static uint8_t memFor8bpp[MEM_FOR_8BPP];
+	inline static uint8_t memFor16bpp[MEM_FOR_16BPP];
 
-	inline static uint8_t memFor16bpp[
-		((SUBIMAGE_DIMENSIONS * 2) * SUBIMAGE_DIMENSIONS + 2) * 2
-	];
 
 
 public:
@@ -67,6 +76,49 @@ public:
 	{
 		static MemHandler instance; // Guaranteed to be created once
 		return instance;
+	}
+
+	bool validateMemIntegrity()
+	{
+		void *pTemp{ nullptr };
+		//if amount of free mem has changed, that's bad but potentially manageable.
+		if (uint24_t newFreeMem{ os_MemChk(&pTemp) }; totalFreeMem != newFreeMem)
+		{
+			dbg_sprintf(dbgout, "\nWARN: Free Mem amount has changed from %d to %d", totalFreeMem, newFreeMem);
+			totalFreeMem = newFreeMem;
+		}
+
+		//If mem pointer has moved that is catastrophic.
+		if (pTemp != pFreeMem) {
+			dbg_sprintf(dbgout, "\nERR: Free Mem Ptr has changed from %p to %p", pFreeMem, pTemp);
+			return false;
+		}
+
+		dbg_sprintf(dbgout, "\nINFO: Mem check pass.");
+
+		return true;
+	}
+
+	//similar to os_ChkMem()
+	//Updates ptr with pointer to available memory
+	//Returns amount of memory available.
+	uint24_t checkFreeMemory()
+	{
+		if (!validateMemIntegrity())
+			return 0;
+		return totalFreeMem - usedMem;
+	}
+
+	// Permenantly reserves an amount of memory.
+	// Returns a pointer to that memory.
+	void* permaAllocMemory(uint24_t mem)
+	{
+		if (totalFreeMem - usedMem < mem)
+			return nullptr;
+		usedMem += mem;
+		void *pPrevFreeMem = pFreeMem;
+		pFreeMem = static_cast<char *>(pFreeMem) + usedMem;
+		return pPrevFreeMem;
 	}
 
 	static void use8bppMemory()

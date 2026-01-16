@@ -4,10 +4,10 @@
 
 #include "globals.h"
 #include "gfxCompatibility.h"
-#include "types/vector.h"
 #include "types/pair.h"
 #include "types/map.h"
 #include "loadingBarHandler.h"
+#include "types/fixedVector.h"
 
 struct imageData
 {
@@ -26,9 +26,9 @@ struct imageData
 	//When we find a subimage, store the pointer to it here.
 	Map< uint24_t, Map< uint24_t, void *>> cache;
 	//GIFs have their image location pointers stored beforehand
-	void ** framesPtrList =nullptr;
-	//Store how long a GIF frame should be on screen
-	uint24_t* framesDelayMSlist = nullptr;
+
+	FixedVector<void*> framesPtrList;
+	FixedVector<uint24_t> framesDelayMSlist; 
 };
 
 class PicDatabase
@@ -52,23 +52,17 @@ public:
 		return instance;
 	}
 
-	Vector <imageData> allImages;
+	FixedVector <imageData> allImages;
 
 	// Resets all memory this db uses
 	void resetPicDB()
 	{
-		allImages.clear_deallocate();
+		allImages.clear();
 	}
 
 	uint24_t size()
 	{
-		return allImages.getSize();
-	}
-
-	//pre-allocate memory for the database (optional but faster than only calling addPicture())
-	void reserve(uint24_t size)
-	{
-		allImages.reserve(size);
+		return allImages.size();
 	}
 
 	void toLower(const char strIn[9], char strOut[9])
@@ -87,7 +81,7 @@ public:
 	void addPicture(imageData const img)
 	{
 
-		if (allImages.getSize() == 1) {
+		if (allImages.size() == 1) {
 			char left[9], right[9];
 			toLower(img.imgName, left);
 			toLower(allImages[0].imgName, right);
@@ -101,7 +95,7 @@ public:
 				return;
 			}
 		}
-		for (int24_t i = 0; i < static_cast<int24_t>(allImages.getSize()) - 2; i++) {
+		for (int24_t i = 0; i < static_cast<int24_t>(allImages.size()) - 2; i++) {
 			char left[9], right[9];
 			toLower(img.imgName, left);
 			toLower(allImages[i].imgName, right);

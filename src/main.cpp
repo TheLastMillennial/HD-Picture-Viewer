@@ -26,12 +26,48 @@
 #include "pictureDatabase.h"
 #include "globals.h"
 #include "guiUtils.h"
-#include "types/vector.h"
 
+void heapCheck()
+{
+	void **temp = nullptr;
+
+	dbg_sprintf(dbgout, "\nFree User RAM: %zu", os_MemChk(temp));
+
+
+	uint24_t iFreeRAM = 0;
+	uint8_t iExponent = 1;
+	uint24_t prevAttempt = 0;
+	while (iExponent != 0) {
+
+		uint24_t iAttempt = iFreeRAM + (uint24_t)(pow(2, iExponent));
+		//dbg_sprintf(dbgout, "\niFreeRAM: %d iAttempt: %d iExponent: %d", iFreeRAM, iAttempt, iExponent);
+		void *test = gfx_MallocSprite(sqrt(iAttempt), sqrt(iAttempt));
+
+		//dbg_sprintf(dbgout, "\n ptr: %p", test);
+		if (test == nullptr) {
+			iFreeRAM += prevAttempt;
+			prevAttempt = 0;
+			iExponent--;
+		}
+		else {
+			prevAttempt = iAttempt;
+			iExponent++;
+			free(test);
+
+		}
+		if (iExponent > 18) {
+			dbg_sprintf(dbgout, "\nFunction Failed. Impossible RAM limit reached.");
+			return;
+		}
+
+	}
+	dbg_sprintf(dbgout, "\nFree HEAP: %d", iFreeRAM);
+}
 
 int main(void)
 {
 	dbg_sprintf(dbgout, "\nStart");
+	heapCheck();
 	//initialize 8 & 16bpp compatibility functions
 	HDpicGFX &gfx = HDpicGFX::getInstance();
 	gfx.use16bpp();
@@ -56,13 +92,9 @@ int main(void)
 	drawHomeScreen();
 	dbg_sprintf(dbgout, "\n quitter 2");
 
-
 	//quit
 	HDpicGFX::end();
-	dbg_sprintf(dbgout, "\n quitter 3");
-
 	kb_ClearOnLatch();
-	dbg_sprintf(dbgout, "\n quitter 4");
 
 	return 0;
 
@@ -462,13 +494,14 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	const uint24_t finalFrame{ curPicture.numGIFFrames - 1 };
 	const uint24_t x = fullScreenPic ? 0 : 160;
 	const uint24_t y = fullScreenPic ? 0 : 80;
-	const uint8_t scale = fullScreenPic ? 2 : 1;
-	dbg_sprintf(dbgout, "\n test 3");
 
 	clock_t frameTimer = clock();
 	while (!keyHandler.scanKeys(fullScreenPic)) {
+		dbg_sprintf(dbgout, "\n curFrame %d", curFrame);
+
 		if (curPicture.framesPtrList[curFrame] == nullptr) {
-			curFrame++;
+			if (++curFrame > finalFrame)
+				curFrame = 0;
 			continue;
 		}
 		//display frame
@@ -957,7 +990,11 @@ uint24_t findPictures()
 	}
 
 	PicDatabase &picDB = PicDatabase::getInstance();
-	picDB.reserve(imagesFound);
+	if (!picDB.allImages.init(imagesFound)) 		{
+		dbg_sprintf(dbgout, "\nERR: Could not init picDB.AllImages for %d images", imagesFound);
+		return 0;
+
+	}
 
 	loadingBar.resetLoadingBar(imagesFound);
 
@@ -1120,9 +1157,24 @@ uint24_t findPictures()
 			ti_Close(palette);
 			continue;
 		}
+		dbg_sprintf(dbgout, "\n framesDelayListSize = %d", sizeof(uint24_t) * imgData.numGIFFrames);
 
-		imgData.framesDelayMSlist = static_cast<uint24_t *>(operator new(sizeof(uint24_t) * imgData.numGIFFrames));
-		imgData.framesPtrList = static_cast<void **>(operator new(sizeof(void *) * imgData.numGIFFrames));
+		heapCheck();
+
+		if (!imgData.framesPtrList.init(imgData.numGIFFrames)) 			{
+			dbg_sprintf(dbgout, "\n ERR: Not enough mem for frame pointers!");
+			ti_Close(palette);
+			continue;
+		}
+		if (!imgData.framesDelayMSlist.init(imgData.numGIFFrames)) 			{
+			dbg_sprintf(dbgout, "\n ERR: Not enough mem for frame delay!");
+			ti_Close(palette);
+			continue;
+		}
+
+		dbg_sprintf(dbgout, "\nAFTER STATIC ARRAY");
+
+		heapCheck();
 
 
 		for (uint24_t i{ 0 }; i < imgData.numGIFFrames; i++) {
@@ -1139,18 +1191,25 @@ uint24_t findPictures()
 			if (subimgSlot) {
 				char frameDelay[4];
 				ti_Read(&frameDelay, GIF_FRAME_DELAY_SIZE, 1, subimgSlot);
-				dbg_sprintf(dbgout, "\n FrameDelay string: %.4s", frameDelay);
+				//dbg_sprintf(dbgout, "\n FrameDelay string: %.4s", frameDelay);
 				uint24_t delayBuffer = charToInt(frameDelay[0]) * 1000 + charToInt(frameDelay[1]) * 100 + charToInt(frameDelay[2]) * 10 + charToInt(frameDelay[3]);
-				dbg_sprintf(dbgout, "\n FrameDelay int   : %d", delayBuffer);
+				//dbg_sprintf(dbgout, "\n FrameDelay int   : %d = %d ms -> index %d", delayBuffer, delayBuffer * 32, i);
 				imgData.framesDelayMSlist[i] = delayBuffer * 32;//The CE does 32.768 clocks per millisecond
 				//imgData.vecFramesDelayMS.push_back(delayBuffer * 32); 
+
+				//dbg_sprintf(dbgout, "\n LoadTest 0 %d, %d", GIF_FRAMES_SIZE, subimgSlot);
 
 				//seek past frame delay
 				ti_Seek(GIF_FRAME_DELAY_SIZE, SEEK_SET, subimgSlot);
 
+				//dbg_sprintf(dbgout, "\n LoadTest 1");
+
 				//cache the pointer to the image data
 				void *subimgPtr{ ti_GetDataPtr(subimgSlot) };
+				//dbg_sprintf(dbgout, "\n LoadTest 2 %p", subimgPtr);
+
 				imgData.framesPtrList[i] = subimgPtr;
+				//dbg_sprintf(dbgout, "\n LoadTest 3");
 
 				//imgData.vecFramesPtr.push_back(subimgPtr);
 				ti_Close(subimgSlot);
@@ -1162,6 +1221,8 @@ uint24_t findPictures()
 				imgData.framesPtrList[i] = nullptr;
 				continue;
 			}
+			//dbg_sprintf(dbgout, "\n EndLoop %d", i);
+
 
 		}
 
@@ -1175,6 +1236,8 @@ uint24_t findPictures()
 	dbg_sprintf(dbgout, "\nPics Detected: %d", imagesFound);
 	return imagesFound;
 }
+
+
 
 
 
