@@ -15,7 +15,7 @@ public:
     {
         MemHandler &mem = MemHandler::getInstance();
         mem.validateMemIntegrity();
-        const uint24_t iFreeBytes = mem.checkFreeMemory();
+        const uint24_t iFreeBytes = mem.getFreeMemoryBytes();
         mem.validateMemIntegrity();
 
         const uint24_t required = max_elements * sizeof(T);

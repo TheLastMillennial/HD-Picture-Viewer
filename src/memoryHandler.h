@@ -90,8 +90,8 @@ public:
 
 		//If mem pointer has moved that is catastrophic.
 		if (pTemp != pFreeMem) {
-			dbg_sprintf(dbgout, "\nERR: Free Mem Ptr has changed from %p to %p", pFreeMem, pTemp);
-			return false;
+			dbg_sprintf(dbgout, "\nWARN: Free Mem Ptr has changed from %p to %p", pFreeMem, pTemp);
+			//return false;
 		}
 
 		dbg_sprintf(dbgout, "\nINFO: Mem check pass.");
@@ -99,14 +99,22 @@ public:
 		return true;
 	}
 
-	//similar to os_ChkMem()
-	//Updates ptr with pointer to available memory
-	//Returns amount of memory available.
-	uint24_t checkFreeMemory()
+	//Returns amount of memory available in bytes
+	uint24_t getFreeMemoryBytes()
 	{
 		if (!validateMemIntegrity())
 			return 0;
+		dbg_sprintf(dbgout, "\nINFO: getFreeMemoryBytes: %d", totalFreeMem - usedMem);
+
 		return totalFreeMem - usedMem;
+	}
+
+	//Returns the pointer to the amount of free memory remaining.
+	void* getFreeMemoryPtr()
+	{
+		dbg_sprintf(dbgout, "\nINFO: getFreeMemoryPtr: %p", pFreeMem);
+
+		return pFreeMem;
 	}
 
 	// Permenantly reserves an amount of memory.

@@ -29,6 +29,7 @@
 
 void heapCheck()
 {
+	return;
 	void **temp = nullptr;
 
 	dbg_sprintf(dbgout, "\nFree User RAM: %zu", os_MemChk(temp));
@@ -487,8 +488,6 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcGif memory!");
 		return 1;
 	}
-	dbg_sprintf(dbgout, "\n test 2:   %p", *srcGif);
-
 
 	uint24_t curFrame{ 0 };
 	const uint24_t finalFrame{ curPicture.numGIFFrames - 1 };
@@ -497,7 +496,7 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 
 	clock_t frameTimer = clock();
 	while (!keyHandler.scanKeys(fullScreenPic)) {
-		dbg_sprintf(dbgout, "\n curFrame %d", curFrame);
+		//dbg_sprintf(dbgout, "\n curFrame %d", curFrame);
 
 		if (curPicture.framesPtrList[curFrame] == nullptr) {
 			if (++curFrame > finalFrame)
@@ -515,7 +514,7 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 
 
 		//dbg_sprintf(dbgout, "\nclock: %lu\nframeTimer: %lu\ndifference: %lu\nwaiting: %d", (clock()), frameTimer, (clock()) - frameTimer, curPicture.framesDelayMSlist[curFrame]);
-		dbg_sprintf(dbgout, "\n clock ticks: %lu", clock() - frameTimer);
+		//dbg_sprintf(dbgout, "\n clock ticks: %lu", clock() - frameTimer);
 		//wait for frame delay to expire.
 		while ((clock() - frameTimer) < (curPicture.framesDelayMSlist[curFrame]));
 		frameTimer = clock();
@@ -556,13 +555,16 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	PicDatabase &picDB = PicDatabase::getInstance();
 	imageData &curPicture = picDB.getPicture(picName);
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
+	MemHandler &mem = MemHandler::getInstance();
 	HDpicGFX &gfx = HDpicGFX::getInstance();
 	HDpicGFX::usePictureMode();
 	HDpicGFX::autoSelectLibrary(curPicture.BPP);
 
-	MemHandler &mem = MemHandler::getInstance();
 	gfx_sprite_t **srcImg = { nullptr };  //Appvar data initially stored here
 	gfx_sprite_t **tempImg = { nullptr }; //If 1,2, or 4bpp, we'll need to bit-unpacked to here.
+
+	dbg_sprintf(dbgout, "check draw-image 1");
+	mem.validateMemIntegrity();
 
 	if (gfx.is16bppMode()) {
 		mem.use16bppMemory();
@@ -585,6 +587,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		if (!srcImg || !tempImg)
 			return 1;
 	}
+
 
 	//checks if it should scale an image horizontally or vertically.
 	int24_t scaleNumerator{ 1 }, scaleDenominator{ 1 }, subimgNewDimNumerator{ 0 };
@@ -773,21 +776,27 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//allocates memory for resized image
 
-	//TODO: fix memory allocation with gfx16_MallocSprite()
 	gfx_sprite_t *outputImg{ nullptr };
 	if (HDpicGFX::is16bppMode()) {
 		//we allocate twice as much memory as an 8bpp image.
-		outputImg = gfx_MallocSprite(subimgScaledDim * 2, subimgScaledDim);
-		//we manually set the width and height to the correct values.
-		if (outputImg != nullptr)
-			outputImg->width = outputImg->height = subimgScaledDim;
+		if (static_cast<int24_t> (mem.getFreeMemoryBytes()) < subimgScaledDim * 2 * subimgScaledDim)
+			return 1;
+		outputImg = static_cast<gfx_sprite_t *>(mem.getFreeMemoryPtr());	
 	}
-	else
-		outputImg = gfx_MallocSprite(subimgScaledDim, subimgScaledDim);
+	else {
+		if (static_cast<int24_t> (mem.getFreeMemoryBytes()) < subimgScaledDim * subimgScaledDim)
+			return 1;
+		outputImg = static_cast<gfx_sprite_t *>(mem.getFreeMemoryPtr());
+	}
 	if (!outputImg) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate outputImg memory!");
 		return 1;
 	}
+	//we manually set the width and height to the correct values.
+	outputImg->width = outputImg->height = subimgScaledDim;
+
+	dbg_sprintf(dbgout, "\noutptImg \n ptr: %p \n subimgscaldim: %d \n %p", outputImg,subimgScaledDim, &(outputImg->width));
+
 
 	//pointer to memory where each unsized subimage will be stored
 	dbg_sprintf(dbgout, "\nMediaMemory: %p", *srcImg);
@@ -817,8 +826,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//a key interrupted output. Quit immediately
 		if (kb_On || keyHandler.scanKeys(fullScreenPic)) {
 			dbg_sprintf(dbgout, "\nRender aborted!\n");
-			//free up source and output memory
-			free(outputImg);
 			return 0;
 		}
 
@@ -943,9 +950,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		ti_Close(subimgSlot);
 	}
 
-	//free up output memory
-	free(outputImg);
-
 	dbg_sprintf(dbgout, "\nDraw Finished.\n");
 	return 0;
 }
@@ -990,7 +994,7 @@ uint24_t findPictures()
 	}
 
 	PicDatabase &picDB = PicDatabase::getInstance();
-	if (!picDB.allImages.init(imagesFound)) 		{
+	if (!picDB.allImages.init(imagesFound)) {
 		dbg_sprintf(dbgout, "\nERR: Could not init picDB.AllImages for %d images", imagesFound);
 		return 0;
 
@@ -1161,12 +1165,12 @@ uint24_t findPictures()
 
 		heapCheck();
 
-		if (!imgData.framesPtrList.init(imgData.numGIFFrames)) 			{
+		if (!imgData.framesPtrList.init(imgData.numGIFFrames)) {
 			dbg_sprintf(dbgout, "\n ERR: Not enough mem for frame pointers!");
 			ti_Close(palette);
 			continue;
 		}
-		if (!imgData.framesDelayMSlist.init(imgData.numGIFFrames)) 			{
+		if (!imgData.framesDelayMSlist.init(imgData.numGIFFrames)) {
 			dbg_sprintf(dbgout, "\n ERR: Not enough mem for frame delay!");
 			ti_Close(palette);
 			continue;
