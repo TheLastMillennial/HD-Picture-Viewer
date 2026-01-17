@@ -27,8 +27,8 @@ struct imageData
 	Map< uint24_t, Map< uint24_t, void *>> cache;
 	//GIFs have their image location pointers stored beforehand
 
-	FixedVector<void*> framesPtrList;
-	FixedVector<uint24_t> framesDelayMSlist; 
+	FixedVector<void *> framesPtrList;
+	FixedVector<uint24_t> framesDelayMSlist;
 };
 
 class PicDatabase
@@ -37,7 +37,7 @@ private:
 
 	// Private constructor to prevent instantiation from outside the class
 	PicDatabase() {}
-	~PicDatabase(){}//todo: delete data stored in lists
+	~PicDatabase() {}
 
 	// Private copy constructor and assignment operator to prevent copying
 	PicDatabase(const PicDatabase &) = delete;

@@ -3,9 +3,20 @@
 #include <globals.h>
 #include <graphx.h>
 
+
+/* MemHandler puts variables in free user memory
+* The Setup looks like this:
+* -------------------------------------
+* Cached sprite pointers     (constant)
+* -------------------------------------
+* Sprite data              (adjustable)
+* -------------------------------------
+* Free memory for outputImg    (Random)
+* -------------------------------------
+*/
+
 class MemHandler
 {
-
 
 private:
 	//this is dumb this function doesn't exist already.
@@ -16,19 +27,23 @@ private:
 	// Private constructor to prevent instantiation from outside the class
 	MemHandler()
 	{
-		usedMem += maxInt(MEM_FOR_GIF, maxInt(MEM_FOR_8BPP, MEM_FOR_16BPP));
-		dbg_sprintf(dbgout, "\nINFO: usedMem: %d / %d", usedMem, totalFreeMem);
-
+		dbg_sprintf(dbgout, "\nINFO: Mem 1 m_usedMem %d / %d", m_usedMem, m_totalFreeMem);
 	}
 
 	// Private copy constructor and assignment operator to prevent copying
 	MemHandler(const MemHandler &) = delete;
 	MemHandler &operator=(const MemHandler &) = delete;
 
-	void *pFreeMem{ nullptr };
-	uint24_t totalFreeMem = os_MemChk(&pFreeMem);
+	// Location where new data can be stored
+	inline static void *m_pFreeMem{ nullptr };
+	uint24_t m_totalFreeMem = os_MemChk(&m_pFreeMem);
+	// location where new data can be stored once cache is locked
+	inline static void *m_ptrAfterCache{ nullptr };
+	//Memory used for caching all pics and gifs 
+	inline static uint24_t m_usedMemForCache{ 0 };
+	//Total user memory used
+	inline static uint24_t m_usedMem{ 0 };
 
-	uint24_t usedMem{ 0 };
 	//Statically allocate memory for pictures and GIFs. The memory will never be shared across modes.
 	union MediaMemory
 	{
@@ -57,16 +72,6 @@ private:
 		} picture16bpp;
 	};
 
-	/* Allocate maximum required space ONCE */
-	static constexpr uint24_t MEM_FOR_GIF{ (GIF_SRC_WIDTH * GIF_SRC_HEIGHT + 2) };
-	static constexpr uint24_t MEM_FOR_8BPP{ (SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS + 2) * 2 };
-	static constexpr uint24_t MEM_FOR_16BPP{ ((SUBIMAGE_DIMENSIONS * 2) * SUBIMAGE_DIMENSIONS + 2) * 2 };
-
-	inline static uint8_t memForGif[MEM_FOR_GIF];
-	inline static uint8_t memFor8bpp[MEM_FOR_8BPP];
-	inline static uint8_t memFor16bpp[MEM_FOR_16BPP];
-
-
 
 public:
 	inline static union MediaMemory allocation;
@@ -78,19 +83,30 @@ public:
 		return instance;
 	}
 
+	// Once we've cached all necessary data, we don't want that memory overwritten.
+	// Returns true on success
+	// Returns false if already locked
+	bool lockCache()
+	{
+		if (m_ptrAfterCache != nullptr)
+			return false;
+		m_ptrAfterCache = m_pFreeMem;
+		m_usedMemForCache = m_usedMem;
+		return true;
+	}
+
 	bool validateMemIntegrity()
 	{
 		void *pTemp{ nullptr };
 		//if amount of free mem has changed, that's bad but potentially manageable.
-		if (uint24_t newFreeMem{ os_MemChk(&pTemp) }; totalFreeMem != newFreeMem)
-		{
-			dbg_sprintf(dbgout, "\nWARN: Free Mem amount has changed from %d to %d", totalFreeMem, newFreeMem);
-			totalFreeMem = newFreeMem;
+		if (uint24_t newFreeMem{ os_MemChk(&pTemp) }; m_totalFreeMem != newFreeMem) {
+			dbg_sprintf(dbgout, "\nWARN: Free Mem amount has changed from %d to %d", m_totalFreeMem, newFreeMem);
+			m_totalFreeMem = newFreeMem;
 		}
 
 		//If mem pointer has moved that is catastrophic.
-		if (pTemp != pFreeMem) {
-			dbg_sprintf(dbgout, "\nWARN: Free Mem Ptr has changed from %p to %p", pFreeMem, pTemp);
+		if (pTemp != m_pFreeMem) {
+			dbg_sprintf(dbgout, "\nWARN: Free Mem Ptr has changed from %p to %p", pTemp, m_pFreeMem);
 			//return false;
 		}
 
@@ -104,58 +120,98 @@ public:
 	{
 		if (!validateMemIntegrity())
 			return 0;
-		dbg_sprintf(dbgout, "\nINFO: getFreeMemoryBytes: %d", totalFreeMem - usedMem);
+		dbg_sprintf(dbgout, "\nINFO: getFreeMemoryBytes: %d", m_totalFreeMem - m_usedMem);
 
-		return totalFreeMem - usedMem;
+		return m_totalFreeMem - m_usedMem;
 	}
 
 	//Returns the pointer to the amount of free memory remaining.
-	void* getFreeMemoryPtr()
+	void *getFreeMemoryPtr()
 	{
-		dbg_sprintf(dbgout, "\nINFO: getFreeMemoryPtr: %p", pFreeMem);
+		dbg_sprintf(dbgout, "\nINFO: getFreeMemoryPtr: %p", m_pFreeMem);
 
-		return pFreeMem;
+		return m_pFreeMem;
 	}
 
 	// Permenantly reserves an amount of memory.
 	// Returns a pointer to that memory.
-	void* permaAllocMemory(uint24_t mem)
+	void *permaAllocMemory(uint24_t mem)
 	{
-		if (totalFreeMem - usedMem < mem)
+		dbg_sprintf(dbgout, "\nINFO:\n Before:\n  permaAlloc'ing %d / %d @ %p", mem, m_totalFreeMem - m_usedMem, m_pFreeMem);
+
+		if (m_totalFreeMem - m_usedMem < mem)
 			return nullptr;
-		usedMem += mem;
-		void *pPrevFreeMem = pFreeMem;
-		pFreeMem = static_cast<char *>(pFreeMem) + usedMem;
+		m_usedMem += mem;
+		void *pPrevFreeMem = m_pFreeMem;
+		m_pFreeMem = static_cast<char *>(m_pFreeMem) + m_usedMem;
+		dbg_sprintf(dbgout, "\n After:  \n  m_usedMem %d / %d @ %p", m_usedMem, m_totalFreeMem, m_pFreeMem);
+
+
 		return pPrevFreeMem;
 	}
 
 	static void use8bppMemory()
 	{
-		uint8_t iOffset = 0;
-		allocation.picture8bpp.srcImg = (gfx_sprite_t *)&memFor8bpp[iOffset];
+		m_pFreeMem = m_ptrAfterCache;
+		m_usedMem = m_usedMemForCache;
+
+		allocation.picture8bpp.srcImg = static_cast<gfx_sprite_t *>(m_pFreeMem);
 		allocation.picture8bpp.srcImg->width = SUBIMAGE_DIMENSIONS;
 		allocation.picture8bpp.srcImg->height = SUBIMAGE_DIMENSIONS;
-		iOffset += SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS + 2; //2 accounts for storing width and height
-		allocation.picture8bpp.tempImg = (gfx_sprite_t *)&memFor8bpp[iOffset];
+
+		const uint24_t iOffset = SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS + 2; //2 accounts for storing width and height
+
+		m_pFreeMem = static_cast<char *>(m_pFreeMem) + iOffset;
+		m_usedMem += iOffset;
+
+		allocation.picture8bpp.tempImg = static_cast<gfx_sprite_t *>(m_pFreeMem);
 		allocation.picture8bpp.tempImg->width = SUBIMAGE_DIMENSIONS;
 		allocation.picture8bpp.tempImg->height = SUBIMAGE_DIMENSIONS;
+
+		m_pFreeMem = static_cast<char *>(m_pFreeMem) + iOffset;
+		m_usedMem += iOffset;
+		//dbg_sprintf(dbgout, "\n After 2: usedMem: %d @ %p ", m_usedMem, m_pFreeMem);
+
 	}
 
 	static void use16bppMemory()
 	{
-		uint8_t iOffset = 0;
-		allocation.picture8bpp.srcImg = (gfx_sprite_t *)&memFor16bpp[iOffset];
-		allocation.picture8bpp.srcImg->width = SUBIMAGE_DIMENSIONS * 2;
-		allocation.picture8bpp.srcImg->height = SUBIMAGE_DIMENSIONS;
-		iOffset += (SUBIMAGE_DIMENSIONS * 2) * SUBIMAGE_DIMENSIONS + 2; //2 accounts for storing width and height
-		allocation.picture8bpp.tempImg = (gfx_sprite_t *)&memFor16bpp[iOffset];
-		allocation.picture8bpp.tempImg->width = SUBIMAGE_DIMENSIONS * 2;
-		allocation.picture8bpp.tempImg->height = SUBIMAGE_DIMENSIONS;
+
+		m_pFreeMem = m_ptrAfterCache;
+		m_usedMem = m_usedMemForCache;
+
+		const uint24_t iOffset = (SUBIMAGE_DIMENSIONS * 2) * SUBIMAGE_DIMENSIONS + 2; //2 accounts for storing width and height
+
+		allocation.picture16bpp.srcImg = static_cast<gfx_sprite_t *>(m_pFreeMem);
+		allocation.picture16bpp.srcImg->width = SUBIMAGE_DIMENSIONS;
+		allocation.picture16bpp.srcImg->height = SUBIMAGE_DIMENSIONS;
+		m_pFreeMem = static_cast<char *>(m_pFreeMem) + iOffset;
+		m_usedMem += iOffset;
+
+		allocation.picture16bpp.tempImg = static_cast<gfx_sprite_t *>(m_pFreeMem);
+		allocation.picture16bpp.tempImg->width = SUBIMAGE_DIMENSIONS;
+		allocation.picture16bpp.tempImg->height = SUBIMAGE_DIMENSIONS;
+		m_pFreeMem = static_cast<char *>(m_pFreeMem) + iOffset;
+		m_usedMem += iOffset;
+
+		//dbg_sprintf(dbgout, "\n After 2: usedMem: %d @ %p ", m_usedMem, m_pFreeMem);
+
 	}
 
 	static void useGifMemory()
 	{
-		uint8_t iOffset = 0;
-		allocation.gif.thumbnail = (gfx_sprite_t *)&memForGif[iOffset];
+		m_pFreeMem = m_ptrAfterCache;
+		m_usedMem = m_usedMemForCache;
+
+		allocation.gif.thumbnail = static_cast<gfx_sprite_t *>(m_pFreeMem);
+
+		const uint24_t iOffset = GIF_SRC_WIDTH * GIF_SRC_HEIGHT + 2; //2 accounts for storing width and height
+
+		m_pFreeMem = static_cast<char *>(m_pFreeMem) + iOffset;
+		m_usedMem += iOffset;
+
+		//dbg_sprintf(dbgout, "\n After 2: usedMem: %d @ %p", m_usedMem, m_pFreeMem);
+
+
 	}
 };//namespace MemoryHandler

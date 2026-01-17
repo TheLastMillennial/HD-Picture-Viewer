@@ -34,7 +34,6 @@
 #define THUMBNAIL_ZOOM 0
 #define ZOOM_SCALE 1.1
 #define SUBIMAGE_DIMENSIONS 80
-#define MAX_16BPP_SUBIMAGE_DIMENSIONS 100
 #define MAX_UINT 16777215
 //colors
 //#define XLIBC_GREY 181 //the best grey xlibc has to offer

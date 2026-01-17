@@ -67,7 +67,9 @@ void heapCheck()
 
 int main(void)
 {
-	dbg_sprintf(dbgout, "\nStart");
+	dbg_sprintf(dbgout, "\n==START==");
+
+
 	heapCheck();
 	//initialize 8 & 16bpp compatibility functions
 	HDpicGFX &gfx = HDpicGFX::getInstance();
@@ -337,9 +339,9 @@ void drawHomeScreen()
 				imageErr = drawMedia(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
-					dbg_sprintf(dbgout, "\nCant zoom in to Max. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
 					desiredWidthInPxl = prevWidth;
 					desiredHeightInPxl = prevHeight;
+					dbg_sprintf(dbgout, "\nCant zoom out. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
 					redrawPic = true;
 				}
 				errorID = kb_KeyZoom; //260
@@ -357,11 +359,11 @@ void drawHomeScreen()
 				imageErr = drawMedia(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
 				//this means we can't zoom in any more. Zoom back out.
 				if (imageErr != 0) {
-					dbg_sprintf(dbgout, "\nCant zoom in. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
 					desiredWidthInPxl = prevWidth;
 					desiredHeightInPxl = prevHeight;
+					dbg_sprintf(dbgout, "\nCant zoom out. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
+					redrawPic = true;
 				}
-				//}
 				errorID = kb_KeyAdd; //1538
 			}
 
@@ -377,9 +379,10 @@ void drawHomeScreen()
 					imageErr = drawMedia(selectedPicIndex, desiredWidthInPxl, desiredHeightInPxl, true);
 					//this means we can't zoom out any more. Zoom back in.
 					if (imageErr != 0) {
-						dbg_sprintf(dbgout, "\nCant zoom out. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
 						desiredWidthInPxl = prevWidth;
 						desiredHeightInPxl = prevHeight;
+						dbg_sprintf(dbgout, "\nCant zoom out. Reverting to %d x %d...", desiredWidthInPxl, desiredHeightInPxl);
+						redrawPic = true;
 					}
 				}
 				errorID = kb_KeySub; //1540
@@ -563,9 +566,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	gfx_sprite_t **srcImg = { nullptr };  //Appvar data initially stored here
 	gfx_sprite_t **tempImg = { nullptr }; //If 1,2, or 4bpp, we'll need to bit-unpacked to here.
 
-	dbg_sprintf(dbgout, "check draw-image 1");
-	mem.validateMemIntegrity();
-
 	if (gfx.is16bppMode()) {
 		mem.use16bppMemory();
 		srcImg = &mem.allocation.picture16bpp.srcImg;
@@ -617,7 +617,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	//	subimgScaledDim, subimgNewDimNumerator, scaleNumerator, scaleDenominator, curPicture.xOffset, curPicture.yOffset);
 
 	//ensure the resized subimage will fit within the dimensions of the screen.
-	if (subimgScaledDim > LCD_HEIGHT || (HDpicGFX::is16bppMode() && subimgScaledDim > MAX_16BPP_SUBIMAGE_DIMENSIONS)) {
+	if (subimgScaledDim > LCD_HEIGHT) {
 		dbg_sprintf(dbgout, "\nERR: Subimage will be too large: %d", subimgScaledDim);
 		return 1;
 	}
@@ -774,28 +774,19 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		}
 	}
 
-	//allocates memory for resized image
-
-	gfx_sprite_t *outputImg{ nullptr };
-	if (HDpicGFX::is16bppMode()) {
-		//we allocate twice as much memory as an 8bpp image.
-		if (static_cast<int24_t> (mem.getFreeMemoryBytes()) < subimgScaledDim * 2 * subimgScaledDim)
-			return 1;
-		outputImg = static_cast<gfx_sprite_t *>(mem.getFreeMemoryPtr());	
-	}
-	else {
-		if (static_cast<int24_t> (mem.getFreeMemoryBytes()) < subimgScaledDim * subimgScaledDim)
-			return 1;
-		outputImg = static_cast<gfx_sprite_t *>(mem.getFreeMemoryPtr());
-	}
-	if (!outputImg) {
-		dbg_sprintf(dbgout, "\nERR: Failed to allocate outputImg memory!");
+	//find free memory for resized image. Need twice the memory for 16bpp
+	const uint24_t iRequiredMem{ static_cast<uint24_t>(subimgScaledDim) * static_cast<uint24_t>(subimgScaledDim) * (HDpicGFX::is16bppMode() ? 2 : 1) + 2 };
+	if (mem.getFreeMemoryBytes() < iRequiredMem) {
+		dbg_sprintf(dbgout, "\nERR: Failed to allocate outputImg memory! %d < %d", iRequiredMem, mem.getFreeMemoryBytes());
 		return 1;
 	}
+	dbg_sprintf(dbgout, "\nINFO: outputImg is using %d / %d bytes of free mem.", iRequiredMem, mem.getFreeMemoryBytes());
+	gfx_sprite_t *outputImg{ static_cast<gfx_sprite_t *>(mem.getFreeMemoryPtr()) };
+
 	//we manually set the width and height to the correct values.
 	outputImg->width = outputImg->height = subimgScaledDim;
 
-	dbg_sprintf(dbgout, "\noutptImg \n ptr: %p \n subimgscaldim: %d \n %p", outputImg,subimgScaledDim, &(outputImg->width));
+	dbg_sprintf(dbgout, "\noutptImg \n ptr: %p \n subimgscaldim: %d \n %p", outputImg, subimgScaledDim, &(outputImg->width));
 
 
 	//pointer to memory where each unsized subimage will be stored
@@ -821,7 +812,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		const uint24_t subimgPxlPosX{ thumbnailOffsetX + static_cast<uint24_t>((xSubimgID + curPicture.xOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 		const uint24_t subimgPxlPosY{ thumbnailOffsetY + static_cast<uint24_t>((ySubimgID - curPicture.yOffset) * (subimgNewDimNumerator / scaleDenominator)) };
 
-		dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl", xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
+		//dbg_sprintf(dbgout, "\nLooped.\n xSubimgID: %d @ %d pxl \n ySubimgID: %d @ %d pxl", xSubimgID, subimgPxlPosX, ySubimgID, subimgPxlPosY);
 
 		//a key interrupted output. Quit immediately
 		if (kb_On || keyHandler.scanKeys(fullScreenPic)) {
@@ -877,11 +868,11 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 		//decompress subimage into srcImg
 		//dbg_sprintf(dbgout, "\n Decompressing... subimgPtr %p to srcImg %p", subimgPtr, srcImg);
-		dbg_sprintf(dbgout, "\n Decompressing... ");
+		//dbg_sprintf(dbgout, "\n Decompressing... ");
 		zx0_Decompress(*srcImg, subimgPtr);
 
 
-		dbg_sprintf(dbgout, "\n CHECK 2: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
+		dbg_sprintf(dbgout, "\n outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
 
 		//displays subimage
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
@@ -1229,15 +1220,19 @@ uint24_t findPictures()
 
 
 		}
-
 		picDB.addPicture(imgData);
 
 		//closes palette for next iteration
 		ti_Close(palette);
 	}
 
+
 	drawSplashScreen();
 	dbg_sprintf(dbgout, "\nPics Detected: %d", imagesFound);
+
+	MemHandler &mem = MemHandler::getInstance();
+	mem.lockCache();
+
 	return imagesFound;
 }
 
