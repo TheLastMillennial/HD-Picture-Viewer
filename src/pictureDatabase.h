@@ -119,11 +119,6 @@ public:
 
 	}
 
-	//void addToCache(imageData& img, uint24_t imgXID, uint24_t imgYID, void *VATptr)
-	//{
-		//img.cache
-	//}
-
 	imageData &getPicture(uint24_t index)
 	{
 		return allImages[index];

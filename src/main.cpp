@@ -27,50 +27,10 @@
 #include "globals.h"
 #include "guiUtils.h"
 
-void heapCheck()
-{
-	return;
-	void **temp = nullptr;
-
-	dbg_sprintf(dbgout, "\nFree User RAM: %zu", os_MemChk(temp));
-
-
-	uint24_t iFreeRAM = 0;
-	uint8_t iExponent = 1;
-	uint24_t prevAttempt = 0;
-	while (iExponent != 0) {
-
-		uint24_t iAttempt = iFreeRAM + (uint24_t)(pow(2, iExponent));
-		//dbg_sprintf(dbgout, "\niFreeRAM: %d iAttempt: %d iExponent: %d", iFreeRAM, iAttempt, iExponent);
-		void *test = gfx_MallocSprite(sqrt(iAttempt), sqrt(iAttempt));
-
-		//dbg_sprintf(dbgout, "\n ptr: %p", test);
-		if (test == nullptr) {
-			iFreeRAM += prevAttempt;
-			prevAttempt = 0;
-			iExponent--;
-		}
-		else {
-			prevAttempt = iAttempt;
-			iExponent++;
-			free(test);
-
-		}
-		if (iExponent > 18) {
-			dbg_sprintf(dbgout, "\nFunction Failed. Impossible RAM limit reached.");
-			return;
-		}
-
-	}
-	dbg_sprintf(dbgout, "\nFree HEAP: %d", iFreeRAM);
-}
-
 int main(void)
 {
 	dbg_sprintf(dbgout, "\n==START==");
 
-
-	heapCheck();
 	//initialize 8 & 16bpp compatibility functions
 	HDpicGFX &gfx = HDpicGFX::getInstance();
 	gfx.use16bpp();
@@ -513,11 +473,12 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		if (fullScreenPic)
 			gfx_ScaledTransparentSprite_NoClip(*srcGif, x, y, 2, 2);
 		else
-			gfx_TransparentSprite_NoClip(*srcGif, x, y);
+			gfx_TransparentSprite_NoClip(*srcGif, 0, 0);
+
 
 
 		//dbg_sprintf(dbgout, "\nclock: %lu\nframeTimer: %lu\ndifference: %lu\nwaiting: %d", (clock()), frameTimer, (clock()) - frameTimer, curPicture.framesDelayMSlist[curFrame]);
-		//dbg_sprintf(dbgout, "\n clock ticks: %lu", clock() - frameTimer);
+		dbg_sprintf(dbgout, "\n clock ticks: %lu", clock() - frameTimer);
 		//wait for frame delay to expire.
 		while ((clock() - frameTimer) < (curPicture.framesDelayMSlist[curFrame]));
 		frameTimer = clock();
@@ -826,12 +787,11 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//combines the separate parts into one name to search for
 		char picAppvarToFind[9];
 
-		dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
+		//dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
 
 		//Pull pointer to the subimage from the cache
 		void *subimgPtr{ nullptr };
 		if (!bDisableCache) {
-			dbg_sprintf(dbgout, "\n Cache Hit.");
 			subimgPtr = curPicture.cache[xSubimgID][ySubimgID];
 		}
 
@@ -870,9 +830,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//dbg_sprintf(dbgout, "\n Decompressing... subimgPtr %p to srcImg %p", subimgPtr, srcImg);
 		//dbg_sprintf(dbgout, "\n Decompressing... ");
 		zx0_Decompress(*srcImg, subimgPtr);
-
-
-		dbg_sprintf(dbgout, "\n outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
 
 		//displays subimage
 		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
@@ -1154,8 +1111,6 @@ uint24_t findPictures()
 		}
 		dbg_sprintf(dbgout, "\n framesDelayListSize = %d", sizeof(uint24_t) * imgData.numGIFFrames);
 
-		heapCheck();
-
 		if (!imgData.framesPtrList.init(imgData.numGIFFrames)) {
 			dbg_sprintf(dbgout, "\n ERR: Not enough mem for frame pointers!");
 			ti_Close(palette);
@@ -1166,11 +1121,6 @@ uint24_t findPictures()
 			ti_Close(palette);
 			continue;
 		}
-
-		dbg_sprintf(dbgout, "\nAFTER STATIC ARRAY");
-
-		heapCheck();
-
 
 		for (uint24_t i{ 0 }; i < imgData.numGIFFrames; i++) {
 			char result[GIF_FRAMES_SIZE + 1];//+1 to account for needing \0

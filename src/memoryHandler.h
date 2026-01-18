@@ -95,31 +95,29 @@ public:
 		return true;
 	}
 
-	bool validateMemIntegrity()
-	{
-		void *pTemp{ nullptr };
-		//if amount of free mem has changed, that's bad but potentially manageable.
-		if (uint24_t newFreeMem{ os_MemChk(&pTemp) }; m_totalFreeMem != newFreeMem) {
-			dbg_sprintf(dbgout, "\nWARN: Free Mem amount has changed from %d to %d", m_totalFreeMem, newFreeMem);
-			m_totalFreeMem = newFreeMem;
-		}
+	//bool validateMemIntegrity()
+	//{
+	//	void *pTemp{ nullptr };
+	//	//if amount of free mem has changed, that's bad but potentially manageable.
+	//	if (uint24_t newFreeMem{ os_MemChk(&pTemp) }; m_totalFreeMem != newFreeMem) {
+	//		dbg_sprintf(dbgout, "\nWARN: Free Mem amount has changed from %d to %d", m_totalFreeMem, newFreeMem);
+	//		m_totalFreeMem = newFreeMem;
+	//	}
 
-		//If mem pointer has moved that is catastrophic.
-		if (pTemp != m_pFreeMem) {
-			dbg_sprintf(dbgout, "\nWARN: Free Mem Ptr has changed from %p to %p", pTemp, m_pFreeMem);
-			//return false;
-		}
+	//	//If mem pointer has moved that is catastrophic.
+	//	if (pTemp != m_pFreeMem) {
+	//		dbg_sprintf(dbgout, "\nWARN: Free Mem Ptr has changed from %p to %p", pTemp, m_pFreeMem);
+	//		//return false;
+	//	}
 
-		dbg_sprintf(dbgout, "\nINFO: Mem check pass.");
+	//	dbg_sprintf(dbgout, "\nINFO: Mem check pass.");
 
-		return true;
-	}
+	//	return true;
+	//}
 
 	//Returns amount of memory available in bytes
 	uint24_t getFreeMemoryBytes()
 	{
-		if (!validateMemIntegrity())
-			return 0;
 		dbg_sprintf(dbgout, "\nINFO: getFreeMemoryBytes: %d", m_totalFreeMem - m_usedMem);
 
 		return m_totalFreeMem - m_usedMem;

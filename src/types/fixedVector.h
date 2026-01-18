@@ -11,19 +11,15 @@ public:
 		: data_(nullptr), size_(0), capacity_(0)
 	{}
 
+	// allocate memory for this vector in free user memory
 	bool init(uint24_t max_elements)
 	{
-		MemHandler &mem = MemHandler::getInstance();
-		mem.validateMemIntegrity();
-		const uint24_t iFreeBytes = mem.getFreeMemoryBytes();
-
 		const uint24_t required = max_elements * sizeof(T);
-
+		MemHandler &mem = MemHandler::getInstance();
 		void *pFreeMem = mem.permaAllocMemory(required);
-		mem.validateMemIntegrity();
 
 		if (pFreeMem == nullptr) {
-			dbg_sprintf(dbgout, "\nFree User RAM: %zu at %p for %d elements", iFreeBytes, pFreeMem, max_elements);
+			dbg_sprintf(dbgout, "\nFree User RAM: %zu at %p for %d elements", mem.getFreeMemoryBytes(), pFreeMem, max_elements);
 
 			return false;
 		}
@@ -32,8 +28,7 @@ public:
 		size_ = 0;
 		capacity_ = max_elements;
 
-		dbg_sprintf(dbgout, "\nFree User RAM: %zu at %p for %d elements", iFreeBytes, pFreeMem, max_elements);
-
+		dbg_sprintf(dbgout, "\nFree User RAM: %zu at %p for %d elements", mem.getFreeMemoryBytes(), pFreeMem, max_elements);
 
 		return true;
 	}
