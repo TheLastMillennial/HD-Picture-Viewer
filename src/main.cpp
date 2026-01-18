@@ -453,8 +453,8 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	}
 
 	const uint24_t finalFrame{ curPicture.numGIFFrames - 1 };
-	const uint24_t x = fullScreenPic ? 0 : 160;
-	const uint24_t y = fullScreenPic ? 0 : 80;
+	const uint24_t x = fullScreenPic ? 32 : 160;
+	const uint24_t y = fullScreenPic ? 24 : 80;
 
 	// Local references for faster access
 	auto &frames = curPicture.framesPtrList;
@@ -475,14 +475,18 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 
 	zx0_Decompress(*srcGif, curPicture.framesPtrList[curFrame]);//pre-decompress first frame
 
+	//thumbnail only shows first frame
+	if (!fullScreenPic)
+	{
+		gfx_TransparentSprite_NoClip(*srcGif, x, y);
+		return 0;
+	}
 
 	clock_t frameTimer{ clock() };
 	while (!keyHandler.isAnyKeyPressed()) {
 		// Display the already-decompressed curFrame frame
-		if (fullScreenPic)
-			gfx_ScaledTransparentSprite_NoClip(*srcGif, x, y, 2, 2);
-		else
-			gfx_TransparentSprite_NoClip(*srcGif, 0, 0);
+		gfx_TransparentSprite_NoClip(*srcGif, x, y);
+
 
 		// Find next valid frame index (wrap-around)
 		uint24_t next{ curFrame };
@@ -493,12 +497,10 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 				return 0;
 		} while (frames[next] == nullptr);
 
-		// Decompress next frame into the same working buffer while waiting for curFrame delay.
-		// Overwriting the buffer is safe because the sprite was already copied to the screen by the gfx calls above.
+		// Decompress frame
 		zx0_Decompress(*srcGif, frames[next]);
 
-		// Wait until curFrame frame's delay has elapsed, polling keys to allow user interrupt.
-		//clock_t endTime = frameTimer + static_cast<clock_t>(delays[curFrame]);
+		// Wait until current frame's delay has elapsed. Press any key to skip.
 		dbg_sprintf(dbgout, "\n Finished in: %lu / %d ticks", clock() - frameTimer, delays[curFrame]);
 
 		while (clock() - frameTimer < static_cast<clock_t>(delays[curFrame])) {
