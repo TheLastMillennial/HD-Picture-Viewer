@@ -65,7 +65,7 @@ public:
 		return allImages.size();
 	}
 
-	void toLower(const char strIn[9], char strOut[9])
+	static inline void toLower(const char strIn[9], char strOut[9])
 	{
 		for (int i = 0; i < 9; ++i) {
 			if (strIn[i] >= 'A' && strIn[i] <= 'Z') {

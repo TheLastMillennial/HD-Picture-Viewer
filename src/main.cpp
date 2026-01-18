@@ -445,48 +445,70 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 
 	//allocate memory for resized image
 	//gfx_rletsprite_t *srcGif{ nullptr };
-	gfx_sprite_t **srcGif = { nullptr };
+	gfx_sprite_t **srcGif{ nullptr };
 	srcGif = &mem.allocation.gif.thumbnail;
 	if (srcGif == nullptr) {
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcGif memory!");
 		return 1;
 	}
 
-	uint24_t curFrame{ 0 };
 	const uint24_t finalFrame{ curPicture.numGIFFrames - 1 };
 	const uint24_t x = fullScreenPic ? 0 : 160;
 	const uint24_t y = fullScreenPic ? 0 : 80;
 
-	clock_t frameTimer = clock();
-	while (!keyHandler.scanKeys(fullScreenPic)) {
-		//dbg_sprintf(dbgout, "\n curFrame %d", curFrame);
+	// Local references for faster access
+	auto &frames = curPicture.framesPtrList;
+	auto &delays = curPicture.framesDelayMSlist;
+	KeyPressHandler &kh = keyHandler;
 
-		if (curPicture.framesPtrList[curFrame] == nullptr) {
-			if (++curFrame > finalFrame)
-				curFrame = 0;
-			continue;
-		}
-		//display frame
-		//dbg_sprintf(dbgout, "\n test 3.2: %p @ curFrame %d", curPicture.framesPtrList[curFrame], curFrame);
-		zx0_Decompress(*srcGif, curPicture.framesPtrList[curFrame]);
-		//dbg_sprintf(dbgout, "\n test 4 %p", curPicture.framesPtrList[curFrame]);
+	// Find first valid frame index
+	uint24_t curFrame{ 0 };
+	if (curPicture.numGIFFrames == 0)
+		return 1;
+
+	while (frames[curFrame] == nullptr) {
+		if (++curFrame > finalFrame)
+			curFrame = 0;
+		if (kh.scanKeys(fullScreenPic))
+			return 0;
+	}
+
+	zx0_Decompress(*srcGif, curPicture.framesPtrList[curFrame]);//pre-decompress first frame
+
+
+	clock_t frameTimer{ clock() };
+	while (!keyHandler.isAnyKeyPressed()) {
+		// Display the already-decompressed curFrame frame
 		if (fullScreenPic)
 			gfx_ScaledTransparentSprite_NoClip(*srcGif, x, y, 2, 2);
 		else
 			gfx_TransparentSprite_NoClip(*srcGif, 0, 0);
 
+		// Find next valid frame index (wrap-around)
+		uint24_t next{ curFrame };
+		do {
+			if (++next > finalFrame)
+				next = 0;
+			if (keyHandler.scanKeys(fullScreenPic))
+				return 0;
+		} while (frames[next] == nullptr);
 
+		// Decompress next frame into the same working buffer while waiting for curFrame delay.
+		// Overwriting the buffer is safe because the sprite was already copied to the screen by the gfx calls above.
+		zx0_Decompress(*srcGif, frames[next]);
 
-		//dbg_sprintf(dbgout, "\nclock: %lu\nframeTimer: %lu\ndifference: %lu\nwaiting: %d", (clock()), frameTimer, (clock()) - frameTimer, curPicture.framesDelayMSlist[curFrame]);
-		dbg_sprintf(dbgout, "\n clock ticks: %lu", clock() - frameTimer);
-		//wait for frame delay to expire.
-		while ((clock() - frameTimer) < (curPicture.framesDelayMSlist[curFrame]));
-		frameTimer = clock();
+		// Wait until curFrame frame's delay has elapsed, polling keys to allow user interrupt.
+		//clock_t endTime = frameTimer + static_cast<clock_t>(delays[curFrame]);
+		dbg_sprintf(dbgout, "\n Finished in: %lu / %d ticks", clock() - frameTimer, delays[curFrame]);
 
-		//loop gif
-		if (++curFrame > finalFrame) {
-			curFrame = 0;
+		while (clock() - frameTimer < static_cast<clock_t>(delays[curFrame])) {
+			if (os_GetCSC())
+				break;
 		}
+
+		// Move to next frame and update timer
+		frameTimer = clock();
+		curFrame = next;
 	}
 	return 0;
 }
@@ -593,7 +615,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	if (!gfx.is16bppMode()) {
 		char palName[9];
 		sprintf(palName, "HP%.2s0000", curPicture.ID);
-		uint24_t iEntries = static_cast<uint24_t>(pow(2.0, static_cast<double>(curPicture.BPP)) * 2);
+		uint24_t iEntries = (1u << curPicture.BPP) * 2u;
 		if (!gfx.usePalette(palName, iEntries)) {
 			PrintCenteredX(palName, 110);
 			PrintCenteredX("ERR: Palette does not exist!", 120);
@@ -1285,19 +1307,19 @@ bool iterate(int24_t &xSubimgID, int24_t const &xFirstID, int24_t const &xLastID
 }
 
 // divide and round up if necessary
-int24_t ceilDiv(int24_t x, int24_t y)
+static inline int24_t ceilDiv(int24_t x, int24_t y)
 {
 	return (x + y - 1) / y;
 }
 
 //converts number character to int24_t i.e. '5' -> 5
-int24_t charToInt(char c)
+static inline int24_t charToInt(char c)
 {
 	return static_cast<int24_t>(c) - '0';
 }
 
 //converts char array of 6 digits to integer.
-uint24_t base36charToInt(const char str[6])
+static inline uint24_t base36charToInt(const char str[6])
 {
 	uint24_t value{ 0 };
 
@@ -1316,7 +1338,7 @@ uint24_t base36charToInt(const char str[6])
 }
 
 //convert base 10 int to base 36 char array. Handles at most 6 characters
-void toBase36(uint24_t value, char out[7])
+static inline void toBase36(uint24_t value, char out[7])
 {
 	static const char digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
