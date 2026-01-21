@@ -9,6 +9,7 @@
 
 #include <tice.h>
 #include <graphx.h>
+#include <hdlib.h>
 #include <string.h>
 #include <fileioc.h>
 #include <debug.h>
@@ -408,6 +409,7 @@ void drawHomeScreen()
 
 }
 
+// Draws animated frames. Changes draw to the buffer.
 uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 {
 	dbg_sprintf(dbgout, "GIF --");
@@ -453,8 +455,8 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	}
 
 	const uint24_t finalFrame{ curPicture.numGIFFrames - 1 };
-	const uint24_t x = fullScreenPic ? 32 : 160;
-	const uint24_t y = fullScreenPic ? 24 : 80;
+	const uint24_t x = fullScreenPic ? 0 : 160;
+	const uint24_t y = fullScreenPic ? 0 : 80;
 
 	// Local references for faster access
 	auto &frames = curPicture.framesPtrList;
@@ -476,17 +478,22 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	zx0_Decompress(*srcGif, curPicture.framesPtrList[curFrame]);//pre-decompress first frame
 
 	//thumbnail only shows first frame
-	if (!fullScreenPic)
-	{
+	if (!fullScreenPic) {
 		gfx_TransparentSprite_NoClip(*srcGif, x, y);
 		return 0;
 	}
+	else {
+		hdl_ScaleHalfResTransparentSpriteFullscreen_NoClip(*srcGif);
+	}
+
+	gfx_sprite_t *test{ static_cast<gfx_sprite_t *>(mem.getFreeMemoryPtr()) };
+	test->width = 255;
+	test->height = 191;
 
 	clock_t frameTimer{ clock() };
 	while (!keyHandler.isAnyKeyPressed()) {
 		// Display the already-decompressed curFrame frame
-		gfx_TransparentSprite_NoClip(*srcGif, x, y);
-
+		hdl_ScaleHalfResTransparentSpriteFullscreen_NoClip(*srcGif);
 
 		// Find next valid frame index (wrap-around)
 		uint24_t next{ curFrame };
@@ -497,7 +504,7 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 				return 0;
 		} while (frames[next] == nullptr);
 
-		// Decompress frame
+		// Decompress next frame
 		zx0_Decompress(*srcGif, frames[next]);
 
 		// Wait until current frame's delay has elapsed. Press any key to skip.
@@ -507,8 +514,7 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 			if (os_GetCSC())
 				break;
 		}
-
-		// Move to next frame and update timer
+		// Move to next frame, reset timer
 		frameTimer = clock();
 		curFrame = next;
 	}

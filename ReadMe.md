@@ -5,6 +5,11 @@ By TheLastMillennial
 
 ## How To Use
 
+### Dependancies:
+These should already be included in the release.
+hdlib.8xv (HD Graphics Library): https://github.com/TheLastMillennial/toolchain
+gfx16.8xv (16 bit Graphics Library): https://github.com/EzCE/gfx16/tree/main
+
 ### Converting Pictures:
 Convert a picture using the HD Picture Viewer Converter: https://github.com/TheLastMillennial/HDPictureViewerConverter2/releases
 Refer to the HD Picture Viewer Converter's readme.md file for instructions on converting a picture. 
@@ -15,6 +20,7 @@ Please note I cannot guarantee the web converter's compatibility with this progr
 ### Written tutorial:
 - Send "HDPICV.8xp" to the *archive memory* of your calculator.
 - Send "gfx16.8xp" to the *archive memory* of your calculator.
+- Send "hdlib.8xp" to the *archive memory* of your calculator.
 - Send the C libraries to the *archive memory* of your calculator: tiny.cc/clibs
 - Send all converted picture files to the *archive memory* of your calculator.
 - Refer to this troubleshooting video if you encounter any issues sending files to the calculator:
@@ -156,10 +162,12 @@ More helpful people:
 - Beckadamtheinventor
 - commandblockguy
 - calclover2514
+- calc84maniac
 - Hooloovoo
 - iPhoenix
 - Epsilon5
 - Runer112
+- Adriweb
 - Jacobly
 - Iambian
 - SahilS
