@@ -28,7 +28,7 @@
 #define Y_SPACING 25
 #define GIF_SRC_WIDTH 160
 #define GIF_SRC_HEIGHT 120
-#define GIF_TRANSPARENT_COLOR 2
+#define GIF_TRANSPARENT_COLOR 0
 #define MAX_THUMBNAIL_WIDTH 160
 #define MAX_THUMBNAIL_HEIGHT 200
 #define THUMBNAIL_ZOOM 0
@@ -38,8 +38,8 @@
 //colors
 //#define XLIBC_GREY 181 //the best grey xlibc has to offer
 //#define XLIBC_RED 192 //xlibc red
-#define PALETTE_BLACK 0 //the xlibc palette and all hdpic generated palettes will have black as 0
-#define PALETTE_WHITE 1 //the xlibc palette and all hdpic generated palettes will have white as 1
+#define PALETTE_BLACK 1 //the xlibc palette and all hdpic generated palettes will have black as 0
+#define PALETTE_WHITE 2 //the xlibc palette and all hdpic generated palettes will have white as 1
 
 #define GFX16_WHITE 0xffff
 #define GFX16_BLACK 0x0

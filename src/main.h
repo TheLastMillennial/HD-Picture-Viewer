@@ -9,5 +9,4 @@ uint24_t findPictures();
 static inline int24_t ceilDiv(int24_t x, int24_t y);
 bool iterate(int24_t &xSubimgID, int24_t const &xFirstID, int24_t const &xLastID, int24_t &ySubimgID, int24_t const &yFirstID, int24_t const &yLastID, bool bDrawVertically, bool bDrawOppositeSideFirst, bool &bFirstRun);
 static inline int24_t charToInt(char c);
-static inline uint24_t base36charToInt(const char str[6]);
-static inline void toBase36(uint24_t value, char out[7]);
+uint24_t charArrToInt(const char *s, uint8_t size);

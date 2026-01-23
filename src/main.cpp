@@ -437,8 +437,6 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	}
 	gfx_SetTransparentColor(GIF_TRANSPARENT_COLOR);
 
-
-
 	// If displaying thumbnail, cover up the last image
 	if (!fullScreenPic) {
 		gfx_SetColor(PALETTE_BLACK);
@@ -483,17 +481,13 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		return 0;
 	}
 	else {
-		hdl_ScaleHalfResTransparentSpriteFullscreen_NoClip(*srcGif);
+		hdl_ScaledTransSpriteFullscreen_ColMajor(*srcGif);
 	}
-
-	gfx_sprite_t *test{ static_cast<gfx_sprite_t *>(mem.getFreeMemoryPtr()) };
-	test->width = 255;
-	test->height = 191;
 
 	clock_t frameTimer{ clock() };
 	while (!keyHandler.isAnyKeyPressed()) {
 		// Display the already-decompressed curFrame frame
-		hdl_ScaleHalfResTransparentSpriteFullscreen_NoClip(*srcGif);
+		hdl_ScaledTransSpriteFullscreen_ColMajor(*srcGif);
 
 		// Find next valid frame index (wrap-around)
 		uint24_t next{ curFrame };
@@ -1071,9 +1065,9 @@ uint24_t findPictures()
 		// Get width of whole image. Then convert the number from a char representation to a int24_t
 		char dimBuffer[3];
 		std::strncpy(dimBuffer, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE + ID_SIZE, HORIZ_VERT_SIZE);
-		imgData.horizSubImages = charToInt(dimBuffer[0]) * 100 + charToInt(dimBuffer[1]) * 10 + charToInt(dimBuffer[2]) + 1;
+		imgData.horizSubImages = charArrToInt(dimBuffer, 3) + 1;
 		std::strncpy(dimBuffer, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE + ID_SIZE + HORIZ_VERT_SIZE, HORIZ_VERT_SIZE);
-		imgData.vertSubImages = charToInt(dimBuffer[0]) * 100 + charToInt(dimBuffer[1]) * 10 + charToInt(dimBuffer[2]) + 1;
+		imgData.vertSubImages = charArrToInt(dimBuffer, 3) + 1;
 
 		//convert the char BPP to a uint8_t
 		imgData.BPP = static_cast<uint8_t>(charToInt(BPPbuffer[0]) * 10 + charToInt(BPPbuffer[1]));
@@ -1120,7 +1114,7 @@ uint24_t findPictures()
 		std::strncpy(imgData.imgName, charArrImgInfo, IMAGE_NAME_SIZE);
 		std::strncpy(imgData.ID, charArrImgInfo + IMAGE_NAME_SIZE, ID_SIZE);
 		std::strncpy(numFramesBuffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE, GIF_FRAMES_SIZE);
-		imgData.numGIFFrames = base36charToInt(numFramesBuffer) + 1;//+1 because first image starts at 0
+		imgData.numGIFFrames = charArrToInt(numFramesBuffer, GIF_FRAMES_SIZE) + 1;;//+1 because first image starts at 0
 
 
 		std::strncpy(imgData.paletteName, var_name, PALETTE_NAME_SIZE);
@@ -1154,7 +1148,7 @@ uint24_t findPictures()
 
 		for (uint24_t i{ 0 }; i < imgData.numGIFFrames; i++) {
 			char result[GIF_FRAMES_SIZE + 1];//+1 to account for needing \0
-			toBase36(i, result);
+			sprintf(result, "%06d", i);
 
 			char picAppvarToFind[9]; //combines the separate parts into one name to search for
 			sprintf(picAppvarToFind, "%.2s%.6s", imgData.ID, result);
@@ -1326,35 +1320,11 @@ static inline int24_t charToInt(char c)
 	return static_cast<int24_t>(c) - '0';
 }
 
-//converts char array of 6 digits to integer.
-static inline uint24_t base36charToInt(const char str[6])
+uint24_t charArrToInt(const char *s, uint8_t size)
 {
-	uint24_t value{ 0 };
+	uint8_t result = 0;
+	for (uint8_t i{ 0 }; i < size; i++)
+		result = result * 10 + (s[i] - '0');
 
-	for (uint8_t i{ 0 }; i < 6; i++) {
-		const char c{ str[i] };
-
-		if (c >= '0' && c <= '9')
-			value = value * 36 + (c - '0');
-		else if (c >= 'A' && c <= 'Z')
-			value = value * 36 + (c - 'A' + 10);
-		else
-			return MAX_UINT;  // invalid character
-	}
-
-	return value;
-}
-
-//convert base 10 int to base 36 char array. Handles at most 6 characters
-static inline void toBase36(uint24_t value, char out[7])
-{
-	static const char digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-	// Generate from least-significant digit to most
-	for (int8_t i = 5; i >= 0; --i) {
-		out[i] = digits[value % 36];
-		value /= 36;
-	}
-
-	out[6] = '\0'; // null terminator
+	return result;
 }

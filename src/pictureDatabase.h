@@ -142,14 +142,10 @@ public:
 			gfx_VertLine_NoClip(260, 153, 7);
 		}
 
-		int24_t const &picWidthInSubimages{ imgToDelete->horizSubImages };
-		int24_t const &picHeightInSubimages{ imgToDelete->vertSubImages };
+		if (imgToDelete->isGIF) 			{
+			LoadingBar &loadingBar = LoadingBar::getInstance();
+			loadingBar.resetLoadingBar(imgToDelete->numGIFFrames);
 
-		LoadingBar &loadingBar = LoadingBar::getInstance();
-		loadingBar.resetLoadingBar(picWidthInSubimages * picHeightInSubimages);
-
-		// 1,2,4, & 8 bpp pictures use a palette
-		if (imgToDelete->BPP != 16) {
 			// find the palette
 			sprintf(picAppvarToFind, "HP%.2s0000", imgToDelete->ID);
 			int delSuccess = ti_Delete(picAppvarToFind);
@@ -160,23 +156,59 @@ public:
 				dbg_sprintf(dbgout, "\nERR: Issue deleting palette");
 				dbg_sprintf(dbgout, "\nHP%.2s0000", imgToDelete->ID);
 			}
-		}
 
-		//delete every subimage
-		for (uint24_t xSubimage = (picWidthInSubimages - 1); xSubimage < MAX_UINT; xSubimage--) {
-			for (uint24_t ySubimage = (picHeightInSubimages - 1); ySubimage < MAX_UINT; ySubimage--) {
-
+			for (uint24_t iFrame = (imgToDelete->numGIFFrames - 1); iFrame < MAX_UINT; iFrame--) {
 				//combines the separate parts into one name to search for
-				sprintf(picAppvarToFind, "%.2s%03u%03u", imgToDelete->ID, xSubimage, ySubimage);
+				sprintf(picAppvarToFind, "%.2s%06d", imgToDelete->ID, iFrame);
 				int delSuccess = ti_Delete(picAppvarToFind);
 
 				//checks if the subimage does not exist
 				if (delSuccess == 0) {
 					//subimage does not exist
 					dbg_sprintf(dbgout, "\nERR: Issue deleting subimage");
-					dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgToDelete->ID, xSubimage, ySubimage);
+					dbg_sprintf(dbgout, "\n%.8s", picAppvarToFind);
 				}
 				loadingBar.increment();
+			}
+
+		}
+		else
+		{
+			int24_t const &picWidthInSubimages{ imgToDelete->horizSubImages };
+			int24_t const &picHeightInSubimages{ imgToDelete->vertSubImages };
+
+			LoadingBar &loadingBar = LoadingBar::getInstance();
+			loadingBar.resetLoadingBar(picWidthInSubimages * picHeightInSubimages);
+
+			// 1,2,4, & 8 bpp pictures use a palette
+			if (imgToDelete->BPP != 16) {
+				// find the palette
+				sprintf(picAppvarToFind, "HP%.2s0000", imgToDelete->ID);
+				int delSuccess = ti_Delete(picAppvarToFind);
+
+				//checks if the palette does not exist
+				if (delSuccess == 0) {
+					//subimage does not exist
+					dbg_sprintf(dbgout, "\nERR: Issue deleting palette");
+					dbg_sprintf(dbgout, "\nHP%.2s0000", imgToDelete->ID);
+				}
+			}
+
+			//delete every subimage
+			for (uint24_t xSubimage = (picWidthInSubimages - 1); xSubimage < MAX_UINT; xSubimage--) {
+				for (uint24_t ySubimage = (picHeightInSubimages - 1); ySubimage < MAX_UINT; ySubimage--) {
+					//combines the separate parts into one name to search for
+					sprintf(picAppvarToFind, "%.2s%03u%03u", imgToDelete->ID, xSubimage, ySubimage);
+					int delSuccess = ti_Delete(picAppvarToFind);
+
+					//checks if the subimage does not exist
+					if (delSuccess == 0) {
+						//subimage does not exist
+						dbg_sprintf(dbgout, "\nERR: Issue deleting subimage");
+						dbg_sprintf(dbgout, "\n%.2s%03u%03u", imgToDelete->ID, xSubimage, ySubimage);
+					}
+					loadingBar.increment();
+				}
 			}
 		}
 		allImages.removeAt(picName);
