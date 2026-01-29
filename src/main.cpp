@@ -438,7 +438,10 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	gfx_SetTransparentColor(GIF_TRANSPARENT_COLOR);
 
 	// If displaying thumbnail, cover up the last image
-	if (!fullScreenPic) {
+	if (fullScreenPic) {
+		gfx_FillScreen(PALETTE_BLACK);
+	}
+	else {
 		gfx_SetColor(PALETTE_BLACK);
 		gfx_FillRectangle_NoClip(150, 0, 170, 240);
 	}
@@ -948,19 +951,19 @@ uint24_t findPictures()
 
 	//find 16 bit pictures
 	void *search_pos = NULL;
-	while ((var_name = ti_DetectVar(&search_pos, "HDPIC16A", OS_TYPE_APPVAR)) != NULL) {
+	while ((var_name = ti_DetectVar(&search_pos, SEARCH_HEADER_16BPP, OS_TYPE_APPVAR)) != NULL) {
 		imagesFound++;
 		loadingBar.increment();
 	}
 	// find 1,2,4,8 bit pictures
 	search_pos = NULL;
-	while ((var_name = ti_DetectVar(&search_pos, "HDPALV11", OS_TYPE_APPVAR)) != NULL) {
+	while ((var_name = ti_DetectVar(&search_pos, SEARCH_HEADER_8BPP, OS_TYPE_APPVAR)) != NULL) {
 		imagesFound++;
 		loadingBar.increment();
 	}
 	// find GIFs
 	search_pos = NULL;
-	while ((var_name = ti_DetectVar(&search_pos, "HDGIFV01", OS_TYPE_APPVAR)) != NULL) {
+	while ((var_name = ti_DetectVar(&search_pos, SEARCH_HEADER_GIF, OS_TYPE_APPVAR)) != NULL) {
 		imagesFound++;
 		loadingBar.increment();
 	}
@@ -976,7 +979,7 @@ uint24_t findPictures()
 
 	/* Find and store 16bpp image data */
 	search_pos = NULL;
-	while ((var_name = ti_DetectVar(&search_pos, "HDPIC16A", OS_TYPE_APPVAR)) != NULL) {
+	while ((var_name = ti_DetectVar(&search_pos, SEARCH_HEADER_16BPP, OS_TYPE_APPVAR)) != NULL) {
 
 		constexpr uint8_t ID_SIZE{ 2 };
 		constexpr uint8_t HORIZ_VERT_SIZE{ 3 };
@@ -992,7 +995,7 @@ uint24_t findPictures()
 		dbg_sprintf(dbgout, "\nfirstPic %.8s", var_name);
 
 		firstPic = ti_Open(var_name, "r");
-		//seeks past HDPIC16A
+		//seeks past 7 bytes header + 1 byte placeholder
 		ti_Seek(8, SEEK_CUR, firstPic);
 		//reads the important info
 		//e.g. poppy___JT003002
@@ -1024,7 +1027,7 @@ uint24_t findPictures()
 
 	/* Find a store data for 1,2,4,&8bpp images*/
 	search_pos = NULL;
-	while ((var_name = ti_DetectVar(&search_pos, "HDPALV11", OS_TYPE_APPVAR)) != NULL) {
+	while ((var_name = ti_DetectVar(&search_pos, SEARCH_HEADER_8BPP, OS_TYPE_APPVAR)) != NULL) {
 
 		constexpr uint8_t ID_SIZE{ 2 };
 		constexpr uint8_t HORIZ_VERT_SIZE{ 3 };
@@ -1042,7 +1045,7 @@ uint24_t findPictures()
 		dbg_sprintf(dbgout, "\npalette %.8s", var_name);
 
 		palette = ti_Open(var_name, "r");
-		//seeks past HDPALV11
+		//seeks past 7 byte header + 1 unused parameter
 		ti_Seek(8, SEEK_CUR, palette);
 		//reads the important info
 		//e.g. 08poppy___JT003002
@@ -1051,7 +1054,7 @@ uint24_t findPictures()
 		char charArrImgInfo[HEADER_SIZE];
 		char BPPbuffer[BITS_PER_PIXEL_SIZE];
 		std::strncpy(charArrImgInfo, imgInfo, HEADER_SIZE);
-		dbg_sprintf(dbgout, "\n charArrImgInfo\n BPP: %.18s", charArrImgInfo);
+		dbg_sprintf(dbgout, "\n charArrImgInfo %.18s", charArrImgInfo);
 		std::strncpy(BPPbuffer, charArrImgInfo, BITS_PER_PIXEL_SIZE);
 		std::strncpy(imgData.imgName, charArrImgInfo + BITS_PER_PIXEL_SIZE, IMAGE_NAME_SIZE);
 		std::strncpy(imgData.ID, charArrImgInfo + BITS_PER_PIXEL_SIZE + IMAGE_NAME_SIZE, ID_SIZE);
@@ -1081,9 +1084,10 @@ uint24_t findPictures()
 		ti_Close(palette);
 	}
 
-	/* Find a store data for 1,2,4,&8bpp images*/
+
+	/* Find a store data for GIFs*/
 	search_pos = NULL;
-	while ((var_name = ti_DetectVar(&search_pos, "HDGIFV01", OS_TYPE_APPVAR)) != NULL) {
+	while ((var_name = ti_DetectVar(&search_pos, SEARCH_HEADER_GIF, OS_TYPE_APPVAR)) != NULL) {
 		constexpr uint8_t ID_SIZE{ 2 };
 		constexpr uint8_t PALETTE_NAME_SIZE{ 8 };
 		constexpr uint8_t GIF_FRAMES_SIZE{ 6 };
@@ -1097,12 +1101,11 @@ uint24_t findPictures()
 		imageData imgData;
 		imgData.isGIF = true;
 		//finds the name, letter ID, and size of entire image this palette belongs to.
-		ti_var_t  palette;
-		//dbg_sprintf(dbgout, "\npalette %.8s", var_name);
+		ti_var_t  palette{ ti_Open(var_name, "r") };
 
-		palette = ti_Open(var_name, "r");
-		//seeks past HDGIFV01
+		//seeks past 7 byte header + 1 unused identifier
 		ti_Seek(8, SEEK_CUR, palette);
+
 		//reads the important info
 		//e.g. poppy___JT
 		ti_Read(&imgInfo, HEADER_SIZE, 1, palette);
@@ -1110,14 +1113,12 @@ uint24_t findPictures()
 		char charArrImgInfo[HEADER_SIZE];
 		char numFramesBuffer[GIF_FRAMES_SIZE];
 		std::strncpy(charArrImgInfo, imgInfo, HEADER_SIZE);
-		//dbg_sprintf(dbgout, "\n charArrImgInfo\n BPP: %.16s", charArrImgInfo);
 		std::strncpy(imgData.imgName, charArrImgInfo, IMAGE_NAME_SIZE);
 		std::strncpy(imgData.ID, charArrImgInfo + IMAGE_NAME_SIZE, ID_SIZE);
 		std::strncpy(numFramesBuffer, charArrImgInfo + IMAGE_NAME_SIZE + ID_SIZE, GIF_FRAMES_SIZE);
 		imgData.numGIFFrames = charArrToInt(numFramesBuffer, GIF_FRAMES_SIZE) + 1;;//+1 because first image starts at 0
-
-
 		std::strncpy(imgData.paletteName, var_name, PALETTE_NAME_SIZE);
+		//dbg_sprintf(dbgout, "\n charArrImgInfo\n BPP: %.16s", charArrImgInfo);
 
 		imgData.imgName[8] = '\0';
 		imgData.paletteName[8] = '\0';
@@ -1127,13 +1128,13 @@ uint24_t findPictures()
 		dbg_sprintf(dbgout, "\n\nGIF found:\n gifName: %.8s\n palName: %.8s", imgData.imgName, imgData.paletteName);
 		dbg_sprintf(dbgout, "\n ID: %.2s\n Frames string: %.6s\n Frames int   : %d\n", imgData.ID, numFramesBuffer, imgData.numGIFFrames);
 
-		dbg_sprintf(dbgout, "\nCaching frame pointers...");
+		//dbg_sprintf(dbgout, "\nCaching frame pointers...");
 		if (imgData.numGIFFrames == MAX_UINT) {
 			dbg_sprintf(dbgout, "\n ERR: Invalid frame length!");
 			ti_Close(palette);
 			continue;
 		}
-		dbg_sprintf(dbgout, "\n framesDelayListSize = %d", sizeof(uint24_t) * imgData.numGIFFrames);
+		//dbg_sprintf(dbgout, "\n framesDelayListSize = %d", sizeof(uint24_t) * imgData.numGIFFrames);
 
 		if (!imgData.framesPtrList.init(imgData.numGIFFrames)) {
 			dbg_sprintf(dbgout, "\n ERR: Not enough mem for frame pointers!");
@@ -1145,15 +1146,17 @@ uint24_t findPictures()
 			ti_Close(palette);
 			continue;
 		}
+		loadingBar.resetLoadingBar(imgData.numGIFFrames);
 
 		for (uint24_t i{ 0 }; i < imgData.numGIFFrames; i++) {
+			loadingBar.increment();
 			char result[GIF_FRAMES_SIZE + 1];//+1 to account for needing \0
 			sprintf(result, "%06d", i);
 
 			char picAppvarToFind[9]; //combines the separate parts into one name to search for
 			sprintf(picAppvarToFind, "%.2s%.6s", imgData.ID, result);
 			picAppvarToFind[8] = '\0';
-			dbg_sprintf(dbgout, "\n gifAppvarToFind: %s", picAppvarToFind);
+			//dbg_sprintf(dbgout, "\n gifAppvarToFind: %s", picAppvarToFind);
 
 			ti_var_t subimgSlot = NULL;
 			subimgSlot = ti_Open(picAppvarToFind, "r");
@@ -1161,26 +1164,21 @@ uint24_t findPictures()
 				char frameDelay[4];
 				ti_Read(&frameDelay, GIF_FRAME_DELAY_SIZE, 1, subimgSlot);
 				//dbg_sprintf(dbgout, "\n FrameDelay string: %.4s", frameDelay);
-				uint24_t delayBuffer = charToInt(frameDelay[0]) * 1000 + charToInt(frameDelay[1]) * 100 + charToInt(frameDelay[2]) * 10 + charToInt(frameDelay[3]);
+				const uint24_t delayBuffer{ static_cast<uint24_t>(
+					charToInt(frameDelay[0]) * 1000 + 
+					charToInt(frameDelay[1]) * 100 + 
+					charToInt(frameDelay[2]) * 10 + 
+					charToInt(frameDelay[3])) };
 				//dbg_sprintf(dbgout, "\n FrameDelay int   : %d = %d ms -> index %d", delayBuffer, delayBuffer * 32, i);
 				imgData.framesDelayMSlist[i] = delayBuffer * 32;//The CE does 32.768 clocks per millisecond
-				//imgData.vecFramesDelayMS.push_back(delayBuffer * 32); 
 
-				//dbg_sprintf(dbgout, "\n LoadTest 0 %d, %d", GIF_FRAMES_SIZE, subimgSlot);
-
-				//seek past frame delay
-				ti_Seek(GIF_FRAME_DELAY_SIZE, SEEK_SET, subimgSlot);
-
-				//dbg_sprintf(dbgout, "\n LoadTest 1");
+				//seek past frame delay and placeholder byte
+				ti_Seek(GIF_FRAME_DELAY_SIZE + 1, SEEK_SET, subimgSlot);
 
 				//cache the pointer to the image data
 				void *subimgPtr{ ti_GetDataPtr(subimgSlot) };
-				//dbg_sprintf(dbgout, "\n LoadTest 2 %p", subimgPtr);
-
 				imgData.framesPtrList[i] = subimgPtr;
-				//dbg_sprintf(dbgout, "\n LoadTest 3");
 
-				//imgData.vecFramesPtr.push_back(subimgPtr);
 				ti_Close(subimgSlot);
 			}
 			else {
@@ -1190,16 +1188,12 @@ uint24_t findPictures()
 				imgData.framesPtrList[i] = nullptr;
 				continue;
 			}
-			//dbg_sprintf(dbgout, "\n EndLoop %d", i);
-
-
 		}
 		picDB.addPicture(imgData);
 
 		//closes palette for next iteration
 		ti_Close(palette);
 	}
-
 
 	drawSplashScreen();
 	dbg_sprintf(dbgout, "\nPics Detected: %d", imagesFound);
@@ -1209,9 +1203,6 @@ uint24_t findPictures()
 
 	return imagesFound;
 }
-
-
-
 
 
 // Allows iterating a 2D grid in multiple different directions.
@@ -1322,7 +1313,7 @@ static inline int24_t charToInt(char c)
 
 uint24_t charArrToInt(const char *s, uint8_t size)
 {
-	uint8_t result = 0;
+	uint24_t result = 0;
 	for (uint8_t i{ 0 }; i < size; i++)
 		result = result * 10 + (s[i] - '0');
 

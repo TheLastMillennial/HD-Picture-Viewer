@@ -27,20 +27,22 @@ private:
 	{
 		constexpr double maxPixelWidth{ 240.0 };
 		const double progress = (static_cast<double>(tasksFinished) / static_cast<double>(tasksToFinish)) * maxPixelWidth;
-
 		HDpicGFX &gfx = HDpicGFX::getInstance();
 
-		if (gfx.is16bppMode())
-		{
+		if (gfx.is16bppMode()) {
 			gfx16_SetColor(GFX16_WHITE);
-			gfx16_FillRectangle_NoClip(40, 153, fmin(progress, maxPixelWidth), 7);
+			gfx16_FillRectangle_NoClip(40, 160, fmin(progress, maxPixelWidth), 7);
+			gfx16_SetColor(GFX16_BLACK);
+			const double dCoverWidth{ fmax(0.0,fmin(maxPixelWidth - progress, maxPixelWidth)) };
+			gfx16_FillRectangle_NoClip(40.0 + progress, 160, dCoverWidth, 7);
 		}
-		else
-		{
+		else {
 			gfx_SetColor(PALETTE_WHITE);
-			gfx_FillRectangle_NoClip(40, 153, fmin(progress, maxPixelWidth), 7);
+			gfx_FillRectangle_NoClip(40, 160, fmin(progress, maxPixelWidth), 7);
+			gfx16_SetColor(PALETTE_BLACK);
+			const double dCoverWidth{ fmax(0.0,fmin(maxPixelWidth - progress, maxPixelWidth)) };
+			gfx16_FillRectangle_NoClip(40.0 + progress, 160, dCoverWidth, 7);
 		}
-
 	}
 
 public:

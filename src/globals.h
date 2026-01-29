@@ -14,6 +14,10 @@
 #define YEAR "2025"
 #define TUTORIAL_LINK "no tutorial for alpha"
 
+#define SEARCH_HEADER_8BPP "HDPALV11"
+#define SEARCH_HEADER_16BPP "HDPICFA"
+#define SEARCH_HEADER_GIF "HDGIFV00"
+
 
 /* MAX_IMAGES is the maximum number of images that can be on the calculator.
 * It's obtained from the two characters used for appvar identification.
