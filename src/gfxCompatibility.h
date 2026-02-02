@@ -52,6 +52,11 @@ public:
 		return b16bppModeEnabled;
 	}
 
+	static uint8_t getPaletteHeaderSize()
+	{
+		return paletteHeaderSize;
+	}
+
 	//16bpp pictures must use 16bpp mode
 	static void use16bpp()
 	{

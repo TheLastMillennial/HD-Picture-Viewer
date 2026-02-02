@@ -77,19 +77,15 @@ void drawHomeScreen()
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
 	HDpicGFX &gfx = HDpicGFX::getInstance();
 
-	HDpicGFX::autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
+	//UI is always 16bpp
+	HDpicGFX::use16bpp();
 
 	/* main menu */
-	if (gfx.is16bppMode()) {
-		dbg_sprintf(dbgout, "\ndrawMenu_16bpp");
-		gfx16_FillScreen(GFX16_BLACK);
-		drawMenu_16bpp(selectedPicIndex);
-	}
-	else {
-		dbg_sprintf(dbgout, "\ndrawMenu_8bpp");
-		gfx_FillScreen(PALETTE_BLACK);
-		drawMenu_8bpp(selectedPicIndex);
-	}
+
+	dbg_sprintf(dbgout, "\ndrawMenu_16bpp");
+	gfx16_FillScreen(GFX16_BLACK);
+	drawMenu_16bpp(selectedPicIndex);
+
 
 	//thumbnail
 	dbg_sprintf(dbgout, "\n drawMedia");
@@ -247,7 +243,8 @@ void drawHomeScreen()
 				dbg_sprintf(dbgout, "\ntoo high %d -> 0", selectedPicIndex);
 				selectedPicIndex = 0;
 			}
-			gfx.autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
+			if (fullScreenImage)
+				gfx.autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
 			resetPic = fullScreenImage;
 			redrawPic = true;
 			errorID = kb_KeyGraph; //257 if an error is thrown, then we've scrolled past the safety barrier somehow.
@@ -262,7 +259,8 @@ void drawHomeScreen()
 				dbg_sprintf(dbgout, "\nunderflow: %d -> %d", selectedPicIndex, (picDB.size() - 1));
 				selectedPicIndex = picDB.size() - 1;
 			}
-			gfx.autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
+			if (fullScreenImage)
+				gfx.autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
 			resetPic = fullScreenImage;
 			redrawPic = true;
 			errorID = kb_KeyYequ; //272 if an error is thrown, then we've scrolled past the safety barrier somehow.
@@ -370,20 +368,18 @@ void drawHomeScreen()
 			//this can cover up other errors so append it
 			errorID = errorID * 1000 + kb_KeyWindow; //264
 		}
+		dbg_sprintf(dbgout, "\n test 2");
 
 		// If necessary, draw the image with new settings.
 		if (redrawPic) {
 			// change gfx libraries, if necessary.
-			HDpicGFX::autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
-			if (!fullScreenImage) {
-				if (gfx.is16bppMode()) {
-					gfx16_FillScreen(GFX16_BLACK);
-					drawMenu_16bpp(selectedPicIndex);
-				}
-				else {
-					gfx_FillScreen(PALETTE_BLACK);
-					drawMenu_8bpp(selectedPicIndex);
-				}
+			dbg_sprintf(dbgout, "\n test 1");
+
+			if (fullScreenImage)
+				HDpicGFX::autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
+			else {
+				gfx16_FillScreen(GFX16_BLACK);
+				drawMenu_16bpp(selectedPicIndex);
 			}
 
 			keyHandler.reset();
@@ -399,10 +395,7 @@ void drawHomeScreen()
 		}
 
 		if (!fullScreenImage) {
-			if (gfx.is16bppMode())
-				drawWatermark_16bpp();
-			else
-				drawWatermark_8bpp();
+			drawWatermark_16bpp();
 		}
 	} while (!quitProgram);
 	dbg_sprintf(dbgout, "\n quitter 1");
@@ -419,7 +412,13 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	KeyPressHandler &keyHandler = KeyPressHandler::getInstance();
 	HDpicGFX &gfx = HDpicGFX::getInstance();
 	HDpicGFX::useGIFMode();
-	HDpicGFX::use8bpp(); //GIF is always 8bpp
+	if (fullScreenPic) {
+		HDpicGFX::use8bpp(); //GIF is always 8bpp
+	}
+	else {
+		HDpicGFX::use16bpp(); //thumbnail is always 16bpp
+	}
+
 	MemHandler &mem = MemHandler::getInstance();
 	mem.useGifMemory();
 
@@ -427,24 +426,7 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	char palName[9];
 	sprintf(palName, "HP%.2s0000", curPicture.ID);
 
-	if (!gfx.usePalette(palName, 512)) {
-		PrintCenteredX(palName, 110);
-		PrintCenteredX("ERR: Palette does not exist!", 120);
-		PrintCenteredX("Image may have recently been deleted.", 130);
-		PrintCenteredX("Try restarting the program.", 140);
-		KeyPressHandler::waitForAnyKey();
-		return 1;
-	}
-	gfx_SetTransparentColor(GIF_TRANSPARENT_COLOR);
 
-	// If displaying thumbnail, cover up the last image
-	if (fullScreenPic) {
-		gfx_FillScreen(PALETTE_BLACK);
-	}
-	else {
-		gfx_SetColor(PALETTE_BLACK);
-		gfx_FillRectangle_NoClip(150, 0, 170, 240);
-	}
 
 	//allocate memory for resized image
 	//gfx_rletsprite_t *srcGif{ nullptr };
@@ -454,6 +436,7 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		dbg_sprintf(dbgout, "\nERR: Failed to allocate srcGif memory!");
 		return 1;
 	}
+
 
 	const uint24_t finalFrame{ curPicture.numGIFFrames - 1 };
 	const uint24_t x = fullScreenPic ? 0 : 160;
@@ -476,16 +459,53 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 			return 0;
 	}
 
-	zx0_Decompress(*srcGif, curPicture.framesPtrList[curFrame]);//pre-decompress first frame
 
 	//thumbnail only shows first frame
 	if (!fullScreenPic) {
-		gfx_TransparentSprite_NoClip(*srcGif, x, y);
+		zx0_Decompress(static_cast<void *>(*srcGif), curPicture.framesPtrList[curFrame]);//pre-decompress first frame
+
+		ti_var_t palSlot{ ti_Open(palName,"r") };
+		if (!palSlot) {
+			dbg_sprintf(dbgout, "\nERR: Couldn't find gif palette to convert!");
+			return 0;
+		}
+
+		// skips past palette header
+		ti_Seek(gfx.getPaletteHeaderSize(), SEEK_SET, palSlot);
+		gfx_sprite_t *outputImg{ static_cast<gfx_sprite_t *>(mem.getFreeMemoryPtr()) };
+		outputImg->width = GIF_SRC_WIDTH;
+		outputImg->height = GIF_SRC_HEIGHT;
+		gfx16_Sprite8bppTo16bpp(ti_GetDataPtr(palSlot), *srcGif, outputImg);
+
+		HDpicGFX::sprite(outputImg, x, y, false);
+
+		ti_Close(palSlot);
 		return 0;
 	}
-	else {
-		hdl_ScaledTransSpriteFullscreen_ColMajor(*srcGif);
+
+	if (!gfx.usePalette(palName, 512)) {
+		PrintCenteredX(palName, 110);
+		PrintCenteredX("ERR: Palette does not exist!", 120);
+		PrintCenteredX("Image may have recently been deleted.", 130);
+		PrintCenteredX("Try restarting the program.", 140);
+		KeyPressHandler::waitForAnyKey();
+		return 1;
 	}
+	gfx_SetTransparentColor(GIF_TRANSPARENT_COLOR);
+
+	// If displaying thumbnail, cover up the last image
+	if (fullScreenPic) {
+		gfx_FillScreen(PALETTE_BLACK);
+	}
+	else {
+		gfx16_SetColor(GFX16_BLACK);
+		gfx16_FillRectangle_NoClip(150, 0, 170, 240);
+	}
+
+	zx0_Decompress(*srcGif, curPicture.framesPtrList[curFrame]);//pre-decompress first frame
+
+	hdl_ScaledTransSpriteFullscreen_ColMajor(*srcGif);
+
 
 	clock_t frameTimer{ clock() };
 	while (!keyHandler.isAnyKeyPressed()) {
@@ -533,10 +553,11 @@ uint8_t drawMedia(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	}
 }
 
-/* Draws the image stored in database at position selectedName.
-* Draws the image at location x,y starting at top left corner.
-* If x=-1 then make image horizontally centered in the screen.
-* If y=-1 then make image vertically centered on the screen.
+/* Draws the image stored in database at position picName.
+* Resizes the image while maintaining aspect ratio to fit desiredWidthInPxl and desiredHeightInPxl
+* fullScreenPic: when false, assumes displaying thumbnails and uses 16bpp. If true, will black out the screen and maintain bpp mode.
+* Draws the image at location shiftX,shiftY starting at top left corner.
+
 * Image will automatically be resized to same aspect ratio so you just set the max width and height (4,3 will fit the screen normally)
 * If successful, returns 0. Otherwise returns 1
 */
@@ -550,6 +571,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	HDpicGFX &gfx = HDpicGFX::getInstance();
 	HDpicGFX::usePictureMode();
 	HDpicGFX::autoSelectLibrary(curPicture.BPP);
+
+	//thumbnails are always 16bpp
+	//Convert 8bpp thumbnails to 16bpp
+	const bool bConvertTo16bpp{ !fullScreenPic && !gfx.is16bppMode() };
+	if (bConvertTo16bpp)
+		gfx.use16bpp();
 
 	gfx_sprite_t **srcImg = { nullptr };  //Appvar data initially stored here
 	gfx_sprite_t **tempImg = { nullptr }; //If 1,2, or 4bpp, we'll need to bit-unpacked to here.
@@ -570,7 +597,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	else {
 		mem.use8bppMemory();
 		srcImg = &mem.allocation.picture8bpp.srcImg;
-		tempImg = &mem.allocation.picture16bpp.tempImg;
+		tempImg = &mem.allocation.picture8bpp.tempImg;
 
 		if (!srcImg || !tempImg)
 			return 1;
@@ -616,9 +643,9 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	}
 
 	//sets correct palettes
-	//requires 8bpp mode
-	if (!gfx.is16bppMode()) {
-		char palName[9];
+	//requires 8bpp picture
+	char palName[9];
+	if (!gfx.is16bppMode() || bConvertTo16bpp) {
 		sprintf(palName, "HP%.2s0000", curPicture.ID);
 		uint24_t iEntries = (1u << curPicture.BPP) * 2u;
 		if (!gfx.usePalette(palName, iEntries)) {
@@ -649,9 +676,9 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			gfx16_SetColor(GFX16_BLACK);
 		}
 		else {
+			//todo: this needs addressing
 			//only 8bpp can double buffer
 			gfx_SetColor(PALETTE_BLACK);
-			gfx_SetDrawBuffer();
 		}
 
 		// Shift screen to right
@@ -682,11 +709,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			HDpicGFX::copyRectangle(0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
 			HDpicGFX::fillRectangle(0, 0, LCD_WIDTH, subimgScaledDim, false);
 		}
-		//Show other 8bpp buffer
-		if (!HDpicGFX::is16bppMode()) {
-			gfx_BlitBuffer();
-			gfx_SetDrawScreen();
-		}
+
 	}
 	else if (fullScreenPic) {
 		//If there's no panning, then we need to re-draw the entire image. 
@@ -752,27 +775,20 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	// If displaying thumbnail, cover up the last image
 	if (!fullScreenPic) {
-		if (gfx.is16bppMode()) {
-			gfx16_SetColor(GFX16_BLACK);
-			gfx16_FillRectangle_NoClip(150, 0, 170, 240);
-		}
-		else {
-			gfx_SetColor(PALETTE_BLACK);
-			gfx_FillRectangle_NoClip(150, 0, 170, 240);
-		}
+		//thumbnails are always 16bpp
+		gfx16_SetColor(GFX16_BLACK);
+		gfx16_FillRectangle_NoClip(150, 0, 170, 240);
 	}
 
 	//find free memory for resized image. Need twice the memory for 16bpp
 	const uint24_t iRequiredMem{ static_cast<uint24_t>(subimgScaledDim) * static_cast<uint24_t>(subimgScaledDim) * (HDpicGFX::is16bppMode() ? 2 : 1) + 2 };
 	if (mem.getFreeMemoryBytes() < iRequiredMem) {
-		dbg_sprintf(dbgout, "\nERR: Failed to allocate outputImg memory! %d < %d", iRequiredMem, mem.getFreeMemoryBytes());
+		dbg_sprintf(dbgout, "\nERR: Failed to allocate outputImg memory! %d > %d", iRequiredMem, mem.getFreeMemoryBytes());
 		return 1;
 	}
 	dbg_sprintf(dbgout, "\nINFO: outputImg is using %d / %d bytes of free mem.", iRequiredMem, mem.getFreeMemoryBytes());
 	gfx_sprite_t *outputImg{ static_cast<gfx_sprite_t *>(mem.getFreeMemoryPtr()) };
-
-	//we manually set the width and height to the correct values.
-	outputImg->width = outputImg->height = subimgScaledDim;
+	//we manually set the width and height to the correct values later
 
 	dbg_sprintf(dbgout, "\noutptImg \n ptr: %p \n subimgscaldim: %d \n %p", outputImg, subimgScaledDim, &(outputImg->width));
 
@@ -853,72 +869,23 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		//dbg_sprintf(dbgout, "\n CHECK 1: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
 
 
-		//decompress subimage into srcImg
-		//dbg_sprintf(dbgout, "\n Decompressing... subimgPtr %p to srcImg %p", subimgPtr, srcImg);
-		//dbg_sprintf(dbgout, "\n Decompressing... ");
-		zx0_Decompress(*srcImg, subimgPtr);
+		if (decompressConvertSprite(subimgPtr, static_cast<gfx_sprite_t *>(*srcImg), static_cast<gfx_sprite_t *>(*tempImg), outputImg, palName, curPicture.BPP, bConvertTo16bpp) != nullptr) {
 
-		//displays subimage
-		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
-		//dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
+			//displays subimage
 
-		uint8_t pixelsPerByte = 8 / curPicture.BPP;
-		uint24_t dataToRead = (SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS) / pixelsPerByte;
-		uint24_t out{ 0 };
 
-		/*dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX < 0: %d < 0", subimgPxlPosX < 0, subimgPxlPosX);
-		dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX + subimgScaledDim > LCD_WIDTH: %d > %d", subimgPxlPosX + subimgScaledDim > LCD_WIDTH, subimgPxlPosX + subimgScaledDim, LCD_WIDTH);
-		dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY < 0: %d < 0", subimgPxlPosY < 0, subimgPxlPosY);
-		dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY + subimgScaledDim > LCD_HEIGHT: %d > %d", subimgPxlPosY + subimgScaledDim > LCD_HEIGHT, subimgPxlPosY + subimgScaledDim, LCD_HEIGHT);*/
-		bool bClipPicture = subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT;
+			//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
+			//dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
 
-		switch (curPicture.BPP) {
-		case 1:
-			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>((*srcImg)->data[i]);
+			/*dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX < 0: %d < 0", subimgPxlPosX < 0, subimgPxlPosX);
+			dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX + subimgScaledDim > LCD_WIDTH: %d > %d", subimgPxlPosX + subimgScaledDim > LCD_WIDTH, subimgPxlPosX + subimgScaledDim, LCD_WIDTH);
+			dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY < 0: %d < 0", subimgPxlPosY < 0, subimgPxlPosY);
+			dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY + subimgScaledDim > LCD_HEIGHT: %d > %d", subimgPxlPosY + subimgScaledDim > LCD_HEIGHT, subimgPxlPosY + subimgScaledDim, LCD_HEIGHT);*/
+			bool bClipPicture = subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT;
 
-				(*tempImg)->data[out++] = (byte >> 7) & 0x01;
-				(*tempImg)->data[out++] = (byte >> 6) & 0x01;
-				(*tempImg)->data[out++] = (byte >> 5) & 0x01;
-				(*tempImg)->data[out++] = (byte >> 4) & 0x01;
-				(*tempImg)->data[out++] = (byte >> 3) & 0x01;
-				(*tempImg)->data[out++] = (byte >> 2) & 0x01;
-				(*tempImg)->data[out++] = (byte >> 1) & 0x01;
-				(*tempImg)->data[out++] = byte & 0x01;
-			}
-			HDpicGFX::scaleSprite(*tempImg, outputImg);
-			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
-			break;
-
-		case 2:
-			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>((*srcImg)->data[i]);
-
-				(*tempImg)->data[out++] = (byte >> 6) & 0x03;
-				(*tempImg)->data[out++] = (byte >> 4) & 0x03;
-				(*tempImg)->data[out++] = (byte >> 2) & 0x03;
-				(*tempImg)->data[out++] = byte & 0x03;
-			}
-			HDpicGFX::scaleSprite(*tempImg, outputImg);
-			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
-			break;
-
-		case 4:
-			for (size_t i = 0; i < dataToRead; i++) {
-				uint8_t byte = static_cast<uint8_t>((*srcImg)->data[i]);
-
-				(*tempImg)->data[out++] = (byte >> 4) & 0x0F;
-				(*tempImg)->data[out++] = byte & 0x0F;
-			}
-			HDpicGFX::scaleSprite(*tempImg, outputImg);
-			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
-			break;
-
-		case 8:
-		case 16:
+			outputImg->width = outputImg->height = subimgScaledDim; // set outputImg to the desired width/height
 			HDpicGFX::scaleSprite(*srcImg, outputImg);
 			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
-			break;
 		}
 
 		//cleans up
@@ -929,6 +896,100 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	return 0;
 }
 
+
+gfx_sprite_t *decompressConvertSprite(void *subimgPtr, gfx_sprite_t *srcImg, gfx_sprite_t *tempImg, gfx_sprite_t *outputImg, char *palName, uint8_t bpp, bool bConvertTo16bpp)
+{
+	//decompress subimage into srcImg
+		// Converts 8bpp thumbnails to 16bpp if necessary
+	if (bConvertTo16bpp) {
+		palName[8] = '\0';//avoid invalid input
+		dbg_sprintf(dbgout, "\nINFO: Converting 8bpp to 16bpp. Palette %.8s", palName);
+		ti_var_t palSlot{ ti_Open(palName,"r") };
+		if (!palSlot) {
+			//Reverts to xlibc palette
+			dbg_sprintf(dbgout, "\nWARN: Couldn't find thumbnail palette!");
+			return nullptr;
+		}
+
+		// skips past palette header
+		HDpicGFX &gfx = HDpicGFX::getInstance();
+		ti_Seek(gfx.getPaletteHeaderSize(), SEEK_SET, palSlot);
+		if (bpp < 8) {
+			zx0_Decompress(srcImg, subimgPtr);
+			if (!tempImg || !bitUnpackSprite(srcImg, tempImg, bpp)) {
+				ti_Close(palSlot);
+				return nullptr;
+			}
+			gfx16_Sprite8bppTo16bpp(static_cast<void *>(ti_GetDataPtr(palSlot)), tempImg, srcImg); //store 16bpp conversion to srcImg
+		}
+		else {
+			zx0_Decompress(outputImg, subimgPtr);
+			gfx16_Sprite8bppTo16bpp(static_cast<void *>(ti_GetDataPtr(palSlot)), outputImg, srcImg); //store 16bpp conversion to srcImg
+		}
+		ti_Close(palSlot);
+	}
+	else {
+		if (bpp < 8) {
+			zx0_Decompress(tempImg, subimgPtr);
+			if (!tempImg || !bitUnpackSprite(tempImg, srcImg, bpp))
+				return nullptr;
+
+		}
+		else {
+			zx0_Decompress(srcImg, subimgPtr);
+		}
+	}
+	return srcImg;
+}
+
+gfx_sprite_t *bitUnpackSprite(gfx_sprite_t *srcImg, gfx_sprite_t *tempImg, uint8_t bpp)
+{
+	uint24_t out{ 0 };
+	uint8_t pixelsPerByte = 8 / bpp;
+	uint24_t dataToRead = (SUBIMAGE_DIMENSIONS * SUBIMAGE_DIMENSIONS) / pixelsPerByte;
+	dbg_sprintf(dbgout, "\n  INFO: Unpacking %d bpp. Data: %d", bpp, dataToRead);
+
+	switch (bpp) {
+	case 1:
+		for (size_t i = 0; i < dataToRead; i++) {
+			uint8_t byte = static_cast<uint8_t>((srcImg)->data[i]);
+
+			(tempImg)->data[out++] = (byte >> 7) & 0x01;
+			(tempImg)->data[out++] = (byte >> 6) & 0x01;
+			(tempImg)->data[out++] = (byte >> 5) & 0x01;
+			(tempImg)->data[out++] = (byte >> 4) & 0x01;
+			(tempImg)->data[out++] = (byte >> 3) & 0x01;
+			(tempImg)->data[out++] = (byte >> 2) & 0x01;
+			(tempImg)->data[out++] = (byte >> 1) & 0x01;
+			(tempImg)->data[out++] = byte & 0x01;
+		}
+		break;
+
+	case 2:
+		for (size_t i = 0; i < dataToRead; i++) {
+			uint8_t byte = static_cast<uint8_t>((srcImg)->data[i]);
+
+			(tempImg)->data[out++] = (byte >> 6) & 0x03;
+			(tempImg)->data[out++] = (byte >> 4) & 0x03;
+			(tempImg)->data[out++] = (byte >> 2) & 0x03;
+			(tempImg)->data[out++] = byte & 0x03;
+		}
+		break;
+
+	case 4:
+		for (size_t i = 0; i < dataToRead; i++) {
+			uint8_t byte = static_cast<uint8_t>((srcImg)->data[i]);
+
+			(tempImg)->data[out++] = (byte >> 4) & 0x0F;
+			(tempImg)->data[out++] = byte & 0x0F;
+		}
+		break;
+	default:
+		dbg_sprintf(dbgout, "\n  ERR: Unknown bpp value: %d", bpp);
+		tempImg = nullptr;
+	}
+	return tempImg;
+}
 
 /* Rebuilds the database of images on the calculator */
 uint24_t findPictures()
@@ -1165,9 +1226,9 @@ uint24_t findPictures()
 				ti_Read(&frameDelay, GIF_FRAME_DELAY_SIZE, 1, subimgSlot);
 				//dbg_sprintf(dbgout, "\n FrameDelay string: %.4s", frameDelay);
 				const uint24_t delayBuffer{ static_cast<uint24_t>(
-					charToInt(frameDelay[0]) * 1000 + 
-					charToInt(frameDelay[1]) * 100 + 
-					charToInt(frameDelay[2]) * 10 + 
+					charToInt(frameDelay[0]) * 1000 +
+					charToInt(frameDelay[1]) * 100 +
+					charToInt(frameDelay[2]) * 10 +
 					charToInt(frameDelay[3])) };
 				//dbg_sprintf(dbgout, "\n FrameDelay int   : %d = %d ms -> index %d", delayBuffer, delayBuffer * 32, i);
 				imgData.framesDelayMSlist[i] = delayBuffer * 32;//The CE does 32.768 clocks per millisecond
