@@ -803,6 +803,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	}
 
 	/* Loop through all subimages to create full image */
+
 	bool bFirstRun{ true };
 	//If there's no cache yet, don't bother even checking it.
 	bool bDisableCache{ curPicture.cache.isEmpty() };
@@ -824,13 +825,13 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			return 0;
 		}
 
+		// Skip subimages outside screen.
 		if (subimgPxlPosX > LCD_WIDTH || subimgPxlPosX < 0 || subimgPxlPosY > LCD_HEIGHT || subimgPxlPosY < 0)
 			continue;
 
-		//combines the separate parts into one name to search for
-		char picAppvarToFind[9];
-
 		//dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
+		
+		/* Check if subimg exists */
 
 		//Pull pointer to the subimage from the cache
 		void *subimgPtr{ nullptr };
@@ -839,10 +840,10 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 		}
 
 		//Check for cache miss
+		char picAppvarToFind[9];
 		ti_var_t subimgSlot = NULL;
 		if (subimgPtr == nullptr) {
 			//cache miss. Find the appvar by name
-
 			sprintf(picAppvarToFind, "%.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
 			//dbg_sprintf(dbgout, "\n Cache Miss. picAppvarToFind: %.8s", picAppvarToFind);
 			subimgSlot = ti_Open(picAppvarToFind, "r");
@@ -865,28 +866,62 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 				continue;
 			}
 		}
-		/* subimage exists, display it */
+		/* We now know the subimg exists */
+		
 		//dbg_sprintf(dbgout, "\n CHECK 1: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
 
-
-		if (decompressConvertSprite(subimgPtr, static_cast<gfx_sprite_t *>(*srcImg), static_cast<gfx_sprite_t *>(*tempImg), outputImg, palName, curPicture.BPP, bConvertTo16bpp) != nullptr) {
-
-			//displays subimage
-
-
-			//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
-			//dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
-
-			/*dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX < 0: %d < 0", subimgPxlPosX < 0, subimgPxlPosX);
-			dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX + subimgScaledDim > LCD_WIDTH: %d > %d", subimgPxlPosX + subimgScaledDim > LCD_WIDTH, subimgPxlPosX + subimgScaledDim, LCD_WIDTH);
-			dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY < 0: %d < 0", subimgPxlPosY < 0, subimgPxlPosY);
-			dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY + subimgScaledDim > LCD_HEIGHT: %d > %d", subimgPxlPosY + subimgScaledDim > LCD_HEIGHT, subimgPxlPosY + subimgScaledDim, LCD_HEIGHT);*/
-			bool bClipPicture = subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT;
-
-			outputImg->width = outputImg->height = subimgScaledDim; // set outputImg to the desired width/height
-			HDpicGFX::scaleSprite(*srcImg, outputImg);
-			HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
+		/* Decompress subimage into srcImg */
+		if (bConvertTo16bpp) {
+			// Convert 8bpp thumbnails to 16bpp
+			dbg_sprintf(dbgout, "\nINFO: Converting 8bpp to 16bpp. Palette %.8s", palName);
+			ti_var_t palSlot{ ti_Open(palName,"r") };
+			if (!palSlot) {
+				//Reverts to xlibc palette
+				dbg_sprintf(dbgout, "\nWARN: Couldn't find thumbnail palette!");
+				return 1;
+			}
+			HDpicGFX &gfx = HDpicGFX::getInstance();
+			ti_Seek(gfx.getPaletteHeaderSize(), SEEK_SET, palSlot);			// skips past palette header
+			if (curPicture.BPP < 8) {
+				// low bpp images must be unpacked before 16bpp conversion
+				zx0_Decompress(*srcImg, subimgPtr);
+				if (!bitUnpackSprite(*srcImg, *tempImg, curPicture.BPP)) {
+					ti_Close(palSlot);
+					return 1;
+				}
+				gfx16_Sprite8bppTo16bpp(static_cast<void *>(ti_GetDataPtr(palSlot)), *tempImg, *srcImg); //store 16bpp conversion to srcImg
+			}
+			else {
+				zx0_Decompress(outputImg, subimgPtr);
+				gfx16_Sprite8bppTo16bpp(static_cast<void *>(ti_GetDataPtr(palSlot)), outputImg, *srcImg); //store 16bpp conversion to srcImg
+			}
+			ti_Close(palSlot);
 		}
+		else {
+			if (curPicture.BPP < 8) {
+				// low bpp images must be unpacked before 16bpp conversion
+				zx0_Decompress(*tempImg, subimgPtr);
+				if (!bitUnpackSprite(*tempImg, *srcImg, curPicture.BPP))
+					return 1;
+			}
+			else {
+				zx0_Decompress(*srcImg, subimgPtr);
+			}
+		}
+		/* ^ subimg is now in srcImg ^ */
+		
+		/*dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
+		* dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX < 0: %d < 0", subimgPxlPosX < 0, subimgPxlPosX);
+		* dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX + subimgScaledDim > LCD_WIDTH: %d > %d", subimgPxlPosX + subimgScaledDim > LCD_WIDTH, subimgPxlPosX + subimgScaledDim, LCD_WIDTH);
+		* dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY < 0: %d < 0", subimgPxlPosY < 0, subimgPxlPosY);
+		* dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosY + subimgScaledDim > LCD_HEIGHT: %d > %d", subimgPxlPosY + subimgScaledDim > LCD_HEIGHT, subimgPxlPosY + subimgScaledDim, LCD_HEIGHT);*/
+
+		/* Scale then Display Subimage */
+		outputImg->width = outputImg->height = subimgScaledDim; // set outputImg to the desired width/height
+		HDpicGFX::scaleSprite(*srcImg, outputImg);
+		//if we are displaying an edge image, clip the subimage. Otherwise don't clip for extra speed.
+		bool bClipPicture = subimgPxlPosX < 0 || subimgPxlPosX + subimgScaledDim > LCD_WIDTH || subimgPxlPosY < 0 || subimgPxlPosY + subimgScaledDim > LCD_HEIGHT;
+		HDpicGFX::sprite(outputImg, subimgPxlPosX, subimgPxlPosY, bClipPicture);
 
 		//cleans up
 		ti_Close(subimgSlot);
@@ -896,53 +931,12 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	return 0;
 }
 
-
-gfx_sprite_t *decompressConvertSprite(void *subimgPtr, gfx_sprite_t *srcImg, gfx_sprite_t *tempImg, gfx_sprite_t *outputImg, char *palName, uint8_t bpp, bool bConvertTo16bpp)
-{
-	//decompress subimage into srcImg
-		// Converts 8bpp thumbnails to 16bpp if necessary
-	if (bConvertTo16bpp) {
-		palName[8] = '\0';//avoid invalid input
-		dbg_sprintf(dbgout, "\nINFO: Converting 8bpp to 16bpp. Palette %.8s", palName);
-		ti_var_t palSlot{ ti_Open(palName,"r") };
-		if (!palSlot) {
-			//Reverts to xlibc palette
-			dbg_sprintf(dbgout, "\nWARN: Couldn't find thumbnail palette!");
-			return nullptr;
-		}
-
-		// skips past palette header
-		HDpicGFX &gfx = HDpicGFX::getInstance();
-		ti_Seek(gfx.getPaletteHeaderSize(), SEEK_SET, palSlot);
-		if (bpp < 8) {
-			zx0_Decompress(srcImg, subimgPtr);
-			if (!tempImg || !bitUnpackSprite(srcImg, tempImg, bpp)) {
-				ti_Close(palSlot);
-				return nullptr;
-			}
-			gfx16_Sprite8bppTo16bpp(static_cast<void *>(ti_GetDataPtr(palSlot)), tempImg, srcImg); //store 16bpp conversion to srcImg
-		}
-		else {
-			zx0_Decompress(outputImg, subimgPtr);
-			gfx16_Sprite8bppTo16bpp(static_cast<void *>(ti_GetDataPtr(palSlot)), outputImg, srcImg); //store 16bpp conversion to srcImg
-		}
-		ti_Close(palSlot);
-	}
-	else {
-		if (bpp < 8) {
-			zx0_Decompress(tempImg, subimgPtr);
-			if (!tempImg || !bitUnpackSprite(tempImg, srcImg, bpp))
-				return nullptr;
-
-		}
-		else {
-			zx0_Decompress(srcImg, subimgPtr);
-		}
-	}
-	return srcImg;
-}
-
-gfx_sprite_t *bitUnpackSprite(gfx_sprite_t *srcImg, gfx_sprite_t *tempImg, uint8_t bpp)
+// Unpacks bit-packed data. 
+// srcImg: sprite to unpack
+// outImg: destination pointer
+// bpp: bits per pixel
+// returns pointer to outImg
+gfx_sprite_t *bitUnpackSprite(gfx_sprite_t *srcImg, gfx_sprite_t *outImg, uint8_t bpp)
 {
 	uint24_t out{ 0 };
 	uint8_t pixelsPerByte = 8 / bpp;
@@ -954,41 +948,39 @@ gfx_sprite_t *bitUnpackSprite(gfx_sprite_t *srcImg, gfx_sprite_t *tempImg, uint8
 		for (size_t i = 0; i < dataToRead; i++) {
 			uint8_t byte = static_cast<uint8_t>((srcImg)->data[i]);
 
-			(tempImg)->data[out++] = (byte >> 7) & 0x01;
-			(tempImg)->data[out++] = (byte >> 6) & 0x01;
-			(tempImg)->data[out++] = (byte >> 5) & 0x01;
-			(tempImg)->data[out++] = (byte >> 4) & 0x01;
-			(tempImg)->data[out++] = (byte >> 3) & 0x01;
-			(tempImg)->data[out++] = (byte >> 2) & 0x01;
-			(tempImg)->data[out++] = (byte >> 1) & 0x01;
-			(tempImg)->data[out++] = byte & 0x01;
+			(outImg)->data[out++] = (byte >> 7) & 0x01;
+			(outImg)->data[out++] = (byte >> 6) & 0x01;
+			(outImg)->data[out++] = (byte >> 5) & 0x01;
+			(outImg)->data[out++] = (byte >> 4) & 0x01;
+			(outImg)->data[out++] = (byte >> 3) & 0x01;
+			(outImg)->data[out++] = (byte >> 2) & 0x01;
+			(outImg)->data[out++] = (byte >> 1) & 0x01;
+			(outImg)->data[out++] = byte & 0x01;
 		}
 		break;
-
 	case 2:
 		for (size_t i = 0; i < dataToRead; i++) {
 			uint8_t byte = static_cast<uint8_t>((srcImg)->data[i]);
 
-			(tempImg)->data[out++] = (byte >> 6) & 0x03;
-			(tempImg)->data[out++] = (byte >> 4) & 0x03;
-			(tempImg)->data[out++] = (byte >> 2) & 0x03;
-			(tempImg)->data[out++] = byte & 0x03;
+			(outImg)->data[out++] = (byte >> 6) & 0x03;
+			(outImg)->data[out++] = (byte >> 4) & 0x03;
+			(outImg)->data[out++] = (byte >> 2) & 0x03;
+			(outImg)->data[out++] = byte & 0x03;
 		}
 		break;
-
 	case 4:
 		for (size_t i = 0; i < dataToRead; i++) {
 			uint8_t byte = static_cast<uint8_t>((srcImg)->data[i]);
 
-			(tempImg)->data[out++] = (byte >> 4) & 0x0F;
-			(tempImg)->data[out++] = byte & 0x0F;
+			(outImg)->data[out++] = (byte >> 4) & 0x0F;
+			(outImg)->data[out++] = byte & 0x0F;
 		}
 		break;
 	default:
 		dbg_sprintf(dbgout, "\n  ERR: Unknown bpp value: %d", bpp);
-		tempImg = nullptr;
+		outImg = nullptr;
 	}
-	return tempImg;
+	return outImg;
 }
 
 /* Rebuilds the database of images on the calculator */
