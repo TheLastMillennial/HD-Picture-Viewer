@@ -130,19 +130,12 @@ public:
 		char picAppvarToFind[9];
 		imageData *imgToDelete{ &allImages[picName] };
 
-		HDpicGFX &gfx = HDpicGFX::getInstance();
-
 		//sets up loading bar finish line
-		if (gfx.is16bppMode()) {
-			gfx16_SetColor(GFX16_WHITE);
-			gfx16_VertLine_NoClip(280, 160, 7);
-		}
-		else {
-			gfx_SetColor(PALETTE_WHITE);
-			gfx_VertLine_NoClip(280, 160, 7);
-		}
+		gfx16_SetColor(GFX16_WHITE);
+		gfx16_VertLine_NoClip(280, 160, 7);
 
-		if (imgToDelete->isGIF) 			{
+
+		if (imgToDelete->isGIF) {
 			LoadingBar &loadingBar = LoadingBar::getInstance();
 			loadingBar.resetLoadingBar(imgToDelete->numGIFFrames);
 
@@ -170,10 +163,8 @@ public:
 				}
 				loadingBar.increment();
 			}
-
 		}
-		else
-		{
+		else {
 			int24_t const &picWidthInSubimages{ imgToDelete->horizSubImages };
 			int24_t const &picHeightInSubimages{ imgToDelete->vertSubImages };
 

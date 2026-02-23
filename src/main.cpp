@@ -9,7 +9,6 @@
 
 #include <tice.h>
 #include <graphx.h>
-#include <hdlib.h>
 #include <string.h>
 #include <fileioc.h>
 #include <debug.h>
@@ -18,6 +17,7 @@
 #include <cstring>
 #include <cmath>
 #include <time.h>
+#include <lcddrvce.h>
 
 #include "main.h"
 #include "loadingBarHandler.h"
@@ -27,6 +27,126 @@
 #include "pictureDatabase.h"
 #include "globals.h"
 #include "guiUtils.h"
+#include "hdlib/hdlib.h"
+
+void SetHalfResMode(bool enable)
+{
+	typedef struct lcd_timing
+	{
+		uint32_t : 2;
+		uint32_t PPL : 6;
+		uint32_t HSW : 8;
+		uint32_t HFP : 8;
+		uint32_t HBP : 8;
+
+		uint32_t LPP : 10;
+		uint32_t VSW : 6;
+		uint32_t VFP : 8;
+		uint32_t VBP : 8;
+
+		uint32_t PCD_LO : 5;
+		uint32_t CLKSEL : 1;
+		uint32_t ACB : 5;
+		uint32_t IVS : 1;
+		uint32_t IHS : 1;
+		uint32_t IPC : 1;
+		uint32_t IOE : 1;
+		uint32_t : 1;
+		uint32_t CPL : 10;
+		uint32_t BCD : 1;
+		uint32_t PCD_HI : 5;
+	} lcd_timing_t;
+
+	typedef struct res_settings
+	{
+		uint8_t frctrl;
+		uint8_t bp;
+		uint16_t xe;
+		uint8_t tfa;
+		uint8_t ramctrl1;
+		lcd_timing_t timing;
+	} res_settings_t;
+
+	static res_settings_t settings[2] =
+	{
+		{
+			/* Default ST7789 settings */
+			.frctrl = LCD_FRCTRL_DEFAULT,
+			.bp = LCD_BP_DEFAULT,
+			.xe = LCD_WIDTH - 1,
+			.tfa = 0,
+			.ramctrl1 = LCD_RAMCTRL1_DEFAULT
+		},
+		{
+			/* With the following ST7789 timing:
+			 * Refreshes LCD in at most 16.51 ms after VSYNC, assuming worst case 9.5 MHz clock
+			 * Waits at least 3.42 ms after VSYNC to read LCD memory, assuming worst case 10.5 MHz clock
+			 */
+			.frctrl = LCD_RTN_378 | LCD_NL_DEFAULT, /* 378 clocks per line */
+			.bp = 95, /* 95 lines of back porch */
+			.xe = HALF_LCD_WIDTH - 1,
+			.tfa = HALF_LCD_WIDTH,
+			.ramctrl1 = LCD_DM_VSYNC | LCD_RAM_DEFAULT,
+			/* With the following PL111 timing:
+			 * Refreshes LCD at 60 Hz = 24 MHz / (800*250*2), a VSYNC period of 16.67 ms
+			 * Outputs 38400 pixels to LCD memory within the first 3.40 ms after VSYNC
+			 */
+			.timing =
+			{
+				.PPL = 768 / 16 - 1, /* 768 pixels per line */
+				.HSW = 1 - 1,
+				.HFP = (800 - 768 - 1 - 1) - 1, /* 800 total clocks per line */
+				.HBP = 1 - 1,
+				.LPP = HALF_LCD_WIDTH * LCD_HEIGHT / 768, /* 50 lines */
+				.VSW = 1 - 1,
+				.VFP = 250 - (HALF_LCD_WIDTH * LCD_HEIGHT / 768) - 1, /* 250 total lines */
+				.VBP = 0,
+				.PCD_LO = (2 - 2) & 0x1F, /* clock divisor of 2 */
+				.CLKSEL = 0,
+				.ACB = 0,
+				.IVS = 1,
+				.IHS = 1,
+				.IPC = 1,
+				.IOE = 1,
+				.CPL = 768 - 1,
+				.BCD = 0,
+				.PCD_HI = (2 - 2) >> 5
+			}
+		}
+	};
+
+	const res_settings_t *p = &settings[enable];
+
+	/* Initialize LCD driver */
+	lcd_Init();
+
+	/* Set clocks per line */
+	lcd_SetNormalFrameRateControl(p->frctrl);
+	/* Set back porch */
+	lcd_SetNormalBackPorchControl(p->bp);
+	/* Set horizontal output window */
+	lcd_SetColumnAddress(0, p->xe);
+	/* Set fixed left scroll area */
+	lcd_SetScrollArea(p->tfa, LCD_WIDTH - p->tfa, 0);
+	/* Set starting vertical scroll address to 0 */
+	lcd_SetScrollAddress(0);
+	/* Set display mode */
+	lcd_SetRamInterface(p->ramctrl1);
+	/* Set interlace mode */
+	lcd_SetInterlacedMode(enable);
+
+	/* Save old display timing when enabling */
+	if (enable) {
+		memcpy(&settings[0].timing, (const void *)&lcd_Timing0, sizeof(settings[0].timing));
+	}
+	/* Set display timing */
+	memcpy((void *)&lcd_Timing0, &p->timing, sizeof(p->timing));
+
+	/* Cleanup LCD driver */
+	lcd_Cleanup();
+}
+
+
 
 int main(void)
 {
@@ -105,7 +225,6 @@ void drawHomeScreen()
 			kb_ClearOnLatch();
 			keyHandler.reset();
 			dbg_sprintf(dbgout, "\nRender aborted by ON.");
-
 			if (gfx.is16bppMode()) {
 				gfx16_SetTextBGColor(GFX16_BG_0);
 				gfx16_SetTextFGColor(GFX16_TEXT_ERROR);
@@ -113,8 +232,8 @@ void drawHomeScreen()
 				gfx16_PrintCenteredX("Press enter to continue.", 215);
 			}
 			else {
-				gfx_SetTextBGColor(PALETTE_BLACK);
-				gfx_SetTextFGColor(PALETTE_WHITE);
+				gfx_SetTextBGColor(1);//todo: fix
+				gfx_SetTextFGColor(2);
 				PrintCenteredX("Render Interrupted.", 10);
 				PrintCenteredX("Press enter to continue.", 215);
 			}
@@ -149,10 +268,8 @@ void drawHomeScreen()
 				resetPic = true;
 				redrawPic = true;
 				errorID = kb_KeyClear; //1600
-				if (gfx.is16bppMode())
-					gfx16_FillScreen(GFX16_BLACK);
-				else
-					gfx_FillScreen(PALETTE_BLACK);
+				gfx16_FillScreen(GFX16_BLACK);
+
 			}
 			else {
 				quitProgram = true;
@@ -176,14 +293,13 @@ void drawHomeScreen()
 			drawHelp();
 			KeyPressHandler::waitForAnyKey();
 
-			if (prev16bpp) {
+			if (prev16bpp) 
 				HDpicGFX::use16bpp();
-				gfx16_FillScreen(GFX16_BLACK);
-			}
-			else {
+			else 
 				HDpicGFX::use8bpp();
-				gfx_FillScreen(PALETTE_BLACK);
-			}
+			
+			gfx16_FillScreen(GFX16_BLACK);
+
 
 			resetPic = true;
 			redrawPic = true;
@@ -248,7 +364,6 @@ void drawHomeScreen()
 			resetPic = fullScreenImage;
 			redrawPic = true;
 			errorID = kb_KeyGraph; //257 if an error is thrown, then we've scrolled past the safety barrier somehow.
-
 		}
 
 		/* Y= or up. Decreases the name to start on and redraws the text */
@@ -378,7 +493,8 @@ void drawHomeScreen()
 			if (fullScreenImage)
 				HDpicGFX::autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
 			else {
-				gfx16_FillScreen(GFX16_BLACK);
+				gfx16_SetColor(GFX16_BLACK);
+				gfx16_FillRectangle(136, 0, 184, 240);
 				drawMenu_16bpp(selectedPicIndex);
 			}
 
@@ -462,7 +578,7 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 
 	//thumbnail only shows first frame
 	if (!fullScreenPic) {
-		zx0_Decompress(static_cast<void *>(*srcGif), curPicture.framesPtrList[curFrame]);//pre-decompress first frame
+		lz4_Decompress(static_cast<void *>(*srcGif), curPicture.framesPtrList[curFrame]);//pre-decompress first frame
 
 		ti_var_t palSlot{ ti_Open(palName,"r") };
 		if (!palSlot) {
@@ -493,24 +609,23 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	}
 	gfx_SetTransparentColor(GIF_TRANSPARENT_COLOR);
 
-	// If displaying thumbnail, cover up the last image
-	if (fullScreenPic) {
-		gfx_FillScreen(PALETTE_BLACK);
-	}
-	else {
-		gfx16_SetColor(GFX16_BLACK);
-		gfx16_FillRectangle_NoClip(150, 0, 170, 240);
-	}
+	// Cover up the last image
+	gfx16_FillScreen(GFX16_BLACK);
+	dbg_sprintf(dbgout, "\nis 16bpp %d",gfx.is16bppMode() ? 1 : 0);
 
-	zx0_Decompress(*srcGif, curPicture.framesPtrList[curFrame]);//pre-decompress first frame
-
-	hdl_ScaledTransSpriteFullscreen_ColMajor(*srcGif);
-
-
+	SetHalfResMode(true);
+	//dbg_WatchpointSet(*srcGif, 1, DBG_WATCHPOINT_ALL);
+	lz4_Decompress(*srcGif, curPicture.framesPtrList[curFrame]);//pre-decompress first frame
+	//gfx_SetDrawBuffer();
 	clock_t frameTimer{ clock() };
 	while (!keyHandler.isAnyKeyPressed()) {
 		// Display the already-decompressed curFrame frame
-		hdl_ScaledTransSpriteFullscreen_ColMajor(*srcGif);
+		dbg_sprintf(dbgout, "\nTimes: ");
+
+		const clock_t spriteTimer{ clock() };
+		hdl_HalfResSprite_NoClip(*srcGif);
+		//gfx_TransparentSprite_NoClip(*srcGif, 0, 0);
+		dbg_sprintf(dbgout, "\n Sprite: %lu ticks", clock() - spriteTimer);
 
 		// Find next valid frame index (wrap-around)
 		uint24_t next{ curFrame };
@@ -518,15 +633,20 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 			if (++next > finalFrame)
 				next = 0;
 			if (keyHandler.scanKeys(fullScreenPic))
+			{
+				SetHalfResMode(false);
 				return 0;
+			}
 		} while (frames[next] == nullptr);
 
 		// Decompress next frame
-		zx0_Decompress(*srcGif, frames[next]);
+		const clock_t compTimer{ clock() };
+		lz4_Decompress(*srcGif, frames[next]);
+		dbg_sprintf(dbgout, "\n Decompression: %lu ticks", clock() - compTimer);
+
 
 		// Wait until current frame's delay has elapsed. Press any key to skip.
 		dbg_sprintf(dbgout, "\n Finished in: %lu / %d ticks", clock() - frameTimer, delays[curFrame]);
-
 		while (clock() - frameTimer < static_cast<clock_t>(delays[curFrame])) {
 			if (os_GetCSC())
 				break;
@@ -535,6 +655,7 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		frameTimer = clock();
 		curFrame = next;
 	}
+	SetHalfResMode(false);
 	return 0;
 }
 
@@ -570,13 +691,14 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	MemHandler &mem = MemHandler::getInstance();
 	HDpicGFX &gfx = HDpicGFX::getInstance();
 	HDpicGFX::usePictureMode();
-	HDpicGFX::autoSelectLibrary(curPicture.BPP);
 
 	//thumbnails are always 16bpp
 	//Convert 8bpp thumbnails to 16bpp
-	const bool bConvertTo16bpp{ !fullScreenPic && !gfx.is16bppMode() };
+	const bool bConvertTo16bpp{ !fullScreenPic && curPicture.BPP != 16 };
 	if (bConvertTo16bpp)
 		gfx.use16bpp();
+	else
+		HDpicGFX::autoSelectLibrary(curPicture.BPP);
 
 	gfx_sprite_t **srcImg = { nullptr };  //Appvar data initially stored here
 	gfx_sprite_t **tempImg = { nullptr }; //If 1,2, or 4bpp, we'll need to bit-unpacked to here.
@@ -672,52 +794,52 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//Check if we need to pan the image. If so, shift the contents of the screen over so we don't need to redraw as many subimages.
 	if (shiftX != 0 || shiftY != 0) {
-		if (HDpicGFX::is16bppMode()) {
+		if (HDpicGFX::is16bppMode()) 
 			gfx16_SetColor(GFX16_BLACK);
-		}
-		else {
-			//todo: this needs addressing
-			//only 8bpp can double buffer
-			gfx_SetColor(PALETTE_BLACK);
-		}
-
+		else 
+			gfx_SetColor(255);//todo: this needs to go.
+		
 		// Shift screen to right
 		if (shiftX > 0) {
 			bReverseDirection = true;
 			bDrawVertical = true;
-			HDpicGFX::copyRectangle(0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+			dbg_sprintf(dbgout, "\nInfo, right. \n x1: %d y1: %d \n x2: %d y2: %d \n w: %d h: %d", 0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+
+			//HDpicGFX::copyRectangle(0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
 			HDpicGFX::fillRectangle(0, 0, subimgScaledDim, LCD_HEIGHT, false);
 		}
 		// Shift screen to left
 		if (shiftX < 0) {
 			bReverseDirection = false;
 			bDrawVertical = true;
-			HDpicGFX::copyRectangle(subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+			dbg_sprintf(dbgout, "\nInfo, left. \n x1: %d y1: %d \n x2: %d y2: %d \n w: %d h: %d", subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+
+			//HDpicGFX::copyRectangle(subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
 			HDpicGFX::fillRectangle(LCD_WIDTH - subimgScaledDim, 0, subimgScaledDim, LCD_HEIGHT, false);
 		}
 		// Shift screen up
 		if (shiftY > 0) {
 			bReverseDirection = false;
 			bDrawVertical = false;
-			HDpicGFX::copyRectangle(0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+			dbg_sprintf(dbgout, "\nInfo, up. \n x1: %d y1: %d \n x2: %d y2: %d \n w: %d h: %d", 0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+
+			//HDpicGFX::copyRectangle(0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
 			HDpicGFX::fillRectangle(0, LCD_HEIGHT - subimgScaledDim, LCD_WIDTH, subimgScaledDim, false);
 		}
 		// Shift screen down
 		if (shiftY < 0) {
 			bReverseDirection = true;
 			bDrawVertical = false;
-			HDpicGFX::copyRectangle(0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+			dbg_sprintf(dbgout, "\nInfo, down. \n x1: %d y1: %d \n x2: %d y2: %d \n w: %d h: %d", 0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+
+			//HDpicGFX::copyRectangle(0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
 			HDpicGFX::fillRectangle(0, 0, LCD_WIDTH, subimgScaledDim, false);
 		}
 
 	}
 	else if (fullScreenPic) {
 		//If there's no panning, then we need to re-draw the entire image. 
-		if (HDpicGFX::is16bppMode())
 			gfx16_FillScreen(GFX16_BLACK);
-		else
-			gfx_FillScreen(PALETTE_BLACK);
-
 	}
 
 	/* Set up to display all the subimages */
@@ -830,7 +952,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			continue;
 
 		//dbg_sprintf(dbgout, "\nAppVar Name: %.2s%03u%03u", curPicture.ID, xSubimgID, ySubimgID);
-		
+
 		/* Check if subimg exists */
 
 		//Pull pointer to the subimage from the cache
@@ -867,7 +989,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			}
 		}
 		/* We now know the subimg exists */
-		
+
 		//dbg_sprintf(dbgout, "\n CHECK 1: outputImg W x H: %d x %d ptr: %p", outputImg->width, outputImg->height, outputImg);
 
 		/* Decompress subimage into srcImg */
@@ -909,7 +1031,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			}
 		}
 		/* ^ subimg is now in srcImg ^ */
-		
+
 		/*dbg_sprintf(dbgout, "\nsubImgX: %d\nsubImgY: %d\nsrcImg: %p", subimgPxlPosX, subimgPxlPosY, (void *)&srcImg);
 		* dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX < 0: %d < 0", subimgPxlPosX < 0, subimgPxlPosX);
 		* dbg_sprintf(dbgout, "\n CHECK %d subimgPxlPosX + subimgScaledDim > LCD_WIDTH: %d > %d", subimgPxlPosX + subimgScaledDim > LCD_WIDTH, subimgPxlPosX + subimgScaledDim, LCD_WIDTH);

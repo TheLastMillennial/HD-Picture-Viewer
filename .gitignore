@@ -9,3 +9,4 @@ src/.vs/*
 *.bc
 *.lnk
 RELEASE_CHECKLIST.txt
+*.obj

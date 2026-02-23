@@ -215,6 +215,5 @@ public:
 			gfx16_CopyRectangle(srcX, srcY, dstX, dstY, width, height);
 		else
 			gfx_CopyRectangle(srcBuffer, dstBuffer, srcX, srcY, dstX, dstY, width, height);
-
 	}
 };

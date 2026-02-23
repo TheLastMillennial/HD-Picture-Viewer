@@ -3,7 +3,6 @@ void drawHomeScreen();
 uint8_t drawMedia(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desiredHeightInPxl, bool refreshWholeScreen, int8_t shiftX = 0, int8_t shiftY = 0);
 uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desiredHeightInPxl, bool refreshWholeScreen, int8_t shiftX = 0, int8_t shiftY = 0);
 uint8_t drawGIF(uint24_t picName, bool fullScreenPic);
-void drawMenu_8bpp(uint24_t startName);
 void drawMenu_16bpp(uint24_t startName);
 uint24_t findPictures();
 gfx_sprite_t *bitUnpackSprite(gfx_sprite_t *srcImg, gfx_sprite_t *outImg, uint8_t bpp);
