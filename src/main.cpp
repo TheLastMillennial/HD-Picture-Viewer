@@ -293,11 +293,11 @@ void drawHomeScreen()
 			drawHelp();
 			KeyPressHandler::waitForAnyKey();
 
-			if (prev16bpp) 
+			if (prev16bpp)
 				HDpicGFX::use16bpp();
-			else 
+			else
 				HDpicGFX::use8bpp();
-			
+
 			gfx16_FillScreen(GFX16_BLACK);
 
 
@@ -611,7 +611,7 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 
 	// Cover up the last image
 	gfx16_FillScreen(GFX16_BLACK);
-	dbg_sprintf(dbgout, "\nis 16bpp %d",gfx.is16bppMode() ? 1 : 0);
+	dbg_sprintf(dbgout, "\nis 16bpp %d", gfx.is16bppMode() ? 1 : 0);
 
 	SetHalfResMode(true);
 	//dbg_WatchpointSet(*srcGif, 1, DBG_WATCHPOINT_ALL);
@@ -632,8 +632,7 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		do {
 			if (++next > finalFrame)
 				next = 0;
-			if (keyHandler.scanKeys(fullScreenPic))
-			{
+			if (keyHandler.scanKeys(fullScreenPic)) {
 				SetHalfResMode(false);
 				return 0;
 			}
@@ -794,18 +793,20 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 
 	//Check if we need to pan the image. If so, shift the contents of the screen over so we don't need to redraw as many subimages.
 	if (shiftX != 0 || shiftY != 0) {
-		if (HDpicGFX::is16bppMode()) 
+		if (HDpicGFX::is16bppMode())
 			gfx16_SetColor(GFX16_BLACK);
-		else 
-			gfx_SetColor(255);//todo: this needs to go.
-		
+		else {
+			gfx_SetColor(1);
+			gfx_SetDraw(gfx_buffer);
+		}
+
 		// Shift screen to right
 		if (shiftX > 0) {
 			bReverseDirection = true;
 			bDrawVertical = true;
 			dbg_sprintf(dbgout, "\nInfo, right. \n x1: %d y1: %d \n x2: %d y2: %d \n w: %d h: %d", 0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
 
-			//HDpicGFX::copyRectangle(0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+			HDpicGFX::copyRectangle(0, 0, subimgScaledDim, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
 			HDpicGFX::fillRectangle(0, 0, subimgScaledDim, LCD_HEIGHT, false);
 		}
 		// Shift screen to left
@@ -814,7 +815,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			bDrawVertical = true;
 			dbg_sprintf(dbgout, "\nInfo, left. \n x1: %d y1: %d \n x2: %d y2: %d \n w: %d h: %d", subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
 
-			//HDpicGFX::copyRectangle(subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
+			HDpicGFX::copyRectangle(subimgScaledDim, 0, 0, 0, (LCD_WIDTH - subimgScaledDim), LCD_HEIGHT);
 			HDpicGFX::fillRectangle(LCD_WIDTH - subimgScaledDim, 0, subimgScaledDim, LCD_HEIGHT, false);
 		}
 		// Shift screen up
@@ -823,7 +824,7 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			bDrawVertical = false;
 			dbg_sprintf(dbgout, "\nInfo, up. \n x1: %d y1: %d \n x2: %d y2: %d \n w: %d h: %d", 0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
 
-			//HDpicGFX::copyRectangle(0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+			HDpicGFX::copyRectangle(0, subimgScaledDim, 0, 0, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
 			HDpicGFX::fillRectangle(0, LCD_HEIGHT - subimgScaledDim, LCD_WIDTH, subimgScaledDim, false);
 		}
 		// Shift screen down
@@ -832,14 +833,17 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			bDrawVertical = false;
 			dbg_sprintf(dbgout, "\nInfo, down. \n x1: %d y1: %d \n x2: %d y2: %d \n w: %d h: %d", 0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
 
-			//HDpicGFX::copyRectangle(0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
+			HDpicGFX::copyRectangle(0, 0, 0, subimgScaledDim, LCD_WIDTH, (LCD_HEIGHT - subimgScaledDim));
 			HDpicGFX::fillRectangle(0, 0, LCD_WIDTH, subimgScaledDim, false);
 		}
-
+		if (!HDpicGFX::is16bppMode()) {
+			gfx_Blit(gfx_buffer);
+			gfx_SetDraw(gfx_screen);
+		}
 	}
 	else if (fullScreenPic) {
 		//If there's no panning, then we need to re-draw the entire image. 
-			gfx16_FillScreen(GFX16_BLACK);
+		gfx16_FillScreen(GFX16_BLACK);
 	}
 
 	/* Set up to display all the subimages */
