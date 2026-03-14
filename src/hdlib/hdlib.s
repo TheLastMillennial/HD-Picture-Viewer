@@ -1,6 +1,5 @@
     .assume  adl=1
 
-
     .section        .text._hdl_HalfResSprite_NoClip
     .global _hdl_HalfResSprite_NoClip
     .type   _hdl_HalfResSprite_NoClip, @function

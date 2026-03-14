@@ -508,8 +508,13 @@ void drawHomeScreen()
 				KeyPressHandler::waitForAnyKey();
 				return;
 			}
-		}
+			if (picDB.getPicture(selectedPicIndex).isGIF) 
+			{
+				HDpicGFX::use16bpp();
+				drawMenu_16bpp(selectedPicIndex);
+			}
 
+		}
 		if (!fullScreenImage) {
 			drawWatermark_16bpp();
 		}
@@ -541,8 +546,6 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	//requires 8bpp mode
 	char palName[9];
 	sprintf(palName, "HP%.2s0000", curPicture.ID);
-
-
 
 	//allocate memory for resized image
 	//gfx_rletsprite_t *srcGif{ nullptr };
@@ -593,6 +596,9 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		outputImg->height = GIF_SRC_HEIGHT;
 		gfx16_Sprite8bppTo16bpp(ti_GetDataPtr(palSlot), *srcGif, outputImg);
 
+		//todo: fix
+		gfx16_SetTransparentColor(63519);//magenta
+		gfx16_TransparentSprite_NoClip(outputImg, x, y);
 		HDpicGFX::sprite(outputImg, x, y, false);
 
 		ti_Close(palSlot);
@@ -609,11 +615,12 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	}
 	gfx_SetTransparentColor(GIF_TRANSPARENT_COLOR);
 
-	// Cover up the last image
-	gfx16_FillScreen(GFX16_BLACK);
 	dbg_sprintf(dbgout, "\nis 16bpp %d", gfx.is16bppMode() ? 1 : 0);
 
+	// Cover up the last image
+	gfx_FillScreen(GIF_BACKGROUND_COLOR);
 	SetHalfResMode(true);
+
 	//dbg_WatchpointSet(*srcGif, 1, DBG_WATCHPOINT_ALL);
 	lz4_Decompress(*srcGif, curPicture.framesPtrList[curFrame]);//pre-decompress first frame
 	//gfx_SetDrawBuffer();
