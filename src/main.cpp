@@ -508,7 +508,8 @@ void drawHomeScreen()
 				KeyPressHandler::waitForAnyKey();
 				return;
 			}
-			if (picDB.getPicture(selectedPicIndex).isGIF) 
+			//todo: this needs to run when gif is first thing selected, then the user switches to a image, then presses clear
+			if (picDB.getPicture(selectedPicIndex).isGIF && fullScreenImage)
 			{
 				HDpicGFX::use16bpp();
 				drawMenu_16bpp(selectedPicIndex);
@@ -595,11 +596,8 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		outputImg->width = GIF_SRC_WIDTH;
 		outputImg->height = GIF_SRC_HEIGHT;
 		gfx16_Sprite8bppTo16bpp(ti_GetDataPtr(palSlot), *srcGif, outputImg);
-
-		//todo: fix
-		gfx16_SetTransparentColor(63519);//magenta
+		gfx16_SetTransparentColor(GFX16_MAGENTA);
 		gfx16_TransparentSprite_NoClip(outputImg, x, y);
-		HDpicGFX::sprite(outputImg, x, y, false);
 
 		ti_Close(palSlot);
 		return 0;

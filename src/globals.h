@@ -50,6 +50,7 @@
 #define GFX16_BLACK 0x0
 #define GFX16_RED 0xf800
 #define GFX16_LIGHT_GREY 0xbdf7
+#define GFX16_MAGENTA 0xf81f
 
 /* Color scheme based off DuckDuckGo
 * Useful color visualizers:
