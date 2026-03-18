@@ -10,6 +10,7 @@ private:
 	uint24_t size;        // Current size (number of elements in the vector)
 
 public:
+	dfdfgsdfg
 	// Default constructor
 	Vector() : data(NULL), capacity(0), size(0) {}
 

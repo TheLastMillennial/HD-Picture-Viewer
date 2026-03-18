@@ -5,8 +5,10 @@ By TheLastMillennial
 
 ## How To Use
 
-### Full Video Tutorial:
-https://youtu.be/uixL9t5ZTJs
+### Dependancies:
+These should already be included in the release.
+hdlib.8xv (HD Graphics Library): https://github.com/TheLastMillennial/toolchain
+gfx16.8xv (16 bit Graphics Library): https://github.com/EzCE/gfx16/tree/main
 
 ### Converting Pictures:
 Convert a picture using the HD Picture Viewer Converter: https://github.com/TheLastMillennial/HDPictureViewerConverter2/releases
@@ -17,11 +19,14 @@ Please note I cannot guarantee the web converter's compatibility with this progr
 
 ### Written tutorial:
 - Send "HDPICV.8xp" to the *archive memory* of your calculator.
+- Send "gfx16.8xp" to the *archive memory* of your calculator.
+- Send "hdlib.8xp" to the *archive memory* of your calculator.
+- Send the C libraries to the *archive memory* of your calculator: tiny.cc/clibs
 - Send all converted picture files to the *archive memory* of your calculator.
-- Refer to this troubleshooting video if you encounter any issues sending files to the calculator.
+- Refer to this troubleshooting video if you encounter any issues sending files to the calculator:
   - https://www.youtube.com/watch?v=-TweNnHuFCQ
-- New OS version will require the HDPICV program to be run through the Artifice Jailbreak:
-  - https://www.youtube.com/watch?v=abB0ZEdQ1rs
+- New OS version will require the HDPICV program to be run through the arTIfiCE Jailbreak:
+  - https://www.youtube.com/watch?v=PFtFIA6zrG8
 - When the program is run, if any pictures are on the calculator, you will see a list of picture names on the main menu.
 - Press Enter to open an image in fullscreen.
 - Press Clear to exit.
@@ -59,13 +64,18 @@ The first-party converter is only designed for Windows. You can try using the al
 Press [clear]. If that's not working, press and hold the reset button on the back of the calculator for at least two seconds.
 
 ### How many pictures can I put on the calculator?
-This greatly depends on many factors: how many files you already have on the calculator, how large each picture is, and how well the pictures can be compressed. In an ideal situation, you could fit 833 pictures at native 320x240 resolution. I tested this by sending over 10,000 files to my calculator. It was physically unable to handle anymore files. A more realistic answer would be about 50 pictures total.
+This greatly depends on many factors: how many files you already have on the calculator, how large each picture is, and how well the pictures can be compressed. In an ideal situation, you could fit 936 pictures at native 320x240 resolution. A more realistic answer would be about 50 pictures total.
 
 ### The picture won't show up!
 This is because not all of the files actually sent to the calculator, or they were accidentally deleted. Try re-sending them. Press [2nd] then [+] then [2] and scroll down to AppVars. Verify all the files are on the calculator.
 
 ## Changelog
 *Most recent update first*
+### v3.0.0-alpha.1
+- Added 16bpp (65,536 colors) support
+- Added 1bpp, 2bpp, and 4bpp support
+- Updated all features to be compatible with all bpp modes
+- Updated to C++17
 
 ### v2.1.0
 - Polish for full release
@@ -142,15 +152,22 @@ This is because not all of the files actually sent to the calculator, or they we
 ## Credits
 Thank you to everyone who has helped me fix code and report bugs! 
 
+16BPP GFX Library: https://github.com/EzCE/gfx16/tree/main
+- TIny_Hacker
+- RoccoloxPrograms
+
+More helpful people:
 - Matt "MateoConLechuga" Waltz
 - Peter "PT_" Tillema
 - Beckadamtheinventor
 - commandblockguy
 - calclover2514
-- _iPhoenix_
+- calc84maniac
 - Hooloovoo
+- iPhoenix
 - Epsilon5
 - Runer112
+- Adriweb
 - Jacobly
 - Iambian
 - SahilS

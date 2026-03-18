@@ -1,4 +1,6 @@
 obj/*
+/.vs/*
+src/.vs/*
 *.map
 *.debug
 *.bin
@@ -8,3 +10,5 @@ obj/*
 *.bc
 *.lnk
 RELEASE_CHECKLIST.txt
+*.obj
+

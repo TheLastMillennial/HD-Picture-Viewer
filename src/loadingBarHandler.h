@@ -1,4 +1,8 @@
+#pragma once
+
 #include "globals.h"
+#include "gfxCompatibility.h"
+#include <cmath>
 
 class LoadingBar
 {
@@ -21,12 +25,14 @@ private:
 	//makes a loading bar and fills it in depending on progress made / tasks left
 	void draw() const
 	{
-		constexpr double maxPixelWidth{ 200.0 };
+		constexpr double maxPixelWidth{ 240.0 };
 		const double progress = (static_cast<double>(tasksFinished) / static_cast<double>(tasksToFinish)) * maxPixelWidth;
 
-		gfx_SetColor(PALETTE_WHITE);
-		gfx_FillRectangle_NoClip(60, 153, progress, 7);
-
+		gfx16_SetColor(GFX16_WHITE);
+		gfx16_FillRectangle_NoClip(40, 160, fmin(progress, maxPixelWidth), 7);
+		gfx16_SetColor(GFX16_BLACK);
+		const double dCoverWidth{ fmax(0.0,fmin(maxPixelWidth - progress, maxPixelWidth)) };
+		gfx16_FillRectangle_NoClip(40.0 + progress, 160, dCoverWidth, 7);
 	}
 
 public:
