@@ -11,7 +11,7 @@
 */
 #define OBTAINED_FROM " from bin folder"
 #define VERSION "3.0.0-alpha.2" OBTAINED_FROM
-#define YEAR "2025"
+#define YEAR "2026"
 #define TUTORIAL_LINK "no tutorial for alpha"
 
 #define SEARCH_HEADER_8BPP "HDPALV11"

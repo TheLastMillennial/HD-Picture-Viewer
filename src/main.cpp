@@ -483,16 +483,14 @@ void drawHomeScreen()
 			//this can cover up other errors so append it
 			errorID = errorID * 1000 + kb_KeyWindow; //264
 		}
-		dbg_sprintf(dbgout, "\n test 2");
 
 		// If necessary, draw the image with new settings.
 		if (redrawPic) {
 			// change gfx libraries, if necessary.
-			dbg_sprintf(dbgout, "\n test 1");
-
 			if (fullScreenImage)
 				HDpicGFX::autoSelectLibrary(picDB.getPicture(selectedPicIndex).BPP);
 			else {
+				HDpicGFX::use16bpp();
 				gfx16_SetColor(GFX16_BLACK);
 				gfx16_FillRectangle(136, 0, 184, 240);
 				drawMenu_16bpp(selectedPicIndex);
@@ -507,12 +505,6 @@ void drawHomeScreen()
 				gfx_PrintStringXY("Press any key to quit.", (LCD_WIDTH - gfx_GetStringWidth("Press any key to quit.")) / 2, 160);
 				KeyPressHandler::waitForAnyKey();
 				return;
-			}
-			//todo: this needs to run when gif is first thing selected, then the user switches to a image, then presses clear
-			if (picDB.getPicture(selectedPicIndex).isGIF && fullScreenImage)
-			{
-				HDpicGFX::use16bpp();
-				drawMenu_16bpp(selectedPicIndex);
 			}
 
 		}
@@ -557,7 +549,6 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		return 1;
 	}
 
-
 	const uint24_t finalFrame{ curPicture.numGIFFrames - 1 };
 	const uint24_t x = fullScreenPic ? 0 : 160;
 	const uint24_t y = fullScreenPic ? 0 : 80;
@@ -578,7 +569,6 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		if (kh.scanKeys(fullScreenPic))
 			return 0;
 	}
-
 
 	//thumbnail only shows first frame
 	if (!fullScreenPic) {
@@ -613,24 +603,17 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 	}
 	gfx_SetTransparentColor(GIF_TRANSPARENT_COLOR);
 
-	dbg_sprintf(dbgout, "\nis 16bpp %d", gfx.is16bppMode() ? 1 : 0);
-
 	// Cover up the last image
 	gfx_FillScreen(GIF_BACKGROUND_COLOR);
 	SetHalfResMode(true);
 
 	//dbg_WatchpointSet(*srcGif, 1, DBG_WATCHPOINT_ALL);
 	lz4_Decompress(*srcGif, curPicture.framesPtrList[curFrame]);//pre-decompress first frame
-	//gfx_SetDrawBuffer();
+
 	clock_t frameTimer{ clock() };
 	while (!keyHandler.isAnyKeyPressed()) {
 		// Display the already-decompressed curFrame frame
-		dbg_sprintf(dbgout, "\nTimes: ");
-
-		const clock_t spriteTimer{ clock() };
 		hdl_HalfResSprite_NoClip(*srcGif);
-		//gfx_TransparentSprite_NoClip(*srcGif, 0, 0);
-		dbg_sprintf(dbgout, "\n Sprite: %lu ticks", clock() - spriteTimer);
 
 		// Find next valid frame index (wrap-around)
 		uint24_t next{ curFrame };
@@ -644,13 +627,9 @@ uint8_t drawGIF(uint24_t picName, bool fullScreenPic)
 		} while (frames[next] == nullptr);
 
 		// Decompress next frame
-		const clock_t compTimer{ clock() };
 		lz4_Decompress(*srcGif, frames[next]);
-		dbg_sprintf(dbgout, "\n Decompression: %lu ticks", clock() - compTimer);
-
 
 		// Wait until current frame's delay has elapsed. Press any key to skip.
-		dbg_sprintf(dbgout, "\n Finished in: %lu / %d ticks", clock() - frameTimer, delays[curFrame]);
 		while (clock() - frameTimer < static_cast<clock_t>(delays[curFrame])) {
 			if (os_GetCSC())
 				break;
@@ -670,12 +649,10 @@ uint8_t drawMedia(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 	PicDatabase &picDB = PicDatabase::getInstance();
 	imageData &curPicture = picDB.getPicture(picName);
 
-	if (curPicture.isGIF) {
+	if (curPicture.isGIF) 
 		return drawGIF(picName, fullScreenPic);
-	}
-	else {
+	else 
 		return drawImage(picName, desiredWidthInPxl, desiredHeightInPxl, fullScreenPic, shiftX, shiftY);
-	}
 }
 
 /* Draws the image stored in database at position picName.
@@ -783,7 +760,6 @@ uint8_t drawImage(uint24_t picName, uint24_t desiredWidthInPxl, uint24_t desired
 			return 1;
 		}
 	}
-
 
 	/* Apply Pan Offset */
 

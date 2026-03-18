@@ -143,26 +143,26 @@ void drawNoImagesFound()
 /* This UI keeps the user selection in the middle of the screen. */
 void drawMenu_16bpp(uint24_t selectedName)
 {
-	gfx16_SetColor(GFX16_WHITE);
-	gfx16_VertLine(140, 20, 200);
-
 	uint24_t yPxlPos{ 0 };
 
 	//clears old text and sets prev for new text
 	gfx16_SetTextScale(2, 2);
 	gfx16_SetColor(GFX16_BLACK);
-	gfx16_FillRectangle_NoClip(0, 0, 140, 240);
-	gfx16_SetColor(GFX16_WHITE);
-	gfx16_SetTextFGColor(GFX16_TEXT);
-	gfx16_SetTextBGColor(GFX16_BLACK);
+	gfx16_FillRectangle_NoClip(0, 0, 150, 240);
 
 	//re-draws UI lines
+	gfx16_SetColor(GFX16_WHITE);
 	gfx16_HorizLine_NoClip(0, 120, 6);
 	gfx16_HorizLine_NoClip(136, 120, 5);
 	gfx16_HorizLine_NoClip(6, 110, 130);
 	gfx16_HorizLine_NoClip(6, 130, 130);
 	gfx16_VertLine_NoClip(6, 110, 20);
 	gfx16_VertLine_NoClip(136, 110, 21);
+	gfx16_VertLine(140, 20, 200);
+
+	gfx16_SetTextFGColor(GFX16_TEXT);
+	gfx16_SetTextBGColor(GFX16_BLACK);
+
 
 	PicDatabase &picDB = PicDatabase::getInstance();
 
