@@ -7,14 +7,14 @@ By TheLastMillennial
 
 ### Dependancies:
 These should already be included in the release.
-hdlib.8xv (HD Graphics Library): https://github.com/TheLastMillennial/toolchain
-gfx16.8xv (16 bit Graphics Library): https://github.com/EzCE/gfx16/tree/main
+- hdlib.8xv (HD Graphics Library): https://github.com/TheLastMillennial/toolchain
+- gfx16.8xv (16 bit Graphics Library): https://github.com/EzCE/gfx16/tree/main
 
 ### Converting Pictures:
-Convert a picture using the HD Picture Viewer Converter: https://github.com/TheLastMillennial/HDPictureViewerConverter2/releases
+Convert a picture using the HD Picture Viewer Converter: https://github.com/TheLastMillennial/HDPictureViewerConverter2/releases <br>
 Refer to the HD Picture Viewer Converter's readme.md file for instructions on converting a picture. 
 
-Alternatively, you can use a web converter created and maintained by Peter Marheine: https://taricorp.gitlab.io/hdpictureconverter-rs/
+Alternatively, you can use a web converter created and maintained by Peter Marheine: https://taricorp.gitlab.io/hdpictureconverter-rs/ <br> 
 Please note I cannot guarantee the web converter's compatibility with this program.
 
 ### Written tutorial:
@@ -33,23 +33,23 @@ Please note I cannot guarantee the web converter's compatibility with this progr
 
 #### Buttons:
 Keymap in Main Menu:
-Clear ______ Quit program.
-Mode _______ Open help.
-Enter ______ Open picture fullscreen.
-Up _________ Select previous picture.
-Down _______ Select next picture.
+<br> Clear ______ Quit program.
+<br> Mode _______ Open help.
+<br> Enter ______ Open picture fullscreen.
+<br> Up _________ Select previous picture.
+<br> Down _______ Select next picture.
 
 Keymap in Fullscreen:
-Clear ______ Quit to menu.
-Mode _______ Open help.
-Y= _________ Show previous.
-Graph ______ Show next.    
-Arrow Keys _ Pan picture.    
-Del ________ Permanently delete picture.
-+ __________ Zoom in. 
-- __________ Zoom out.
-Zoom _______ Maximum zoom.
-Window _____ Reset picture zoom.
+<br> Clear ______ Quit to menu.
+<br> Mode _______ Open help.
+<br> Y= _________ Show previous.
+<br> Graph ______ Show next.    
+<br> Arrow Keys _ Pan picture.    
+<br> Del ________ Permanently delete picture.
+<br> + __________ Zoom in. 
+<br> - __________ Zoom out.
+<br> Zoom _______ Maximum zoom.
+<br> Window _____ Reset picture zoom.
 
 #### Example picture:
 - Sending all the files from one of the `Example` folders is a good start. They are known to work with this program.
